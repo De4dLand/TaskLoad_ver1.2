@@ -1,0 +1,65 @@
+.projectList {
+  padding: 0;
+}
+
+.projectItem {
+  border-radius: 4px;
+  margin-bottom: 8px;
+  background-color: #2a2a2a;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 12px 16px;
+}
+
+.projectHeader {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.projectTitle {
+  font-weight: 500;
+  color: #e0e0e0;
+}
+
+.projectDueDate {
+  color: #aaaaaa;
+}
+
+.taskItem {
+  padding-left: 32px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+
+.taskTitle {
+  font-size: 0.875rem;
+  color: #e0e0e0;
+}
+
+.taskStatusIcon {
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.completedIcon {
+  color: #4caf50;
+  font-size: 12px;
+}
+
+.inProgressIcon {
+  color: #ff9800;
+  font-size: 12px;
+}
+
+.todoIcon {
+  color: #f44336;
+  font-size: 12px;
+}
+
+.emptyProjects {
+  padding: 16px;
+  text-align: center;
+}

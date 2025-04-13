@@ -1,0 +1,466 @@
+.landingPage {
+  background-color: #121212;
+  color: #e0e0e0;
+}
+
+/* Header/Navigation */
+.appBar {
+  background-color: rgba(18, 18, 18, 0.9) !important;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3) !important;
+}
+
+.logoContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo {
+  font-size: 2rem;
+  color: #1a56db;
+  background-color: #1a56db;
+  padding: 4px;
+  border-radius: 4px;
+  color: white;
+}
+
+.logoText {
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.navButtons {
+  display: flex;
+  gap: 16px;
+}
+
+.loginButton {
+  color: #e0e0e0;
+  text-transform: none;
+  font-weight: 500;
+}
+
+.registerButton {
+  background-color: #1a56db;
+  color: white;
+  text-transform: none;
+  font-weight: 500;
+  padding: 6px 16px;
+}
+
+.registerButton:hover {
+  background-color: #1649c0;
+}
+
+.mobileDrawer {
+  background-color: #1e1e1e !important;
+  color: #e0e0e0;
+  width: 250px;
+}
+
+.mobileDrawerHeader {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px;
+}
+
+.registerText {
+  color: #1a56db;
+  font-weight: 500;
+}
+
+/* Hero Section */
+.heroSection {
+  padding-top: 120px;
+  padding-bottom: 80px;
+  background: linear-gradient(to bottom, #121212, #1a1a1a);
+}
+
+.heroTitle {
+  font-weight: 700;
+  margin-bottom: 24px;
+  font-size: 3rem;
+  background: linear-gradient(45deg, #1a56db, #4285f4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.heroSubtitle {
+  color: #aaaaaa;
+  margin-bottom: 32px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.heroCta {
+  display: flex;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.heroRegisterButton {
+  background-color: #1a56db;
+  color: white;
+  text-transform: none;
+  font-weight: 500;
+  padding: 10px 24px;
+  font-size: 1rem;
+}
+
+.heroRegisterButton:hover {
+  background-color: #1649c0;
+}
+
+.heroLoginButton {
+  border-color: #444;
+  color: #e0e0e0;
+  text-transform: none;
+  font-weight: 500;
+  padding: 10px 24px;
+  font-size: 1rem;
+}
+
+.heroLoginButton:hover {
+  border-color: #666;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.heroImageContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.heroImage {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Features Section */
+.featuresSection {
+  padding: 80px 0;
+  background-color: #1a1a1a;
+}
+
+.sectionTitle {
+  text-align: center;
+  margin-bottom: 16px;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.sectionSubtitle {
+  text-align: center;
+  margin-bottom: 48px;
+  color: #aaaaaa;
+  font-weight: 400;
+}
+
+.featuresGrid {
+  margin-top: 32px;
+}
+
+.featureCard {
+  height: 100%;
+  background-color: #242424 !important;
+  border-radius: 8px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.featureCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.featureCardContent {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.featureIconContainer {
+  margin-bottom: 16px;
+  background-color: rgba(26, 86, 219, 0.1);
+  padding: 16px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.featureIcon {
+  color: #1a56db;
+}
+
+.featureTitle {
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.featureDescription {
+  color: #aaaaaa;
+  line-height: 1.6;
+}
+
+/* How It Works Section */
+.howItWorksSection {
+  padding: 80px 0;
+  background-color: #121212;
+}
+
+.howItWorksImageContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.howItWorksImage {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.howItWorksList {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.howItWorksItem {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.howItWorksTitle {
+  font-weight: 600;
+  color: #e0e0e0;
+  display: flex;
+  align-items: center;
+}
+
+.howItWorksDescription {
+  color: #aaaaaa;
+  line-height: 1.6;
+}
+
+/* Testimonials Section */
+.testimonialsSection {
+  padding: 80px 0;
+  background-color: #1a1a1a;
+}
+
+.testimonialCard {
+  height: 100%;
+  background-color: #242424 !important;
+  border-radius: 8px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.testimonialCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.testimonialCardContent {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.testimonialContent {
+  color: #aaaaaa;
+  line-height: 1.6;
+  margin-bottom: 24px;
+  flex-grow: 1;
+}
+
+.testimonialAuthor {
+  margin-top: auto;
+}
+
+.testimonialName {
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.testimonialRole {
+  color: #1a56db;
+}
+
+/* CTA Section */
+.ctaSection {
+  padding: 80px 0;
+  background: linear-gradient(to bottom, #1a1a1a, #121212);
+  text-align: center;
+}
+
+.ctaTitle {
+  margin-bottom: 16px;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.ctaSubtitle {
+  margin-bottom: 32px;
+  color: #aaaaaa;
+  font-weight: 400;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.ctaButtons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.ctaRegisterButton {
+  background-color: #1a56db;
+  color: white;
+  text-transform: none;
+  font-weight: 500;
+  padding: 10px 24px;
+  font-size: 1rem;
+}
+
+.ctaRegisterButton:hover {
+  background-color: #1649c0;
+}
+
+.ctaLoginButton {
+  border-color: #444;
+  color: #e0e0e0;
+  text-transform: none;
+  font-weight: 500;
+  padding: 10px 24px;
+  font-size: 1rem;
+}
+
+.ctaLoginButton:hover {
+  border-color: #666;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Footer */
+.footer {
+  padding: 64px 0 32px;
+  background-color: #121212;
+  border-top: 1px solid #333;
+}
+
+.footerLogoContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.footerLogo {
+  font-size: 1.5rem;
+  color: #1a56db;
+  background-color: #1a56db;
+  padding: 4px;
+  border-radius: 4px;
+  color: white;
+}
+
+.footerLogoText {
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.footerDescription {
+  color: #aaaaaa;
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.footerSectionTitle {
+  font-weight: 600;
+  color: #e0e0e0;
+  margin-bottom: 16px;
+}
+
+.footerLinks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footerLinks li {
+  margin-bottom: 12px;
+}
+
+.footerLink {
+  color: #aaaaaa;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footerLink:hover {
+  color: #1a56db;
+}
+
+.footerContactItem {
+  color: #aaaaaa;
+  margin-bottom: 12px;
+}
+
+.footerBottom {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid #333;
+  text-align: center;
+}
+
+.copyright {
+  color: #777777;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 960px) {
+  .heroTitle {
+    font-size: 2.5rem;
+  }
+
+  .heroCta,
+  .ctaButtons {
+    flex-direction: column;
+  }
+
+  .howItWorksSection .MuiGrid-container {
+    flex-direction: column-reverse;
+  }
+
+  .howItWorksImageContainer {
+    margin-top: 32px;
+  }
+}
+
+@media (max-width: 600px) {
+  .heroTitle {
+    font-size: 2rem;
+  }
+
+  .sectionTitle {
+    font-size: 1.75rem;
+  }
+
+  .heroSection,
+  .featuresSection,
+  .howItWorksSection,
+  .testimonialsSection,
+  .ctaSection {
+    padding: 64px 0;
+  }
+}

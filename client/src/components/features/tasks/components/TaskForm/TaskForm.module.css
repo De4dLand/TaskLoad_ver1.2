@@ -1,0 +1,9 @@
+.form {
+  padding: 16px;
+}
+
+.buttonContainer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}

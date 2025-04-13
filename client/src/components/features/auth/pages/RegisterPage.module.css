@@ -1,0 +1,202 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #121212;
+}
+
+.paper {
+  padding: 2rem;
+  width: 100%;
+  max-width: 450px;
+  background-color: #1e1e1e !important;
+  color: #e0e0e0;
+  border-radius: 8px;
+}
+
+.logoContainer {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.logo {
+  font-size: 2.5rem;
+  color: #1a56db;
+  background-color: #1a56db;
+  padding: 8px;
+  border-radius: 8px;
+  color: white;
+}
+
+.title {
+  color: #e0e0e0;
+  text-align: center;
+  margin-bottom: 2rem;
+  font-weight: 500;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  color: #e0e0e0;
+  font-weight: 400;
+}
+
+.textField {
+  background-color: #2a2a2a;
+  border-radius: 4px;
+}
+
+.textField input {
+  color: #e0e0e0;
+}
+
+.textField :global(.MuiOutlinedInput-root) {
+  border-radius: 4px;
+}
+
+.textField :global(.MuiOutlinedInput-notchedOutline) {
+  border-color: #444;
+}
+
+.textField:hover :global(.MuiOutlinedInput-notchedOutline) {
+  border-color: #666;
+}
+
+.textField.Mui-focused :global(.MuiOutlinedInput-notchedOutline) {
+  border-color: #1a56db;
+}
+
+.errorText {
+  color: #f44336;
+  margin-top: 0.25rem;
+}
+
+.inputIcon {
+  color: #888;
+}
+
+.usernameIcon {
+  color: #888;
+  font-weight: bold;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.passwordIcon {
+  width: 24px;
+  height: 24px;
+}
+
+.visibilityIcon {
+  color: #888;
+}
+
+.termsContainer {
+  margin-top: 0.5rem;
+}
+
+.checkbox {
+  color: #888;
+}
+
+.checkbox.Mui-checked {
+  color: #1a56db;
+}
+
+.termsText {
+  color: #e0e0e0;
+  font-size: 0.875rem;
+}
+
+.termsLink {
+  color: #1a56db;
+  text-decoration: none;
+}
+
+.termsLink:hover {
+  text-decoration: underline;
+}
+
+.formError {
+  margin-top: 1rem;
+}
+
+.submitButton {
+  background-color: #1a56db;
+  color: white;
+  padding: 0.75rem;
+  font-weight: 500;
+  margin-top: 1rem;
+  text-transform: none;
+  font-size: 1rem;
+}
+
+.submitButton:hover {
+  background-color: #1649c0;
+}
+
+.socialLoginContainer {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.socialButton {
+  border-color: #444;
+  color: #e0e0e0;
+  padding: 0.75rem;
+}
+
+.socialButton:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: #666;
+}
+
+.loginLinkContainer {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.loginText {
+  color: #e0e0e0;
+}
+
+.loginLink {
+  color: #1a56db;
+  text-decoration: none;
+}
+
+.loginLink:hover {
+  text-decoration: underline;
+}
+
+.footerContainer {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.privacyLink {
+  color: #1a56db;
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
+.privacyLink:hover {
+  text-decoration: underline;
+}
