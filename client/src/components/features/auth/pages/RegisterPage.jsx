@@ -100,12 +100,11 @@ const RegisterPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    if (!validateForm()) {
-      return
-    }
+    if (!validateForm()) return
 
     try {
       setIsSubmitting(true)
+      setErrors({})
 
       // Call the register service
       await register({
@@ -119,19 +118,25 @@ const RegisterPage = () => {
     } catch (error) {
       console.error("Registration failed:", error)
 
-      // Handle specific error responses from the server
-      if (error.response?.data?.message) {
-        const errorMessage = error.response.data.message.toLowerCase()
-
-        if (errorMessage.includes("email")) {
-          setErrors({ ...errors, email: error.response.data.message })
-        } else if (errorMessage.includes("username") || error.usernameError) {
-          setErrors({ ...errors, username: error.usernameError || error.response.data.message })
+      // Handle validation error array
+      if (error.response?.data?.errors) {
+        const fieldErrors = {}
+        error.response.data.errors.forEach((err) => {
+          fieldErrors[err.field] = err.message
+        })
+        setErrors(fieldErrors)
+      } else if (error.response?.data?.message) {
+        const msg = error.response.data.message
+        const lower = msg.toLowerCase()
+        if (lower.includes("email")) {
+          setErrors((prev) => ({ ...prev, email: msg }))
+        } else if (lower.includes("username") || error.usernameError) {
+          setErrors((prev) => ({ ...prev, username: error.usernameError || msg }))
         } else {
-          setErrors({ ...errors, form: error.response.data.message })
+          setErrors((prev) => ({ ...prev, form: msg }))
         }
       } else {
-        setErrors({ ...errors, form: "Registration failed. Please try again." })
+        setErrors((prev) => ({ ...prev, form: "Registration failed. Please try again." }))
       }
     } finally {
       setIsSubmitting(false)

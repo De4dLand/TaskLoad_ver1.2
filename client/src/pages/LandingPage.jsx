@@ -32,7 +32,7 @@ import {
   Notifications,
 } from "@mui/icons-material"
 import DiamondIcon from "@mui/icons-material/Diamond"
-import { isAuthenticated } from "../components/features/auth/services/authService"
+import useAuth from "../hooks/useAuth"
 import styles from "./LandingPage.module.css"
 
 const LandingPage = () => {
@@ -41,12 +41,13 @@ const LandingPage = () => {
   const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  // Check if user is already authenticated
+  // Redirect to dashboard when auth state is ready
+  const { isAuthenticated, loading } = useAuth()
   useEffect(() => {
-    if (isAuthenticated()) {
+    if (!loading && isAuthenticated) {
       navigate("/dashboard")
     }
-  }, [navigate])
+  }, [loading, isAuthenticated, navigate])
 
   const handleMobileMenuToggle = () => {
     setMobileMenuOpen(!mobileMenuOpen)
@@ -421,7 +422,7 @@ const LandingPage = () => {
 
           <Box className={styles.footerBottom}>
             <Typography variant="body2" className={styles.copyright}>
-              © {new Date().getFullYear()} TaskLoad. All rights reserved.
+              {new Date().getFullYear()} TaskLoad. All rights reserved.
             </Typography>
           </Box>
         </Container>

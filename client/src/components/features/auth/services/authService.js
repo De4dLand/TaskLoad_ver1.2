@@ -30,30 +30,43 @@ export const register = async (userData) => {
 }
 
 export const login = async (email, password, rememberMe = false) => {
+  // Frontend validation
+  if (!email || !password) {
+    const err = new Error("Email and password are required.");
+    err.code = "VALIDATION_ERROR";
+    throw err;
+  }
   try {
-    const response = await api.post("/api/v1/auth/login", { email, password, rememberMe })
+    // Only send fields expected by backend
+    const payload = { email, password };
+    const response = await api.post("/api/v1/auth/login", payload);
 
     // Store tokens in local storage or session storage based on rememberMe
-    const storage = rememberMe ? localStorage : sessionStorage
+    const storage = rememberMe ? localStorage : sessionStorage;
 
     if (response.data.token) {
-      storage.setItem("accessToken", response.data.token)
+      storage.setItem("accessToken", response.data.token);
       // Always keep a copy in localStorage for the API interceptor
-      localStorage.setItem("accessToken", response.data.token)
+      localStorage.setItem("accessToken", response.data.token);
     }
 
     if (response.data.refreshToken) {
-      storage.setItem("refreshToken", response.data.refreshToken)
+      storage.setItem("refreshToken", response.data.refreshToken);
       // Always keep a copy in localStorage for the API interceptor
-      localStorage.setItem("refreshToken", response.data.refreshToken)
+      localStorage.setItem("refreshToken", response.data.refreshToken);
     }
 
-    return response.data.user
+    return response.data.user;
   } catch (error) {
-    console.error("Login error:", error)
-    throw error
+    console.error("Login error:", error);
+    // Optionally, provide a user-friendly error message
+    if (error.response && error.response.data && error.response.data.message) {
+      throw new Error(error.response.data.message);
+    }
+    throw error;
   }
 }
+
 
 export const logout = () => {
   // Clear tokens from both storages

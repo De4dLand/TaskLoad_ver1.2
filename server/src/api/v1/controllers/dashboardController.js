@@ -1,5 +1,5 @@
 import Task from "../../../models/Task.js"
-import redisClient from "../../../loaders/redis.js"
+import Project from "../../../models/Project.js"
 import { subDays, startOfDay, endOfDay, format } from "date-fns"
 
 // Get activity data for the last N days
@@ -8,9 +8,10 @@ export const getActivityData = async (req, res, next) => {
     const { days = 7 } = req.query
     const daysNum = Number.parseInt(days)
 
-    // Check Redis cache
+    // Access Redis from app locals
+    const redis = req.app.locals.redis
     const cacheKey = `activityData:${req.user.userId}:${daysNum}`
-    const cachedData = await redisClient.get(cacheKey)
+    const cachedData = await redis.get(cacheKey)
 
     if (cachedData) {
       return res.status(200).json(JSON.parse(cachedData))
@@ -45,8 +46,8 @@ export const getActivityData = async (req, res, next) => {
       })
     }
 
-    // Cache results
-    await redisClient.set(cacheKey, JSON.stringify(activityData), "EX", 60 * 60) // 1 hour
+    // Cache results (1 hour)
+    await redis.set(cacheKey, JSON.stringify(activityData), "EX", 60 * 60)
 
     res.status(200).json(activityData)
   } catch (error) {
@@ -54,3 +55,19 @@ export const getActivityData = async (req, res, next) => {
   }
 }
 
+// Get dashboard data: tasks and projects
+export const getDashboardData = async (req, res, next) => {
+  try {
+    // Fetch tasks for user (created or assigned)
+    const tasks = await Task.find({
+      $or: [{ createdBy: req.user.userId }, { assignedTo: req.user.userId }],
+    }).sort({ createdAt: -1 })
+    // Fetch projects for user (owner or member)
+    const projects = await Project.find({
+      $or: [{ owner: req.user.userId }, { "members.user": req.user.userId }],
+    }).sort({ updatedAt: -1 })
+    return res.status(200).json({ tasks, projects })
+  } catch (error) {
+    next(error)
+  }
+}

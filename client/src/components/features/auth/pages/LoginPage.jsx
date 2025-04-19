@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
+import useAuth from "../../../../hooks/useAuth"
 import {
   Box,
   Typography,
@@ -17,13 +18,13 @@ import {
   Alert,
 } from "@mui/material"
 import { Visibility, VisibilityOff, Email } from "@mui/icons-material"
-import { login } from "../services/authService"
 import styles from "./LoginPage.module.css"
 import DiamondIcon from "@mui/icons-material/Diamond"
 import GoogleIcon from "@mui/icons-material/Google"
 import AppleIcon from "@mui/icons-material/Apple"
 
 const LoginPage = () => {
+  const auth = useAuth() // Initialize auth context
   const navigate = useNavigate()
   const location = useLocation()
   const from = location.state?.from?.pathname || "/dashboard"
@@ -83,28 +84,33 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-
-    if (!validateForm()) {
-      return
-    }
+    if (!validateForm()) return
 
     try {
       setIsSubmitting(true)
+      setErrors({})
       setLoginError("")
-
-      // Call the login service
-      await login(formData.email, formData.password, formData.rememberMe)
-
-      // Redirect to dashboard or the page user was trying to access
-      navigate(from, { replace: true })
+      await auth.login(formData.email, formData.password, formData.rememberMe)
     } catch (error) {
       console.error("Login failed:", error)
-
-      // Handle specific error responses from the server
-      if (error.response?.data?.message) {
-        setLoginError(error.response.data.message)
+      // Handle validation error array
+      if (error.response?.data?.errors) {
+        const fieldErrors = {}
+        error.response.data.errors.forEach(err => {
+          fieldErrors[err.field] = err.message
+        })
+        setErrors(fieldErrors)
+      } else if (error.response?.data?.message) {
+        const msg = error.response.data.message
+        const lower = msg.toLowerCase()
+        // Attach to email or password field
+        if (lower.includes("email")) {
+          setErrors(prev => ({ ...prev, email: msg }))
+        } else {
+          setErrors(prev => ({ ...prev, password: msg }))
+        }
       } else {
-        setLoginError("Login failed. Please check your credentials and try again.")
+        setLoginError(error.message || "Login failed. Please check your credentials and try again.")
       }
     } finally {
       setIsSubmitting(false)
@@ -114,6 +120,14 @@ const LoginPage = () => {
   const handleTogglePasswordVisibility = () => {
     setShowPassword(!showPassword)
   }
+
+  // Redirect after successful login
+  useEffect(() => {
+    // Redirect after login once auth context has loaded and user is authenticated
+    if (!auth.loading && auth.isAuthenticated) {
+      navigate(from, { replace: true })
+    }
+  }, [auth.loading, auth.isAuthenticated, navigate, from])
 
   return (
     <Container component="main" maxWidth="sm" className={styles.container}>

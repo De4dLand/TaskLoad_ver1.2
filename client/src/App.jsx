@@ -12,15 +12,15 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <LocalizationProvider dateAdapter={AdapterDateFns}>
-        <AuthProvider>
-          <Router>
+        <Router>
+          <AuthProvider>
             <Routes>
               {routes.map((route) => (
                 <Route key={route.path} path={route.path} element={route.element} />
               ))}
             </Routes>
-          </Router>
-        </AuthProvider>
+          </AuthProvider>
+        </Router>
       </LocalizationProvider>
     </ThemeProvider>
   )

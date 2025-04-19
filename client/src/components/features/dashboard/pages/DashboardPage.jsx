@@ -6,7 +6,8 @@ import { Add as AddIcon, ViewList, ViewModule } from "@mui/icons-material"
 import TaskList from "../components/TaskList/TaskList"
 import TaskGrid from "../components/TaskGrid/TaskGrid"
 import ProjectSidebar from "../components/ProjectSidebar/ProjectSidebar"
-import { fetchDashboardData } from "../services/dashboardService"
+import DataNotFound from "../../../common/DataNotFound"
+import { fetchDashboardData, createProject, createTask } from "../services/dashboardService"
 import styles from "./DashboardPage.module.css"
 
 const DashboardPage = () => {
@@ -15,23 +16,35 @@ const DashboardPage = () => {
   const [error, setError] = useState(null)
   const [viewMode, setViewMode] = useState("list")
 
-  useEffect(() => {
-    const loadDashboardData = async () => {
-      try {
-        setLoading(true)
-        const data = await fetchDashboardData()
-        setDashboardData(data)
-        setError(null)
-      } catch (err) {
-        console.error("Failed to load dashboard data:", err)
-        setError("Failed to load your tasks. Please try again later.")
-      } finally {
-        setLoading(false)
-      }
+  // Load data helper
+  const loadData = async () => {
+    try {
+      setLoading(true)
+      const data = await fetchDashboardData()
+      setDashboardData(data)
+      setError(null)
+    } catch (err) {
+      console.error("Failed to load dashboard data:", err)
+      setError("Failed to load data. Please try again later.")
+    } finally {
+      setLoading(false)
     }
+  }
 
-    loadDashboardData()
-  }, [])
+  useEffect(() => { loadData() }, [])
+
+  // Handlers for creation
+  const handleAddProject = async () => {
+    const name = prompt("Enter new project name:")
+    if (name) await createProject({ name }) && loadData()
+  }
+  const handleAddTask = async () => {
+    const title = prompt("Enter new task title:")
+    if (!title || !dashboardData?.projects?.[0]) return
+    const projectId = dashboardData.projects[0]._id
+    await createTask({ title, projectId })
+    loadData()
+  }
 
   const handleViewChange = (event, newView) => {
     if (newView !== null) {
@@ -39,30 +52,20 @@ const DashboardPage = () => {
     }
   }
 
-  if (loading) {
-    return (
-      <Box className={styles.loadingContainer}>
-        <CircularProgress />
-        <Typography variant="body1" color="textSecondary" sx={{ mt: 2 }}>
-          Loading your dashboard...
-        </Typography>
-      </Box>
-    )
+  if (loading) return (<Box className={styles.loadingContainer}><CircularProgress /></Box>)
+
+  if (error) {
+    return <DataNotFound message={error} />
+  }
+
+  if (dashboardData && dashboardData.projects.length === 0) {
+    return <DataNotFound message="No projects found" />
   }
 
   return (
     <Box className={styles.dashboardContainer}>
       <Box className={styles.sidebarContainer}>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          fullWidth
-          className={styles.createTaskButton}
-        >
-          Create New Task
-        </Button>
-
+        <Button fullWidth variant="outlined" onClick={handleAddProject} sx={{ mb:2 }}>+ Add Project</Button>
         {dashboardData?.projects && <ProjectSidebar projects={dashboardData.projects} />}
       </Box>
 
@@ -80,15 +83,10 @@ const DashboardPage = () => {
               <ViewModule /> Grid View
             </ToggleButton>
           </ToggleButtonGroup>
+          <Button variant="contained" size="small" onClick={handleAddTask} sx={{ ml:2 }}>+ Add Task</Button>
         </Box>
 
-        {error && (
-          <Paper className={styles.errorPaper}>
-            <Typography color="error">{error}</Typography>
-          </Paper>
-        )}
-
-        {!error && dashboardData?.tasks && (
+        {dashboardData?.tasks && (
           <>
             {viewMode === "list" ? <TaskList tasks={dashboardData.tasks} /> : <TaskGrid tasks={dashboardData.tasks} />}
           </>

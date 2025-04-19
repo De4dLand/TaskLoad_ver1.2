@@ -23,7 +23,7 @@ const ForgotPasswordPage = () => {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-
+  //validate email
   const validateEmail = () => {
     if (!email) {
       setError("Email is required")
@@ -35,7 +35,7 @@ const ForgotPasswordPage = () => {
     }
     return true
   }
-
+  //handle submit
   const handleSubmit = async (e) => {
     e.preventDefault()
 

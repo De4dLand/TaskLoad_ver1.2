@@ -1,6 +1,5 @@
 import User from "../../../models/User.js"
 import { generateToken, verifyToken } from "../../../utils/jwt.js"
-import { hashPassword, comparePassword } from "../../../utils/password.js"
 import { sendPasswordResetEmail } from "../../../utils/email.js"
 import { createError } from "../../../utils/error.js"
 
@@ -122,7 +121,7 @@ export const login = async (req, res, next) => {
       console.log('Comparing passwords for user:', user.email);
 
       // Use comparePassword function
-      const isPasswordValid = await comparePassword(password, user.password);
+      const isPasswordValid = await user.comparePassword(password);
 
       if (!isPasswordValid) {
         console.log('Password validation failed');
@@ -330,4 +329,3 @@ export const updateProfile = async (req, res, next) => {
     next(error)
   }
 }
-

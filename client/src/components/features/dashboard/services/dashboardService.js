@@ -34,3 +34,25 @@ export const fetchRecentActivity = async () => {
     throw error
   }
 }
+
+// Create a new project
+export const createProject = async (projectData) => {
+  try {
+    const response = await api.post("/api/v1/projects", projectData)
+    return response.data
+  } catch (error) {
+    console.error("Error creating project:", error)
+    throw error
+  }
+}
+
+// Create a new task
+export const createTask = async (taskData) => {
+  try {
+    const response = await api.post("/api/v1/tasks", taskData)
+    return response.data
+  } catch (error) {
+    console.error("Error creating task:", error)
+    throw error
+  }
+}
