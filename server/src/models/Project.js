@@ -12,6 +12,11 @@ const projectSchema = new mongoose.Schema({
         trim: true,
         maxlength: [500, 'Description cannot exceed 500 characters']
     },
+    color: {
+        type: String,
+        trim: true,
+        default: '#1976d2'
+    },
     status: {
         type: String,
         enum: ['planning', 'active', 'on_hold', 'completed', 'cancelled'],
@@ -19,25 +24,34 @@ const projectSchema = new mongoose.Schema({
     },
     startDate: {
         type: Date,
-        required: [true, 'Start date is required']
+        required: [true, 'Start date is required'],
+        default: Date.now
     },
     endDate: {
         type: Date,
-        required: [true, 'End date is required']
+        required: [true, 'End date is required'],
+        default: Date.now
     },
     team: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Team',
-        required: [true, 'Project must belong to a team']
+        ref: 'Team'
     },
-    leader: {
+    owner: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: [true, 'Project must have a leader']
+        required: [true, 'Project must have an owner']
     },
     members: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true
+        },
+        role: {
+            type: String,
+            enum: ['owner', 'admin', 'member'],
+            default: 'member'
+        }
     }],
     tasks: [{
         type: mongoose.Schema.Types.ObjectId,
@@ -104,7 +118,7 @@ const projectSchema = new mongoose.Schema({
 // Indexes
 projectSchema.index({ name: 1, team: 1 });
 projectSchema.index({ status: 1 });
-projectSchema.index({ leader: 1 });
+projectSchema.index({ owner: 1 });
 projectSchema.index({ startDate: 1 });
 projectSchema.index({ endDate: 1 });
 

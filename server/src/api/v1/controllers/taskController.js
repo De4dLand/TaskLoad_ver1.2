@@ -227,19 +227,25 @@ export const createTask = async (req, res, next) => {
       return next(createError(400, "Task title is required"))
     }
 
-    // Create task
-    const task = new Task({
+    // Create task, omit assignedTo if empty to avoid cast errors
+    const taskData = {
       title,
       description,
       status: status || "todo",
       priority: priority || "medium",
       dueDate,
       project,
-      assignedTo,
       tags: tags || [],
       estimatedHours,
-      createdBy: req.user.userId,
-    })
+      createdBy: req.user._id,
+    };
+    if (assignedTo !== "") {
+      taskData.assignedTo = assignedTo;
+    }
+    else{
+      taskData.assignedTo = req.user._id
+    }
+    const task = new Task(taskData);
 
     await task.save()
 

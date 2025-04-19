@@ -33,7 +33,8 @@ const taskSchema = new mongoose.Schema(
     },
     assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+      ref: 'User',
+      set: v => (v === '' ? undefined : v)
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -222,4 +223,3 @@ taskSchema.post('findOneAndDelete', async function(doc) {
 const Task = mongoose.model("Task", taskSchema)
 
 export default Task
-

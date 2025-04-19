@@ -1,187 +1,115 @@
-import Joi from 'joi';
+import { body } from 'express-validator';
 
-export const validateTask = Joi.object({
-  title: Joi.string()
-    .required()
-    .min(1)
-    .max(100)
-    .messages({
-      'string.empty': 'Title cannot be empty',
-      'string.min': 'Title must be at least 1 character long',
-      'string.max': 'Title cannot exceed 100 characters',
-      'any.required': 'Title is required'
-    }),
-  description: Joi.string()
-    .allow('')
-    .max(500)
-    .messages({
-      'string.max': 'Description cannot exceed 500 characters'
-    }),
-  status: Joi.string()
-    .valid('todo', 'in_progress', 'review', 'completed')
-    .default('todo')
-    .messages({
-      'any.only': 'Invalid status value'
-    }),
-  priority: Joi.string()
-    .valid('low', 'medium', 'high')
-    .default('medium')
-    .messages({
-      'any.only': 'Invalid priority value'
-    }),
-  dueDate: Joi.date()
-    .min('now')
-    .messages({
-      'date.base': 'Invalid date format',
-      'date.min': 'Due date cannot be in the past'
-    }),
-  project: Joi.string()
-    .required()
-    .messages({
-      'string.empty': 'Project ID cannot be empty',
-      'any.required': 'Project ID is required'
-    }),
-  assignedTo: Joi.string()
-    .allow('')
-    .messages({
-      'string.empty': 'Assigned user ID cannot be empty'
-    }),
-  createdBy: Joi.string()
-    .required()
-    .messages({
-      'string.empty': 'Creator ID cannot be empty',
-      'any.required': 'Creator ID is required'
-    }),
-  tags: Joi.array()
-    .items(Joi.string())
-    .messages({
-      'array.base': 'Tags must be an array'
-    }),
-  estimatedHours: Joi.number()
-    .min(0)
-    .messages({
-      'number.base': 'Estimated hours must be a number',
-      'number.min': 'Estimated hours cannot be negative'
-    }),
-  actualHours: Joi.number()
-    .min(0)
-    .messages({
-      'number.base': 'Actual hours must be a number',
-      'number.min': 'Actual hours cannot be negative'
-    }),
-  dependencies: Joi.array()
-    .items(Joi.string())
-    .messages({
-      'array.base': 'Dependencies must be an array'
-    }),
-  subtasks: Joi.array()
-    .items(
-      Joi.object({
-        title: Joi.string().required(),
-        completed: Joi.boolean().default(false)
-      })
-    )
-    .messages({
-      'array.base': 'Subtasks must be an array'
-    }),
-  customFields: Joi.array()
-    .items(
-      Joi.object({
-        name: Joi.string().required(),
-        value: Joi.any()
-      })
-    )
-    .messages({
-      'array.base': 'Custom fields must be an array'
-    })
-});
+export const validateTask = [
+  body('title')
+    .notEmpty().withMessage('Title is required')
+    .isLength({ min: 1, max: 100 }).withMessage('Title must be between 1 and 100 characters'),
+  body('description')
+    .optional({ nullable: true })
+    .isString().withMessage('Description must be a string')
+    .isLength({ max: 500 }).withMessage('Description cannot exceed 500 characters'),
+  body('status')
+    .optional()
+    .isIn(['todo', 'in_progress', 'review', 'completed']).withMessage('Invalid status value'),
+  body('priority')
+    .optional()
+    .isIn(['low', 'medium', 'high']).withMessage('Invalid priority value'),
+  body('dueDate')
+    .optional()
+    .isISO8601().withMessage('Invalid date format')
+    .custom(value => new Date(value) >= new Date()).withMessage('Due date cannot be in the past'),
+  body('project')
+    .notEmpty().withMessage('Project ID is required')
+    .isMongoId().withMessage('Project ID must be a valid ID'),
+  body('assignedTo')
+    .optional({ nullable: true })
+    .custom(value => value === null || typeof value === 'undefined' || /^[a-fA-F0-9]{24}$/.test(value))
+    .withMessage('Assigned user ID must be a valid ID or null'),
+  body('tags')
+    .optional()
+    .isArray().withMessage('Tags must be an array'),
+  body('tags.*')
+    .isString().withMessage('Each tag must be a string'),
+  body('estimatedHours')
+    .optional()
+    .isFloat({ min: 0 }).withMessage('Estimated hours must be a non-negative number'),
+];
 
-export const validateTaskUpdate = validateTask.fork(
-  ['title', 'project', 'createdBy'],
-  schema => schema.optional()
-);
+export const validateTaskUpdate = [
+  body('title')
+    .optional()
+    .isLength({ min: 1, max: 100 }).withMessage('Title must be between 1 and 100 characters'),
+  body('description')
+    .optional({ nullable: true })
+    .isString().withMessage('Description must be a string')
+    .isLength({ max: 500 }).withMessage('Description cannot exceed 500 characters'),
+  body('status')
+    .optional()
+    .isIn(['todo', 'in_progress', 'review', 'completed']).withMessage('Invalid status value'),
+  body('priority')
+    .optional()
+    .isIn(['low', 'medium', 'high']).withMessage('Invalid priority value'),
+  body('dueDate')
+    .optional()
+    .isISO8601().withMessage('Invalid date format')
+    .custom(value => new Date(value) >= new Date()).withMessage('Due date cannot be in the past'),
+  body('project')
+    .optional()
+    .isMongoId().withMessage('Project ID must be a valid ID'),
+  body('assignedTo')
+    .optional({ nullable: true })
+    .custom(value => value === null || typeof value === 'undefined' || /^[a-fA-F0-9]{24}$/.test(value))
+    .withMessage('Assigned user ID must be a valid ID or null'),
+  body('tags')
+    .optional()
+    .isArray().withMessage('Tags must be an array'),
+  body('tags.*')
+    .isString().withMessage('Each tag must be a string'),
+  body('estimatedHours')
+    .optional()
+    .isFloat({ min: 0 }).withMessage('Estimated hours must be a non-negative number'),
+];
 
-export const validateTaskStatus = Joi.object({
-  status: Joi.string()
-    .valid('todo', 'in_progress', 'review', 'completed')
-    .required()
-    .messages({
-      'any.only': 'Invalid status value',
-      'any.required': 'Status is required'
-    })
-});
+export const validateTaskStatus = [
+  body('status')
+    .notEmpty().withMessage('Status is required')
+    .isIn(['todo', 'in_progress', 'review', 'completed']).withMessage('Invalid status value'),
+];
 
-export const validateTaskPriority = Joi.object({
-  priority: Joi.string()
-    .valid('low', 'medium', 'high')
-    .required()
-    .messages({
-      'any.only': 'Invalid priority value',
-      'any.required': 'Priority is required'
-    })
-});
+export const validateTaskPriority = [
+  body('priority')
+    .notEmpty().withMessage('Priority is required')
+    .isIn(['low', 'medium', 'high']).withMessage('Invalid priority value'),
+];
 
-export const validateTaskDueDate = Joi.object({
-  dueDate: Joi.date()
-    .min('now')
-    .required()
-    .messages({
-      'date.base': 'Invalid date format',
-      'date.min': 'Due date cannot be in the past',
-      'any.required': 'Due date is required'
-    })
-});
+export const validateTaskDueDate = [
+  body('dueDate')
+    .notEmpty().withMessage('Due date is required')
+    .isISO8601().withMessage('Invalid date format')
+    .custom(value => new Date(value) >= new Date()).withMessage('Due date cannot be in the past'),
+];
 
-export const validateTaskAssignment = Joi.object({
-  userId: Joi.string()
-    .required()
-    .messages({
-      'string.empty': 'User ID cannot be empty',
-      'any.required': 'User ID is required'
-    })
-});
+export const validateTaskAssignment = [
+  body('userId')
+    .notEmpty().withMessage('User ID is required')
+    .isMongoId().withMessage('User ID must be a valid ID'),
+];
 
-export const validateTaskComment = Joi.object({
-  content: Joi.string()
-    .required()
-    .min(1)
-    .max(1000)
-    .messages({
-      'string.empty': 'Comment cannot be empty',
-      'string.min': 'Comment must be at least 1 character long',
-      'string.max': 'Comment cannot exceed 1000 characters',
-      'any.required': 'Comment is required'
-    })
-});
+export const validateTaskComment = [
+  body('content')
+    .notEmpty().withMessage('Comment is required')
+    .isLength({ min: 1, max: 1000 }).withMessage('Comment must be between 1 and 1000 characters'),
+];
 
-export const validateTaskAttachment = Joi.object({
-  name: Joi.string()
-    .required()
-    .messages({
-      'string.empty': 'File name cannot be empty',
-      'any.required': 'File name is required'
-    }),
-  url: Joi.string()
-    .required()
-    .uri()
-    .messages({
-      'string.empty': 'File URL cannot be empty',
-      'string.uri': 'Invalid file URL',
-      'any.required': 'File URL is required'
-    }),
-  type: Joi.string()
-    .required()
-    .messages({
-      'string.empty': 'File type cannot be empty',
-      'any.required': 'File type is required'
-    }),
-  size: Joi.number()
-    .required()
-    .min(0)
-    .messages({
-      'number.base': 'File size must be a number',
-      'number.min': 'File size cannot be negative',
-      'any.required': 'File size is required'
-    })
-});
-
+export const validateTaskAttachment = [
+  body('name')
+    .notEmpty().withMessage('File name is required'),
+  body('url')
+    .notEmpty().withMessage('File URL is required')
+    .isURL().withMessage('Invalid file URL'),
+  body('type')
+    .notEmpty().withMessage('File type is required'),
+  body('size')
+    .notEmpty().withMessage('File size is required')
+    .isFloat({ min: 0 }).withMessage('File size must be a non-negative number'),
+];

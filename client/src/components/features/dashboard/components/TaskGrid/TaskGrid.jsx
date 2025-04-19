@@ -2,7 +2,7 @@ import { Grid, Paper, Typography, Avatar, Box } from "@mui/material"
 import { formatDate } from "../../../../../utils/formatters"
 import styles from "./TaskGrid.module.css"
 
-const TaskGrid = ({ tasks }) => {
+const TaskGrid = ({ tasks, onTaskClick }) => {
   if (!tasks || tasks.length === 0) {
     return (
       <Paper className={styles.emptyState}>
@@ -30,7 +30,11 @@ const TaskGrid = ({ tasks }) => {
     <Grid container spacing={3}>
       {tasks.map((task) => (
         <Grid item xs={12} sm={6} md={4} key={task._id}>
-          <Paper className={`${styles.taskCard} ${getTaskBorderColor(task)}`}>
+          <Paper
+            className={`${styles.taskCard} ${getTaskBorderColor(task)}`}
+            onClick={() => onTaskClick && onTaskClick(task)}
+            style={{ cursor: 'pointer' }}
+          >
             <Typography variant="h6" className={styles.taskTitle}>
               {task.title}
             </Typography>

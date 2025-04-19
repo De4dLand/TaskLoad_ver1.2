@@ -13,7 +13,7 @@ import {
 } from "../controllers/taskController.js"
 import auth from "../../../middlewares/auth.js"
 import { validateTask, validateTaskUpdate, validateTaskStatus } from "../validator/taskValidator.js"
-import { validate } from "../middlewares/validationMiddleware.js"
+import { validationResult } from "express-validator"
 
 const router = express.Router()
 
@@ -29,13 +29,31 @@ router.get("/date-range", getTasksByDateRange)
 router.get("/:id", getTaskById)
 
 // POST routes
-router.post("/", validate(validateTask), createTask)
+router.post("/", [...validateTask, async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+    await createTask(req, res, next);
+}]);
 
 // PUT routes
-router.put("/:id", validate(validateTaskUpdate), updateTask)
+router.put("/:id", [...validateTaskUpdate, async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+    await updateTask(req, res, next);
+}]);
 
 // PATCH routes
-router.patch("/:id/status", validate(validateTaskStatus), updateTaskStatus)
+router.patch("/:id/status", [...validateTaskStatus, async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+    await updateTaskStatus(req, res, next);
+}]);
 
 // DELETE routes
 router.delete("/:id", deleteTask)

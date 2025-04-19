@@ -2,12 +2,11 @@ import api from "../../../../services/api"
 
 export const fetchDashboardData = async () => {
   try {
-    // Fetch tasks and projects in parallel
-    const [tasksResponse, projectsResponse] = await Promise.all([api.get("/api/v1/tasks"), api.get("/api/v1/projects")])
-
+    // Fetch aggregated dashboard data for current user
+    const response = await api.get("/api/v1/dashboard")
     return {
-      tasks: tasksResponse.data.tasks || [],
-      projects: projectsResponse.data || [],
+      tasks: response.data.tasks || [],
+      projects: response.data.projects || [],
     }
   } catch (error) {
     console.error("Error fetching dashboard data:", error)
@@ -53,6 +52,28 @@ export const createTask = async (taskData) => {
     return response.data
   } catch (error) {
     console.error("Error creating task:", error)
+    throw error
+  }
+}
+
+// Update a task
+export const updateTask = async (taskId, taskData) => {
+  try {
+    const response = await api.put(`/api/v1/tasks/${taskId}`, taskData)
+    return response.data
+  } catch (error) {
+    console.error("Error updating task:", error)
+    throw error
+  }
+}
+
+// Delete a task
+export const deleteTask = async (taskId) => {
+  try {
+    const response = await api.delete(`/api/v1/tasks/${taskId}`)
+    return response.data
+  } catch (error) {
+    console.error("Error deleting task:", error)
     throw error
   }
 }

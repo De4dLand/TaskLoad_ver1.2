@@ -1,11 +1,11 @@
 import express from "express"
-import { authenticate } from "../../../middlewares/auth.js"
+import auth from "../../../middlewares/auth.js"
 import projectController from "../controllers/projectController.js"
 
 const router = express.Router()
 
 // Apply authentication middleware to all project routes
-router.use(authenticate)
+router.use(auth)
 
 // Get all projects for current user
 router.get("/", projectController.getUserProjects)

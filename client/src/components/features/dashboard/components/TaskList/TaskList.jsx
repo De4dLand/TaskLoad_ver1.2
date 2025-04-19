@@ -2,7 +2,7 @@ import { Box, Paper, Typography, Avatar } from "@mui/material"
 import { formatDate } from "../../../../../utils/formatters"
 import styles from "./TaskList.module.css"
 
-const TaskList = ({ tasks }) => {
+const TaskList = ({ tasks, onTaskClick, onTaskContextMenu }) => {
   if (!tasks || tasks.length === 0) {
     return (
       <Paper className={styles.emptyState}>
@@ -29,7 +29,16 @@ const TaskList = ({ tasks }) => {
   return (
     <Box className={styles.taskListContainer}>
       {tasks.map((task) => (
-        <Paper key={task._id} className={`${styles.taskCard} ${getTaskBorderColor(task)}`}>
+        <Paper
+          key={task._id}
+          className={`${styles.taskCard} ${getTaskBorderColor(task)}`}
+          onClick={() => onTaskClick && onTaskClick(task)}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            onTaskContextMenu && onTaskContextMenu(e, task);
+          }}
+          style={{ cursor: 'pointer' }}
+        >
           <Box className={styles.taskHeader}>
             <Typography variant="h6" className={styles.taskTitle}>
               {task.title}

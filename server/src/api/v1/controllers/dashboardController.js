@@ -60,12 +60,21 @@ export const getDashboardData = async (req, res, next) => {
   try {
     // Fetch tasks for user (created or assigned)
     const tasks = await Task.find({
-      $or: [{ createdBy: req.user.userId }, { assignedTo: req.user.userId }],
-    }).sort({ createdAt: -1 })
+      $or: [{ owner: req.user._id }, {createdBy: req.user._id}],
+    })
+      .populate('project', 'name')
+      .populate('createdBy', 'username firstName lastName')
+      .sort({ createdAt: -1 })
+
     // Fetch projects for user (owner or member)
     const projects = await Project.find({
-      $or: [{ owner: req.user.userId }, { "members.user": req.user.userId }],
-    }).sort({ updatedAt: -1 })
+      $or: [{ owner: req.user._id }, { "members.user": req.user._id }],
+    })
+      .populate('owner', 'username email')
+      .populate('members.user', 'username email')
+      .sort({ updatedAt: -1 })
+
+
     return res.status(200).json({ tasks, projects })
   } catch (error) {
     next(error)

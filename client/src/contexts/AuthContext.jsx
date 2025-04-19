@@ -24,8 +24,7 @@ export const AuthProvider = ({ children }) => {
 
       if (hasAuthCookie) {
         // Get user data if cookie suggests authentication
-        const userData = await authService.getCurrentUser()
-        setUser(userData)
+        setUser(await authService.getCurrentUser())
       } else {
         setUser(null)
       }
@@ -48,8 +47,7 @@ export const AuthProvider = ({ children }) => {
       const success = await authService.refreshToken()
 
       if (success) {
-        const userData = await authService.getCurrentUser()
-        setUser(userData)
+        setUser(await authService.getCurrentUser())
         return true
       }
       return false

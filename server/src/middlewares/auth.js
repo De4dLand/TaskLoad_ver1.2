@@ -16,10 +16,10 @@ export const verifyToken = async (req, res, next) => {
     const token = authHeader.split(' ')[1];
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const { userId } = jwt.verify(token, process.env.JWT_SECRET);
 
     // Kiểm tra user có tồn tại
-    const user = await User.findById(decoded.id);
+    const user = await User.findById(userId).select('+isActive');
     if (!user) {
       throw createError(401, 'User not found');
     }
@@ -54,10 +54,10 @@ const verifyRefreshToken = async (req, res, next) => {
     }
 
     // Verify refresh token
-    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    const { userId } = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
 
     // Kiểm tra user có tồn tại
-    const user = await User.findById(decoded.id);
+    const user = await User.findById(userId).select('+isActive');
     if (!user) {
       throw createError(401, 'User not found');
     }
@@ -197,4 +197,3 @@ const isProjectMember = async (req, res, next) => {
 
 // Export default middleware
 export default verifyToken;
-
