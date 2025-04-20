@@ -185,6 +185,20 @@ projectSchema.methods.updateSettings = async function(settings) {
   return this;
 };
 
+// Instance methods for access control
+projectSchema.methods.hasAccess = function(userId) {
+  // Owner or any project member has access
+  if (this.owner.toString() === userId.toString()) return true
+  return Array.isArray(this.members) && this.members.some(m => m.user.toString() === userId.toString())
+}
+
+projectSchema.methods.hasRole = function(userId, roles) {
+  // Owner always qualifies
+  if (this.owner.toString() === userId.toString()) return true
+  const member = Array.isArray(this.members) && this.members.find(m => m.user.toString() === userId.toString())
+  return member ? roles.includes(member.role) : false
+}
+
 const Project = mongoose.model('Project', projectSchema);
 
 export default Project;

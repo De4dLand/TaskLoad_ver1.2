@@ -5,14 +5,19 @@ import {
     login,
     logout,
     refreshToken,
-    getProfile,
-    updateProfile,
-    changePassword,
     forgotPassword,
     resetPassword,
-    updateAvatar,
-    deleteAccount
-} from '../../v1/controllers/userController.js';
+    getCurrentUser,
+    updateProfile
+} from '../../v1/controllers/authController.js';
+import { UserController } from '../../v1/controllers/userController.js';
+const userController = new UserController();
+
+// Aliases for user-specific operations
+const getProfile = getCurrentUser;
+const changePassword = userController.updateMe;
+const updateAvatar = userController.updateAvatar;
+const deleteAccount = userController.deleteMe;
 
 const router = express.Router();
 
@@ -32,4 +37,7 @@ router.put('/change-password', changePassword);
 router.put('/avatar', updateAvatar);
 router.delete('/account', deleteAccount);
 
-export default router; 
+// Search users by username or email
+router.get('/search', userController.searchUsers);
+
+export default router;

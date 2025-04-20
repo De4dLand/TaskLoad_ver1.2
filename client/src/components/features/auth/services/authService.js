@@ -110,3 +110,29 @@ export const resetPassword = async (token, password) => {
     throw error
   }
 }
+
+export const refreshToken = async () => {
+  try {
+    const storedToken = localStorage.getItem("refreshToken")
+    if (!storedToken) return false
+    const response = await api.post("/api/v1/auth/refresh-token", { refreshToken: storedToken })
+    const { token: newToken, refreshToken: newRefreshToken } = response.data
+    if (newToken) localStorage.setItem("accessToken", newToken)
+    if (newRefreshToken) localStorage.setItem("refreshToken", newRefreshToken)
+    return true
+  } catch (error) {
+    console.error("Refresh token error:", error)
+    return false
+  }
+}
+
+// Update user profile
+export const updateProfile = async (profileData) => {
+  try {
+    const response = await api.put("/api/v1/auth/profile", profileData)
+    return response.data
+  } catch (error) {
+    console.error("Update profile error:", error)
+    throw error
+  }
+}

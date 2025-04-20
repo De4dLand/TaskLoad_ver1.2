@@ -90,5 +90,11 @@ export class UserController {
       data: { user }
     });
   });
-}
 
+  // Search users by username or email
+  searchUsers = catchAsync(async (req, res) => {
+    const { query } = req.query;
+    const users = await this.userService.searchUsers(query || '');
+    res.status(200).json(users);
+  });
+}

@@ -8,7 +8,7 @@ import FiberManualIcon from "@mui/icons-material/FiberManualRecord"
 import { formatDate } from "../../../../../utils/formatters"
 import styles from "./ProjectSidebar.module.css"
 
-const ProjectSidebar = ({ sidebarData }) => {
+const ProjectSidebar = ({ sidebarData, onProjectContextMenu }) => {
   const { projects, tasks } = sidebarData
   const [expandedProjects, setExpandedProjects] = useState({})
 
@@ -41,7 +41,12 @@ const ProjectSidebar = ({ sidebarData }) => {
     <List component="nav" className={styles.projectList}>
       {projects.map((project) => (
         <Box key={project._id}>
-          <ListItem onClick={() => toggleProject(project._id)} className={styles.projectItem}>
+          <ListItem
+            onClick={() => toggleProject(project._id)}
+            onContextMenu={(e) => { e.preventDefault(); onProjectContextMenu && onProjectContextMenu(e, project); }}
+            className={styles.projectItem}
+            style={{ cursor: 'pointer' }}
+          >
             <Box className={styles.projectHeader}>
               <Typography variant="subtitle1" className={styles.projectTitle}>
                 {project.name}

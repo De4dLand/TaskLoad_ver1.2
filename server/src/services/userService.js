@@ -177,4 +177,13 @@ export class UserService {
 
         return user;
     }
+
+    // Search users by username or email
+    async searchUsers(query) {
+      const regex = new RegExp(query, 'i');
+      const users = await User.find({
+        $or: [{ username: regex }, { email: regex }]
+      }).select('username email _id');
+      return users;
+    }
 }

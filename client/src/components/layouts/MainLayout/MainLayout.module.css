@@ -8,12 +8,12 @@
 }
 
 .drawer {
-  width: 240px;
+  width: 50px;
   flex-shrink: 0;
 }
 
 .drawerPaper {
-  width: 240px;
+  width: 50px;
 }
 
 .toolbar {
@@ -52,5 +52,6 @@
 }
 
 .listItem {
-  padding: 8px 16px;
+  padding: 4px 0;
+  justify-content: center;
 }

@@ -115,6 +115,22 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  // Update user profile
+  const updateProfile = async (profileData) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const updatedUser = await authService.updateProfile(profileData)
+      setUser(updatedUser)
+      return updatedUser
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Update profile failed")
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Context value
   const value = {
     user,
@@ -124,6 +140,7 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     refreshToken,
+    updateProfile,
     isAuthenticated: !!user,
   }
 

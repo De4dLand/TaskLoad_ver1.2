@@ -184,7 +184,7 @@ export const logout = async (req, res, next) => {
 // Get current user
 export const getCurrentUser = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.userId).select("-password")
+    const user = await User.findById(req.user._id).select("-password")
     if (!user) {
       return next(createError(404, "User not found"))
     }
@@ -309,7 +309,7 @@ export const updateProfile = async (req, res, next) => {
     const { username, email } = req.body
 
     // Find user
-    const user = await User.findById(req.user.userId)
+    const user = await User.findById(req.user._id)
     if (!user) {
       return next(createError(404, "User not found"))
     }

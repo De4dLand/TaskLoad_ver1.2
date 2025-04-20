@@ -17,6 +17,10 @@ export const validateProject = Joi.object({
         .messages({
             'string.max': 'Description cannot exceed 500 characters'
         }),
+    color: Joi.string()
+        .trim()
+        .pattern(/^#(?:[0-9A-Fa-f]{3}){1,2}$/)
+        .messages({ 'string.pattern.base': 'Invalid color format' }),
     status: Joi.string()
         .valid('planning', 'active', 'on_hold', 'completed', 'cancelled')
         .default('planning')
@@ -86,7 +90,7 @@ export const validateProject = Joi.object({
 });
 
 export const validateProjectUpdate = validateProject.fork(
-    ['name', 'team', 'leader'],
+    ['name', 'description', 'color', 'status', 'startDate', 'endDate', 'team', 'leader', 'members', 'tags', 'budget', 'customFields'],
     schema => schema.optional()
 );
 

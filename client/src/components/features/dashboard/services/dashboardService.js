@@ -77,3 +77,48 @@ export const deleteTask = async (taskId) => {
     throw error
   }
 }
+
+// Update a project
+export const updateProject = async (projectId, projectData) => {
+  try {
+    const response = await api.put(`/api/v1/projects/${projectId}`, projectData)
+    return response.data
+  } catch (error) {
+    console.error("Error updating project:", error)
+    throw error
+  }
+}
+
+// Delete a project
+export const deleteProject = async (projectId) => {
+  try {
+    const response = await api.delete(`/api/v1/projects/${projectId}`)
+    return response.data
+  } catch (error) {
+    console.error("Error deleting project:", error)
+    throw error
+  }
+}
+
+// Add a member to a project
+export const addProjectMember = async (projectId, userId, role = 'member') => {
+  console.log("Adding project member:", projectId, userId, role)
+  try {
+    const response = await api.post(`/api/v1/projects/${projectId}/members`, { userId, role })
+    return response.data
+  } catch (error) {
+    console.error("Error adding project member:", error)
+    throw error
+  }
+}
+
+// Search users by username or email
+export const searchUsers = async (query) => {
+  try {
+    const response = await api.get("/api/v1/user/search", { params: { query } })
+    return response.data
+  } catch (error) {
+    console.error("Error searching users:", error)
+    throw error
+  }
+}

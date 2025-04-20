@@ -1,5 +1,6 @@
 .dashboardContainer {
   display: flex;
+  margin-top: 64px;
   height: calc(100vh - 64px);
   background-color: #121212;
 }
