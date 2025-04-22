@@ -286,11 +286,11 @@ export const updateTask = async (req, res, next) => {
       return next(createError(404, "Task not found"))
     }
 
-    // Check permissions - only creator or assignee can update
+    // Check permissions - creator or assignee can update
     const isCreator = task.createdBy.toString() === req.user.userId
     const isAssignee = task.assignedTo && task.assignedTo.toString() === req.user.userId
 
-    if (!isCreator && !isAssignee) {
+    if (!isCreator || !isAssignee) {
       return next(createError(403, "You don't have permission to update this task"))
     }
 

@@ -5,6 +5,11 @@ import { Box, Typography, Button, CircularProgress, Paper, ToggleButtonGroup, To
 import { Add as AddIcon, ViewList, ViewModule, CalendarToday, Timeline, BarChart } from "@mui/icons-material"
 import TaskList from "../components/TaskList/TaskList"
 import TaskGrid from "../components/TaskGrid/TaskGrid"
+import ListView from "../components/ViewMode/ListView"
+import GridView from "../components/ViewMode/GridView"
+import CalendarView from "../components/ViewMode/CalendarView"
+import TimelineView from "../components/ViewMode/TimelineView"
+import StatsView from "../components/ViewMode/StatsView"
 import ProjectSidebar from "../components/ProjectSidebar/ProjectSidebar"
 import DataNotFound from "../../../common/DataNotFound"
 import { fetchDashboardData, createProject, updateProject, deleteProject, createTask, updateTask, deleteTask, addProjectMember, searchUsers } from "../services/dashboardService"
@@ -280,14 +285,17 @@ const DashboardPage = () => {
           )}
           {filteredTasks && (
             <Box className={styles.tasksContainer}>
-              {viewMode === "list"
-                ? <TaskList tasks={filteredTasks} onTaskClick={handleEditTask} onTaskContextMenu={handleTaskContextMenu} />
-                : viewMode === "grid"
-                  ? <TaskGrid tasks={filteredTasks} onTaskClick={handleEditTask} onTaskContextMenu={handleTaskContextMenu} />
-                  : <Box sx={{ p: 2, border: '1px solid #ddd', borderRadius: 2 }}>
-                    <Typography variant="h6" component="h2">View mode: {viewMode}</Typography>
-                  </Box>
-              }
+              {{
+                list: <ListView tasks={filteredTasks} onTaskClick={handleEditTask} onTaskContextMenu={handleTaskContextMenu} />,
+                grid: <GridView tasks={filteredTasks} onTaskClick={handleEditTask} onTaskContextMenu={handleTaskContextMenu} />,
+                calendar: <CalendarView tasks={filteredTasks} onTaskClick={handleEditTask} onTaskContextMenu={handleTaskContextMenu} />,
+                timeline: <TimelineView tasks={filteredTasks} onTaskClick={handleEditTask} onTaskContextMenu={handleTaskContextMenu} />,
+                stats: <StatsView tasks={filteredTasks} onTaskClick={handleEditTask} onTaskContextMenu={handleTaskContextMenu} />,
+              }[viewMode] || (
+                <Box sx={{ p: 2, border: '1px solid #ddd', borderRadius: 2 }}>
+                  <Typography variant="h6" component="h2">View mode: {viewMode}</Typography>
+                </Box>
+              )}
             </Box>
           )}
 
