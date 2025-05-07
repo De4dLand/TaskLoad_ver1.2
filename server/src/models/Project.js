@@ -22,6 +22,12 @@ const projectSchema = new mongoose.Schema({
         enum: ['planning', 'active', 'on_hold', 'completed', 'cancelled'],
         default: 'planning'
     },
+    template: {
+        type: String,
+        enum: ['agile', 'waterfall', 'scrum'],
+        default: 'agile',
+        required: false
+    },
     startDate: {
         type: Date,
         required: [true, 'Start date is required'],

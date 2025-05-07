@@ -1,0 +1,15 @@
+server/src/
+├── socket/
+│   ├── index.js                  # Main Socket.io initialization
+│   └── handlers/
+│       ├── chatHandler.js        # Chat functionality
+│       ├── notificationHandler.js # Notifications
+│       └── timeTrackingHandler.js # Time tracking
+├── models/
+│   ├── Chat.js                   # Chat data model
+│   ├── Notification.js           # Notification data model
+│   └── TimeTracking.js           # Time tracking data model
+└── services/
+    ├── chatService.js            # Chat database operations
+    ├── notificationService.js     # Notification operations
+    └── timeTrackingService.js     # Time tracking operations

@@ -41,12 +41,13 @@ const projectController = {
     // Create a new project
     async createProject(req, res, next) {
         try {
-            const { name, description, color } = req.body
+            const { name, description, color, template } = req.body
 
             const project = new Project({
                 name,
                 description,
                 color,
+                template, // Save template if provided
                 owner: req.user._id,
                 members: [{ user: req.user._id, role: "owner" }],
             })

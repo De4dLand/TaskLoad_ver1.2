@@ -37,21 +37,7 @@ const routes = [
       <ProtectedRoute>
         <DashboardPage />
       </ProtectedRoute>
-    ),
-    children: [
-      {
-        path: "",
-        element: <DashboardPage />,
-      },
-      {
-        path: "tasks",
-        element: <TaskListPage />,
-      },
-      {
-        path: "tasks/:id",
-        element: <TaskDetailPage />,
-      },
-    ],
+    )
   },
 
   // Not found route

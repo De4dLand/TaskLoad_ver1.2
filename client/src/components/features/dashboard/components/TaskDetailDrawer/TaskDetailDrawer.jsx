@@ -1,0 +1,338 @@
+import React, { useState, useEffect, useRef } from "react";
+import { io } from "socket.io-client";
+import {
+  Drawer,
+  Box,
+  Typography,
+  IconButton,
+  Chip,
+  Avatar,
+  Button,
+  TextField,
+  Divider,
+  Stack,
+  Grid,
+  Checkbox,
+  Paper,
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import AddIcon from "@mui/icons-material/Add";
+
+// Utility to format date as dd/MM/yyyy
+function formatDate(date) {
+  if (!date) return "-";
+  const d = new Date(date);
+  return d.toLocaleDateString("en-GB");
+}
+
+const SOCKET_SERVER_URL = process.env.REACT_APP_SOCKET_URL || "http://localhost:5001"; // Use same URL as server
+
+const TaskDetailDrawer = ({
+  open,
+  onClose,
+  task,
+  onUpdate,
+  comments = [],
+  onAddComment,
+  loading = false,
+  currentUser = {},
+}) => {
+  const [editMode, setEditMode] = useState(false);
+  const [editedTask, setEditedTask] = useState(task || {});
+  const [commentInput, setCommentInput] = useState("");
+  const [subtaskInput, setSubtaskInput] = useState("");
+  const [liveComments, setLiveComments] = useState(comments || []);
+  const socketRef = useRef(null);
+
+  // Socket.io setup
+  useEffect(() => {
+    if (!task || !task._id) return;
+    if (!open) return;
+
+    // Connect socket if not already
+    if (!socketRef.current) {
+      socketRef.current = io(SOCKET_SERVER_URL, { transports: ['websocket'] });
+    }
+    const socket = socketRef.current;
+
+    // Join task room (optional for scalability)
+    socket.emit('task:join', { taskId: task._id });
+
+    // Listen for newComment events globally
+    const handleNewComment = (data) => {
+      // Only add if for this task
+      if (data && data.taskId === task._id && data.comment) {
+        setLiveComments((prev) => [...prev, data.comment]);
+      }
+    };
+    socket.on('newComment', handleNewComment);
+
+    return () => {
+      socket.emit('task:leave', { taskId: task._id });
+      socket.off('newComment', handleNewComment);
+    };
+  }, [task?._id, open]);
+
+  // Sync props.comments to liveComments on open/task change
+  useEffect(() => {
+    setLiveComments(comments || []);
+  }, [comments, task?._id, open]);
+
+  const handleFieldChange = (field, value) => {
+    setEditedTask((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubtaskToggle = (index) => {
+    const newSubtasks = [...(editedTask.subtasks || [])];
+    newSubtasks[index].completed = !newSubtasks[index].completed;
+    setEditedTask((prev) => ({ ...prev, subtasks: newSubtasks }));
+  };
+
+  const handleAddSubtask = () => {
+    if (subtaskInput.trim()) {
+      setEditedTask((prev) => ({
+        ...prev,
+        subtasks: [
+          ...(prev.subtasks || []),
+          { title: subtaskInput.trim(), completed: false },
+        ],
+      }));
+      setSubtaskInput("");
+    }
+  };
+
+  const handleSave = () => {
+    if (onUpdate) onUpdate(editedTask);
+    setEditMode(false);
+  };
+
+  const handleCommentSubmit = (e) => {
+    e.preventDefault();
+    if (!commentInput.trim()) return;
+    const newComment = {
+      content: commentInput.trim(),
+      user: currentUser?._id,
+      authorName: currentUser?.firstName || currentUser?.username || 'You',
+      profileImage: currentUser?.profileImage || '',
+      createdAt: new Date().toISOString(),
+    };
+    // Emit to socket
+    if (socketRef.current && task && task._id) {
+      socketRef.current.emit('newComment', {
+        taskId: task._id,
+        comment: newComment,
+      });
+    }
+    // Optimistically update UI
+    setLiveComments((prev) => [...prev, { ...newComment, user: currentUser?._id }]);
+    setCommentInput("");
+    // Optionally call onAddComment for fallback/persistence
+    if (onAddComment) onAddComment(commentInput.trim());
+  };
+
+  if (!task) return null;
+
+  return (
+    <Drawer anchor="right" open={open} onClose={onClose} PaperProps={{ sx: { width: 800, maxWidth: '100vw' } }}>
+      <Box sx={{ display: "flex", flexDirection: "row", height: "100%" }}>
+        {/* Left: Task Details */}
+        <Box sx={{ flex: 1, p: 3, overflowY: "auto", minWidth: 380 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Typography variant="h5" fontWeight="bold">
+              {editMode ? (
+                <TextField
+                  value={editedTask.title || ""}
+                  onChange={(e) => handleFieldChange("title", e.target.value)}
+                  size="small"
+                  fullWidth
+                  variant="standard"
+                />
+              ) : (
+                task.title
+              )}
+            </Typography>
+            <IconButton onClick={onClose}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+
+          {/* Description */}
+          <Box mt={2}>
+            <Typography variant="subtitle2">Description</Typography>
+            {editMode ? (
+              <TextField
+                value={editedTask.description || ""}
+                onChange={(e) => handleFieldChange("description", e.target.value)}
+                multiline
+                minRows={2}
+                fullWidth
+              />
+            ) : (
+              <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>{task.description}</Typography>
+            )}
+          </Box>
+
+          {/* Dates and Creator */}
+          <Grid container spacing={2} mt={2}>
+            <Grid item xs={6}>
+              <Typography variant="subtitle2">Start Date</Typography>
+              <Typography>{formatDate(task.startDate)}</Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="subtitle2">Due Date</Typography>
+              {editMode ? (
+                <TextField
+                  type="date"
+                  value={editedTask.dueDate ? formatDate(editedTask.dueDate).split('/').reverse().join('-') : ""}
+                  onChange={(e) => handleFieldChange("dueDate", e.target.value)}
+                  size="small"
+                  fullWidth
+                />
+              ) : (
+                <Typography>{formatDate(task.dueDate)}</Typography>
+              )}
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="subtitle2">Created On</Typography>
+              <Typography>{formatDate(task.createdAt)}</Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="subtitle2">Created By</Typography>
+              <Typography>{task.createdBy?.username || "-"}</Typography>
+            </Grid>
+          </Grid>
+
+          {/* Assigned To */}
+          <Box mt={2}>
+            <Typography variant="subtitle2">Assigned To</Typography>
+            <Stack direction="row" spacing={1} mt={0.5}>
+              {(task.assignedToList || task.assignedTo || []).length > 0 ? (
+                (task.assignedToList || task.assignedTo).map((user, idx) => (
+                  <Chip
+                    key={user._id || user.id || idx}
+                    avatar={<Avatar src={user.profileImage}>{user.firstName?.[0] || user.username?.[0]}</Avatar>}
+                    label={user.firstName || user.username}
+                  />
+                ))
+              ) : (
+                <Typography color="text.secondary">Unassigned</Typography>
+              )}
+            </Stack>
+          </Box>
+
+          {/* Priority & Tags */}
+          <Grid container spacing={2} mt={2}>
+            <Grid item xs={6}>
+              <Typography variant="subtitle2">Priority</Typography>
+              <Chip label={task.priority} color={task.priority === "high" ? "error" : task.priority === "medium" ? "warning" : "default"} />
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="subtitle2">Tags</Typography>
+              <Stack direction="row" spacing={1}>
+                {(task.tags || []).map((tag) => (
+                  <Chip key={tag} label={tag} variant="outlined" />
+                ))}
+              </Stack>
+            </Grid>
+          </Grid>
+
+          {/* Subtasks */}
+          <Box mt={2}>
+            <Typography variant="subtitle2">Subtasks</Typography>
+            <Stack spacing={1} mt={1}>
+              {(editedTask.subtasks || []).map((subtask, idx) => (
+                <Paper key={idx} sx={{ p: 1, display: 'flex', alignItems: 'center' }} variant="outlined">
+                  <Checkbox
+                    checked={!!subtask.completed}
+                    onChange={() => editMode && handleSubtaskToggle(idx)}
+                    disabled={!editMode}
+                  />
+                  <Typography sx={{ flex: 1 }}>{subtask.title}</Typography>
+                </Paper>
+              ))}
+              {editMode && (
+                <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                  <TextField
+                    value={subtaskInput}
+                    onChange={e => setSubtaskInput(e.target.value)}
+                    size="small"
+                    placeholder="Subtask title"
+                    fullWidth
+                  />
+                  <Button variant="contained" color="primary" onClick={handleAddSubtask} startIcon={<AddIcon />}>Add</Button>
+                </Box>
+              )}
+            </Stack>
+          </Box>
+
+          {/* Edit/Save Buttons */}
+          <Box mt={3} display="flex" gap={2}>
+            {editMode ? (
+              <>
+                <Button variant="contained" color="primary" onClick={handleSave} disabled={loading}>Save</Button>
+                <Button onClick={() => setEditMode(false)} disabled={loading}>Cancel</Button>
+              </>
+            ) : (
+              <Button variant="outlined" onClick={() => setEditMode(true)} disabled={loading}>Edit</Button>
+            )}
+          </Box>
+        </Box>
+
+        {/* Right: Comments & Updates */}
+        <Divider orientation="vertical" flexItem sx={{ mx: 0 }} />
+        <Box sx={{ flex: 1, p: 3, overflowY: "auto", minWidth: 350, bgcolor: "#fafbfc" }}>
+          <Typography variant="h6" fontWeight="bold" mb={2}>Comments & Updates</Typography>
+          <Stack spacing={2}>
+            {liveComments.length === 0 && (
+              <Typography color="text.secondary">No comments yet.</Typography>
+            )}
+            {liveComments.map((c, idx) => {
+              const isCurrentUser = c.user === currentUser?._id || c.user === currentUser?.id;
+              return (
+                <Box key={idx} sx={{ display: 'flex', justifyContent: isCurrentUser ? 'flex-end' : 'flex-start' }}>
+                  <Paper sx={{
+                    p: 2,
+                    maxWidth: '80%',
+                    bgcolor: isCurrentUser ? '#e3f2fd' : '#fff',
+                    ml: isCurrentUser ? 'auto' : 0,
+                    mr: isCurrentUser ? 0 : 'auto',
+                  }} variant="outlined">
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <Avatar src={c.profileImage} sx={{ width: 24, height: 24 }}>
+                        {c.authorName?.[0] || '?'}
+                      </Avatar>
+                      <Typography fontWeight="bold">{c.authorName}</Typography>
+                      <Typography variant="caption" color="text.secondary" ml={1}>
+                        {formatDate(c.createdAt)} {c.createdAt && new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </Typography>
+                    </Box>
+                    <Typography sx={{ mt: 1 }}>{c.content}</Typography>
+                  </Paper>
+                </Box>
+              );
+            })}
+          </Stack>
+          <Box mt={3} component="form" onSubmit={handleCommentSubmit}>
+            <TextField
+              value={commentInput}
+              onChange={e => setCommentInput(e.target.value)}
+              placeholder="Write your comment..."
+              fullWidth
+              multiline
+              minRows={2}
+              sx={{ mb: 1 }}
+            />
+            <Button type="submit" variant="contained" color="primary" fullWidth disabled={loading || !commentInput.trim()}>
+              Post Comment
+            </Button>
+            <Typography variant="caption" color="text.secondary" mt={1}>
+              @mention team members to notify them
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+    </Drawer>
+  );
+};
+
+export default TaskDetailDrawer;

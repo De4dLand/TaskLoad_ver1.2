@@ -105,7 +105,7 @@ export const AuthProvider = ({ children }) => {
   // Logout function
   const logout = async () => {
     try {
-      await authService.logout()
+      authService.logout()
     } catch (error) {
       console.error("Logout error:", error)
     } finally {

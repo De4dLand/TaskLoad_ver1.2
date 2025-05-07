@@ -285,13 +285,25 @@ export const updateTask = async (req, res, next) => {
     if (!task) {
       return next(createError(404, "Task not found"))
     }
+    // Robustly extract user ID from req.user
+    const userId = req.user.userId || req.user.id || req.user._id;
+    console.log('DEBUG permission check:', {
+      taskId: id,
+      currentUser: userId,
+      createdBy: task.createdBy,
+      assignedTo: task.assignedTo,
+      updateAssignedTo: updateData.assignedTo,
+      isCreator: task.createdBy.toString() === userId,
+      isAssignee: task.assignedTo && task.assignedTo.toString() === userId,
+      willBeAssignee: updateData.assignedTo && updateData.assignedTo.toString() === userId
+    });
+    // Check permissions - creator, current assignee, or will-be assignee can update
+    const isCreator = task.createdBy.toString() === userId;
+    const isAssignee = task.assignedTo && task.assignedTo.toString() === userId;
+    const willBeAssignee = updateData.assignedTo && updateData.assignedTo.toString() === userId;
 
-    // Check permissions - creator or assignee can update
-    const isCreator = task.createdBy.toString() === req.user.userId
-    const isAssignee = task.assignedTo && task.assignedTo.toString() === req.user.userId
-
-    if (!isCreator || !isAssignee) {
-      return next(createError(403, "You don't have permission to update this task"))
+    if (!isCreator && !isAssignee && !willBeAssignee) {
+      return next(createError(403, "You don't have permission to update this task"));
     }
 
     // List of fields that can be updated
@@ -358,9 +370,12 @@ export const deleteTask = async (req, res, next) => {
       return next(createError(404, "Task not found"))
     }
 
-    // Check permissions - only creator can delete
-    if (task.createdBy.toString() !== req.user.userId) {
-      return next(createError(403, "Only the task creator can delete this task"))
+    // Check permissions - creator or assignee can delete
+    const userId = req.user.userId || req.user.id || req.user._id;
+    const isCreator = task.createdBy.toString() === userId;
+    const isAssignee = task.assignedTo && task.assignedTo.toString() === userId;
+    if (!isCreator && !isAssignee) {
+      return next(createError(403, "Only the task creator or assignee can delete this task"));
     }
 
     // Store assignee ID before deleting for cache invalidation

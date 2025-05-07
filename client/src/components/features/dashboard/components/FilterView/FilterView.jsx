@@ -45,11 +45,17 @@ const FilterView = ({ tasks, projects, user, onFilter }) => {
     }
     // Created filter
     if (filters.includes("created")) {
-      result = result.filter((t) => t.createdBy === (user._id || user.id));
+      result = result.filter((t) => {
+        const creatorId = typeof t.createdBy === "string" ? t.createdBy : t.createdBy?._id;
+        return creatorId === (user._id || user.id);
+      });
     }
     // Assigned filter
     if (filters.includes("assigned")) {
-      result = result.filter((t) => t.assignedTo === (user._id || user.id));
+      result = result.filter((t) => {
+        const assigneeId = typeof t.assignedTo === "string" ? t.assignedTo : t.assignedTo?._id;
+        return assigneeId === (user._id || user.id);
+      });
     }
     // Due soon filter
     if (filters.includes("dueSoon")) {

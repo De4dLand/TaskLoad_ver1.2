@@ -11,7 +11,7 @@ const TaskForm = ({ initialValues = {}, onSubmit, loading = false }) => {
     description: "",
     status: "todo",
     priority: "medium",
-    dueDate: null,
+    dueDate: initialValues.dueDate ? new Date(initialValues.dueDate) : null,
     ...initialValues,
   })
 
@@ -23,7 +23,7 @@ const TaskForm = ({ initialValues = {}, onSubmit, loading = false }) => {
       description: "",
       status: "todo",
       priority: "medium",
-      dueDate: null,
+      dueDate: initialValues.dueDate ? new Date(initialValues.dueDate) : null,
       ...initialValues,
     })
   }, [initialValues])
@@ -47,7 +47,7 @@ const TaskForm = ({ initialValues = {}, onSubmit, loading = false }) => {
   const handleDateChange = (date) => {
     setFormValues({
       ...formValues,
-      dueDate: date,
+      dueDate: date ? new Date(date) : null,
     })
 
     if (errors.dueDate) {
@@ -77,7 +77,12 @@ const TaskForm = ({ initialValues = {}, onSubmit, loading = false }) => {
     e.preventDefault()
 
     if (validateForm()) {
-      onSubmit(formValues)
+      // Convert dueDate to ISO string if present
+      const submitValues = {
+        ...formValues,
+        dueDate: formValues.dueDate ? formValues.dueDate.toISOString() : null,
+      }
+      onSubmit(submitValues)
     }
   }
 

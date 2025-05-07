@@ -17,6 +17,7 @@ export default {
     // MongoDB config
     MONGODB_URI: process.env.VITE_MONGODB_URI,
     MONGODB_OPTIONS: {
+        tls: false,
         autoIndex: true,
         serverSelectionTimeoutMS: 5000,
         socketTimeoutMS: 45000,
