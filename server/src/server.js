@@ -42,19 +42,14 @@ app.get("*", (req, res) => {
 
 
 // Start server
-const PORT = process.env.PORT || 5001 // Changed to port 5001 to avoid conflicts
-import { Server as SocketIOServer } from "socket.io"
-import { emitDeadlineWarnings, handleCommentEvents } from "./socketTasks.js"
+const PORT = process.env.PORT || 5000 // Changed to port 5000 to avoid conflicts
 
 const server = app.listen(PORT, () => {
     console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`)
 })
 
-// Initialize Socket.IO with enhanced functionality
-import initializeSocketIO from './socket/index.js';
-
-// Set up Socket.IO with all handlers (chat, notifications, time tracking)
-const io = initializeSocketIO(server);
+// Initialize Socket.IO using the socket loader
+const io = await app.locals.initializeSocketIO(server);
 
 // Socket.IO is now configured with the following features:
 // - Real-time chat system with typing indicators and read receipts

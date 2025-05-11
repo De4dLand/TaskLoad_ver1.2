@@ -13,9 +13,14 @@ export default function initializeSocketIO(server) {
   // Create Socket.IO server with CORS configuration
   const io = new SocketIOServer(server, {
     cors: {
-      origin: '*',
-      methods: ['GET', 'POST'],
+      origin: process.env.FRONTEND_URL || '*',
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      credentials: true
     },
+    transports: ['websocket', 'polling'],
+    allowEIO3: true,
+    pingTimeout: 60000,
+    pingInterval: 25000
   });
 
   // Set up middleware for authentication (optional)

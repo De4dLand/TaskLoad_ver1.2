@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import { io } from "socket.io-client";
 import {
   Drawer,
   Box,
@@ -14,9 +13,12 @@ import {
   Grid,
   Checkbox,
   Paper,
+  CircularProgress,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
+import KeyboardIcon from "@mui/icons-material/Keyboard";
+import { getSocket } from "../../../../../services/socket";
 
 // Utility to format date as dd/MM/yyyy
 function formatDate(date) {
@@ -24,8 +26,6 @@ function formatDate(date) {
   const d = new Date(date);
   return d.toLocaleDateString("en-GB");
 }
-
-const SOCKET_SERVER_URL = process.env.REACT_APP_SOCKET_URL || "http://localhost:5001"; // Use same URL as server
 
 const TaskDetailDrawer = ({
   open,
@@ -42,7 +42,11 @@ const TaskDetailDrawer = ({
   const [commentInput, setCommentInput] = useState("");
   const [subtaskInput, setSubtaskInput] = useState("");
   const [liveComments, setLiveComments] = useState(comments || []);
+  const [typingUsers, setTypingUsers] = useState([]);
+  const [isTyping, setIsTyping] = useState(false);
+  const [commentError, setCommentError] = useState(null);
   const socketRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
   // Socket.io setup
   useEffect(() => {
@@ -51,12 +55,20 @@ const TaskDetailDrawer = ({
 
     // Connect socket if not already
     if (!socketRef.current) {
-      socketRef.current = io(SOCKET_SERVER_URL, { transports: ['websocket'] });
+      socketRef.current = getSocket(currentUser);
     }
     const socket = socketRef.current;
 
     // Join task room (optional for scalability)
     socket.emit('task:join', { taskId: task._id });
+
+    // Send user info if available
+    if (currentUser && currentUser._id) {
+      socket.emit('user:login', {
+        userId: currentUser._id,
+        username: currentUser.firstName || currentUser.username || 'Anonymous'
+      });
+    }
 
     // Listen for newComment events globally
     const handleNewComment = (data) => {
@@ -65,13 +77,72 @@ const TaskDetailDrawer = ({
         setLiveComments((prev) => [...prev, data.comment]);
       }
     };
+
+    // Listen for typing indicator updates
+    const handleTypingUpdate = (data) => {
+      if (data && data.taskId === task._id) {
+        // Filter out current user from typing users
+        const otherTypingUsers = data.typingUsers.filter(
+          user => user.userId !== currentUser?._id
+        );
+        setTypingUsers(otherTypingUsers);
+      }
+    };
+
+    // Listen for comment errors
+    const handleCommentError = (data) => {
+      setCommentError(data.error);
+      // Clear error after 5 seconds
+      setTimeout(() => setCommentError(null), 5000);
+    };
+
+    // Listen for deleted comments
+    const handleCommentDeleted = (data) => {
+      if (data && data.taskId === task._id && data.commentId) {
+        setLiveComments((prev) => 
+          prev.filter(comment => comment._id.toString() !== data.commentId)
+        );
+      }
+    };
+
+    // Register event listeners
     socket.on('newComment', handleNewComment);
+    socket.on('comment:typingUpdate', handleTypingUpdate);
+    socket.on('comment:error', handleCommentError);
+    socket.on('comment:deleted', handleCommentDeleted);
+
+    // Request all comments for this task
+    socket.emit('comment:getAll', { taskId: task._id });
+
+    // Handle receiving all comments
+    const handleAllComments = (data) => {
+      if (data && data.taskId === task._id && Array.isArray(data.comments)) {
+        setLiveComments(data.comments);
+      }
+    };
+    socket.on('comment:allComments', handleAllComments);
 
     return () => {
+      // Clean up typing indicator when component unmounts
+      if (isTyping) {
+        socket.emit('comment:typing', {
+          taskId: task._id,
+          isTyping: false,
+          userId: currentUser?._id,
+          username: currentUser?.firstName || currentUser?.username
+        });
+      }
+      
       socket.emit('task:leave', { taskId: task._id });
+      
+      // Remove all event listeners
       socket.off('newComment', handleNewComment);
+      socket.off('comment:typingUpdate', handleTypingUpdate);
+      socket.off('comment:error', handleCommentError);
+      socket.off('comment:deleted', handleCommentDeleted);
+      socket.off('comment:allComments', handleAllComments);
     };
-  }, [task?._id, open]);
+  }, [task?._id, open, currentUser, isTyping]);
 
   // Sync props.comments to liveComments on open/task change
   useEffect(() => {
@@ -106,9 +177,63 @@ const TaskDetailDrawer = ({
     setEditMode(false);
   };
 
+  // Handle typing indicator
+  const handleCommentInputChange = (e) => {
+    const value = e.target.value;
+    setCommentInput(value);
+    
+    // Handle typing indicator
+    if (socketRef.current && task && task._id) {
+      // Clear any existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      
+      // Only emit typing event if not already typing
+      if (!isTyping && value.trim()) {
+        socketRef.current.emit('comment:typing', {
+          taskId: task._id,
+          isTyping: true,
+          userId: currentUser?._id,
+          username: currentUser?.firstName || currentUser?.username
+        });
+        setIsTyping(true);
+      }
+      
+      // Set timeout to stop typing indicator after 2 seconds of inactivity
+      typingTimeoutRef.current = setTimeout(() => {
+        if (isTyping) {
+          socketRef.current.emit('comment:typing', {
+            taskId: task._id,
+            isTyping: false,
+            userId: currentUser?._id,
+            username: currentUser?.firstName || currentUser?.username
+          });
+          setIsTyping(false);
+        }
+      }, 2000);
+    }
+  };
+
   const handleCommentSubmit = (e) => {
     e.preventDefault();
     if (!commentInput.trim()) return;
+    
+    // Clear any typing indicator
+    if (isTyping && socketRef.current) {
+      socketRef.current.emit('comment:typing', {
+        taskId: task._id,
+        isTyping: false,
+        userId: currentUser?._id,
+        username: currentUser?.firstName || currentUser?.username
+      });
+      setIsTyping(false);
+      
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    }
+    
     const newComment = {
       content: commentInput.trim(),
       user: currentUser?._id,
@@ -116,6 +241,7 @@ const TaskDetailDrawer = ({
       profileImage: currentUser?.profileImage || '',
       createdAt: new Date().toISOString(),
     };
+    
     // Emit to socket
     if (socketRef.current && task && task._id) {
       socketRef.current.emit('newComment', {
@@ -123,11 +249,23 @@ const TaskDetailDrawer = ({
         comment: newComment,
       });
     }
+    
     // Optimistically update UI
     setLiveComments((prev) => [...prev, { ...newComment, user: currentUser?._id }]);
     setCommentInput("");
+    
     // Optionally call onAddComment for fallback/persistence
     if (onAddComment) onAddComment(commentInput.trim());
+  };
+  
+  // Handle comment deletion
+  const handleDeleteComment = (commentId) => {
+    if (socketRef.current && task && task._id && commentId) {
+      socketRef.current.emit('comment:delete', {
+        taskId: task._id,
+        commentId: commentId
+      });
+    }
   };
 
   if (!task) return null;
@@ -307,22 +445,60 @@ const TaskDetailDrawer = ({
                       </Typography>
                     </Box>
                     <Typography sx={{ mt: 1 }}>{c.content}</Typography>
+                    {isCurrentUser && (
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+                        <Button 
+                          size="small" 
+                          color="error" 
+                          variant="text" 
+                          onClick={() => handleDeleteComment(c._id)}
+                        >
+                          Delete
+                        </Button>
+                      </Box>
+                    )}
                   </Paper>
                 </Box>
               );
             })}
           </Stack>
+          {/* Typing Indicators */}
+          {typingUsers.length > 0 && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, my: 1, px: 2 }}>
+              <KeyboardIcon fontSize="small" color="action" />
+              <Typography variant="caption" color="text.secondary">
+                {typingUsers.length === 1
+                  ? `${typingUsers[0].username} is typing...`
+                  : `${typingUsers.length} people are typing...`}
+              </Typography>
+            </Box>
+          )}
+          
+          {/* Error Message */}
+          {commentError && (
+            <Typography color="error" variant="caption" sx={{ mb: 1 }}>
+              Error: {commentError}
+            </Typography>
+          )}
+          
           <Box mt={3} component="form" onSubmit={handleCommentSubmit}>
             <TextField
               value={commentInput}
-              onChange={e => setCommentInput(e.target.value)}
+              onChange={handleCommentInputChange}
               placeholder="Write your comment..."
               fullWidth
               multiline
               minRows={2}
               sx={{ mb: 1 }}
             />
-            <Button type="submit" variant="contained" color="primary" fullWidth disabled={loading || !commentInput.trim()}>
+            <Button 
+              type="submit" 
+              variant="contained" 
+              color="primary" 
+              fullWidth 
+              disabled={loading || !commentInput.trim()}
+              startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
+            >
               Post Comment
             </Button>
             <Typography variant="caption" color="text.secondary" mt={1}>

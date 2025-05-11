@@ -32,7 +32,7 @@ import ViewModeSwitcher from '../components/ViewModeSwitcher';
 import TaskDialog from '../components/TaskDialog';
 import ProjectDialog from '../components/ProjectDialog';
 import ProjectManageDrawer from '../components/ProjectManageDrawer/ProjectManageDrawer';
-import io from 'socket.io-client';
+import { getSocket, joinRoom } from '../../../../services/socket';
 import ProjectMemberInfo from '../components/ProjectMemberInfo/ProjectMemberInfo';
 
 const DashboardPage = () => {
@@ -92,28 +92,139 @@ const DashboardPage = () => {
   // --- End Potential Component: TaskDetailDrawerState ---
 
   // --- Potential Component: RealtimeNotifications --- 
-  // Manages Socket.IO connection and deadline alerts.
+  // Manages Socket.IO connection and various alerts.
   const [socket, setSocket] = useState(null);
   const [deadlineAlert, setDeadlineAlert] = useState({ open: false, message: "" });
+  const [notification, setNotification] = useState({ open: false, message: "", type: "info" });
+  const [onlineUsers, setOnlineUsers] = useState([]);
+  const [typingUsers, setTypingUsers] = useState({});
   // --- End Potential Component: RealtimeNotifications ---
 
   useEffect(() => {
     if (dashboardData?.tasks) setFilteredTasks(dashboardData.tasks)
   }, [dashboardData])
 
-  // --- Potential Hook: useSocketIO --- 
-  // This effect handles Socket.IO connection and event listeners.
+  // --- Socket.IO Connection and Event Handlers --- 
   useEffect(() => {
-    const sock = io(import.meta.env.VITE_SOCKET_URL);
+    if (!user) return; // Only connect if user is authenticated
+    
+    // Connect to Socket.IO server using the socket service
+    const sock = getSocket(user);
     setSocket(sock);
-    sock.on("deadlineWarning", (data) => {
+    
+    // Connection events
+    sock.on('connect', () => {
+      console.log('Connected to Socket.IO server');
+      // Join user's personal room for targeted notifications
+      joinRoom(user._id);
+    });
+    
+    sock.on('disconnect', () => {
+      console.log('Disconnected from Socket.IO server');
+    });
+    
+    sock.on('reconnect', (attemptNumber) => {
+      console.log(`Reconnected to Socket.IO server after ${attemptNumber} attempts`);
+      // Rejoin rooms after reconnection
+      joinRoom(user._id);
+    });
+    
+    // Task and deadline notifications
+    sock.on('deadlineWarning', (data) => {
       setDeadlineAlert({
         open: true,
         message: `Task "${data.title}" assigned to you is due soon! Deadline: ${new Date(data.dueDate).toLocaleString()}`
       });
     });
-    return () => { sock.disconnect(); };
-  }, []);
+    
+    sock.on('taskUpdated', (data) => {
+      setNotification({
+        open: true,
+        message: `Task "${data.title}" has been updated by ${data.updatedBy}`,
+        type: 'info'
+      });
+      // Refresh dashboard data to reflect changes
+      loadData();
+    });
+    
+    sock.on('taskAssigned', (data) => {
+      setNotification({
+        open: true,
+        message: `You have been assigned to task "${data.title}"`,
+        type: 'info'
+      });
+      // Refresh dashboard data to reflect changes
+      loadData();
+    });
+    
+    // Project activity notifications
+    sock.on('projectUpdated', (data) => {
+      setNotification({
+        open: true,
+        message: `Project "${data.name}" has been updated`,
+        type: 'info'
+      });
+      // Refresh dashboard data to reflect changes
+      loadData();
+    });
+    
+    sock.on('memberAdded', (data) => {
+      setNotification({
+        open: true,
+        message: `${data.memberName} has been added to project "${data.projectName}"`,
+        type: 'info'
+      });
+      // Refresh dashboard data to reflect changes
+      loadData();
+    });
+    
+    // Comment system events
+    sock.on('newComment', (data) => {
+      setNotification({
+        open: true,
+        message: `New comment on task "${data.taskTitle}" by ${data.author}`,
+        type: 'info'
+      });
+      
+      // If the comment is for the currently open task, update comments
+      if (drawerTask && drawerTask._id === data.taskId) {
+        setDrawerComments(prev => [...prev, data.comment]);
+      }
+    });
+    
+    // User presence tracking
+    sock.on('onlineUsers', (users) => {
+      setOnlineUsers(users);
+    });
+    
+    // Typing indicators
+    sock.on('userTyping', (data) => {
+      setTypingUsers(prev => ({
+        ...prev,
+        [data.taskId]: [...(prev[data.taskId] || []), data.userName]
+      }));
+      
+      // Clear typing indicator after 3 seconds
+      setTimeout(() => {
+        setTypingUsers(prev => {
+          const updatedUsers = [...(prev[data.taskId] || [])];
+          const index = updatedUsers.indexOf(data.userName);
+          if (index > -1) {
+            updatedUsers.splice(index, 1);
+          }
+          return {
+            ...prev,
+            [data.taskId]: updatedUsers
+          };
+        });
+      }, 3000);
+    });
+    
+    // Clean up on unmount
+    return () => {
+      sock.disconnect();
+    };
+  }, [user]);
   // --- End Potential Hook: useSocketIO ---
 
   if (authLoading) return (<Box className={styles.loadingContainer}><CircularProgress /></Box>)
@@ -152,6 +263,13 @@ const DashboardPage = () => {
     setContextMenu(null)
     setContextProject(null)
   }
+  
+  // Get project members for the selected project
+  const getProjectMembers = (projectId) => {
+    if (!dashboardData || !dashboardData.projects) return [];
+    const project = dashboardData.projects.find(p => p._id === projectId);
+    return project?.members || [];
+  }
   // --- End Potential Component: ProjectContextMenuHandlers ---
 
   useEffect(() => { loadData() }, [])
@@ -189,7 +307,66 @@ const DashboardPage = () => {
     }
   };
   const handleAddComment = async (commentText) => {
-    // TODO: implement comment API call and reload drawerComments
+    if (!drawerTask || !commentText.trim()) return;
+    
+    try {
+      // Notify others that user is typing
+      if (socket) {
+        socket.emit('typing', {
+          taskId: drawerTask._id,
+          userName: user.name
+        });
+      }
+      
+      // API call to add comment (replace with your actual API endpoint)
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tasks/${drawerTask._id}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: commentText,
+          author: user._id
+        }),
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to add comment');
+      }
+      
+      const newComment = await response.json();
+      
+      // Update local state
+      setDrawerComments(prev => [...prev, newComment]);
+      
+      // Emit socket event for new comment
+      if (socket) {
+        socket.emit('comment', {
+          taskId: drawerTask._id,
+          taskTitle: drawerTask.title,
+          comment: newComment,
+          author: user.name
+        });
+      }
+    } catch (err) {
+      console.error('Error adding comment:', err);
+      setNotification({
+        open: true,
+        message: 'Failed to add comment. Please try again.',
+        type: 'error'
+      });
+    }
+  };
+  
+  // Handle typing indicator for comments
+  const handleCommentTyping = () => {
+    if (socket && drawerTask) {
+      socket.emit('typing', {
+        taskId: drawerTask._id,
+        userName: user.name
+      });
+    }
   };
   // --- End Potential Component: TaskDetailDrawerHandlers ---
 
@@ -251,8 +428,28 @@ const DashboardPage = () => {
       let updatedTask = null;
       if (selectedTask) {
         updatedTask = await updateTask(selectedTask._id, formToSend)
+        
+        // Emit socket event for task update
+        if (socket && updatedTask) {
+          socket.emit('taskUpdate', {
+            taskId: updatedTask._id,
+            title: updatedTask.title,
+            updatedBy: user.name,
+            assignedTo: updatedTask.assignedTo?._id
+          });
+        }
       } else {
-        await createTask(formToSend)
+        const newTask = await createTask(formToSend)
+        
+        // Emit socket event for task creation
+        if (socket && newTask && newTask.assignedTo) {
+          socket.emit('taskAssign', {
+            taskId: newTask._id,
+            title: newTask.title,
+            assignedTo: newTask.assignedTo._id,
+            assignedBy: user.name
+          });
+        }
       }
       // Optimistically update dashboardData.tasks if updateTask returns the updated task
       if (selectedTask && updatedTask && dashboardData?.tasks) {
@@ -549,6 +746,8 @@ const DashboardPage = () => {
         onUpdate={handleTaskUpdate}
         comments={drawerComments}
         onAddComment={handleAddComment}
+        onTyping={handleCommentTyping}
+        typingUsers={typingUsers[drawerTask?._id] || []}
         loading={loading}
         currentUser={user}
       />
@@ -559,6 +758,22 @@ const DashboardPage = () => {
         message={deadlineAlert.message}
         onClose={() => setDeadlineAlert({ open: false, message: "" })}
       />
+
+      {/* General Notifications */}
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={6000}
+        onClose={() => setNotification({ ...notification, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+      >
+        <Alert 
+          onClose={() => setNotification({ ...notification, open: false })} 
+          severity={notification.type} 
+          sx={{ width: '100%' }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
 
       {/* Dialogs */}
       <TaskDialog
@@ -654,6 +869,7 @@ const DashboardPage = () => {
           onSearchMembers={searchUsers}
           searchResults={memberResults}
           searchLoading={searchLoading}
+          members={contextProject ? getProjectMembers(contextProject._id) : []}
         />
 
         {/* ProjectDialog component */}
