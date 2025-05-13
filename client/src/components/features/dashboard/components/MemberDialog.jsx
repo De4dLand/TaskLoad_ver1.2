@@ -1,5 +1,9 @@
 import React from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Stack, Box, TextField } from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 
 const MemberDialog = ({ open, onClose, members, onMemberChange, onRemoveMember, onSave, selectedMembers }) => (
   <Dialog open={open} onClose={onClose}>
@@ -14,14 +18,19 @@ const MemberDialog = ({ open, onClose, members, onMemberChange, onRemoveMember, 
               onChange={e => onMemberChange(idx, 'name', e.target.value)}
               size="small"
             />
-            <TextField
-              label="Start Date"
-              type="date"
-              size="small"
-              InputLabelProps={{ shrink: true }}
-              value={member.startDate || ''}
-              onChange={e => onMemberChange(idx, 'startDate', e.target.value)}
-            />
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                label="Start Date"
+                value={member.startDate ? dayjs(member.startDate) : null}
+                onChange={(date) => onMemberChange(idx, 'startDate', date ? date.format('YYYY-MM-DD') : '')}
+                slotProps={{
+                  textField: {
+                    size: "small",
+                    fullWidth: true
+                  }
+                }}
+              />
+            </LocalizationProvider>
             <Button color="error" size="small" onClick={() => onRemoveMember(idx)}>Remove</Button>
           </Box>
         ))}

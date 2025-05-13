@@ -100,6 +100,17 @@ export const deleteProject = async (projectId) => {
   }
 }
 
+// Fetch user workspace data (tasks created by and assigned to the user)
+export const fetchUserWorkspace = async (userId) => {
+  try {
+    const response = await api.get(`/api/v1/users/${userId}/workspace`)
+    return response.data
+  } catch (error) {
+    console.error("Error fetching user workspace data:", error)
+    throw error
+  }
+}
+
 // Add a member to a project
 export const addProjectMember = async (projectId, userId, role = 'member') => {
   console.log("Adding project member:", projectId, userId, role)

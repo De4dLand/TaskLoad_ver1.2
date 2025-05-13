@@ -14,6 +14,9 @@ import {
   Box
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
 
 const PROJECT_TEMPLATES = [
   { value: 'agile', label: 'Agile' },
@@ -42,7 +45,7 @@ export default function AddProjectForm({ open, onClose, onSubmit }) {
   };
 
   const handleDateChange = (name, value) => {
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((prev) => ({ ...prev, [name]: value ? value.toDate() : null }));
   };
 
   const validate = () => {
@@ -57,7 +60,12 @@ export default function AddProjectForm({ open, onClose, onSubmit }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validate()) {
-      onSubmit(form);
+      const formData = {
+        ...form,
+        startDate: form.startDate ? new Date(form.startDate).toISOString() : undefined,
+        dueDate: form.dueDate ? new Date(form.dueDate).toISOString() : undefined
+      };
+      onSubmit(formData);
     }
   };
 
@@ -90,22 +98,36 @@ export default function AddProjectForm({ open, onClose, onSubmit }) {
             fullWidth
           />
           <Stack direction="row" spacing={2}>
-            <DatePicker
-              label="Start Date"
-              value={form.startDate}
-              onChange={(date) => handleDateChange('startDate', date)}
-              renderInput={(params) => (
-                <TextField {...params} required error={!!errors.startDate} helperText={errors.startDate} fullWidth />
-              )}
-            />
-            <DatePicker
-              label="Due Date"
-              value={form.dueDate}
-              onChange={(date) => handleDateChange('dueDate', date)}
-              renderInput={(params) => (
-                <TextField {...params} required error={!!errors.dueDate} helperText={errors.dueDate} fullWidth />
-              )}
-            />
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                label="Start Date"
+                value={form.startDate ? dayjs(form.startDate) : null}
+                onChange={(date) => handleDateChange('startDate', date)}
+                slotProps={{
+                  textField: {
+                    required: true,
+                    error: !!errors.startDate,
+                    helperText: errors.startDate,
+                    fullWidth: true
+                  }
+                }}
+              />
+            </LocalizationProvider>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                label="Due Date"
+                value={form.dueDate ? dayjs(form.dueDate) : null}
+                onChange={(date) => handleDateChange('dueDate', date)}
+                slotProps={{
+                  textField: {
+                    required: true,
+                    error: !!errors.dueDate,
+                    helperText: errors.dueDate,
+                    fullWidth: true
+                  }
+                }}
+              />
+            </LocalizationProvider>
           </Stack>
           <FormControl fullWidth>
             <InputLabel>Project Template</InputLabel>

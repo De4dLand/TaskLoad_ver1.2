@@ -37,6 +37,14 @@
 
 .content {
   padding: 24px;
+  flex-grow: 1;
+  min-height: 100%;
+}
+
+.navButton {
+  margin-left: 16px;
+  text-transform: none;
+  font-weight: 500;
 }
 
 .menuButton {

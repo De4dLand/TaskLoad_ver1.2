@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 
 const ProjectDialog = ({ open, onClose, onSubmit, project, user }) => {
   const [formState, setFormState] = useState({
@@ -18,12 +22,12 @@ const ProjectDialog = ({ open, onClose, onSubmit, project, user }) => {
         description: project.description || "",
         color: project.color || "#1976d2",
         status: project.status || "",
-        startDate: project.startDate ? project.startDate.split("T")[0] : "",
-        endDate: project.endDate ? project.endDate.split("T")[0] : "",
+        startDate: project.startDate ? new Date(project.startDate) : null,
+        endDate: project.endDate ? new Date(project.endDate) : null,
       });
     } else {
       setFormState({
-        name: "", description: "", color: "#1976d2", status: "planning", startDate: "", endDate: ""
+        name: "", description: "", color: "#1976d2", status: "planning", startDate: null, endDate: null
       });
     }
   }, [project, open]);
@@ -33,8 +37,16 @@ const ProjectDialog = ({ open, onClose, onSubmit, project, user }) => {
     setFormState(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleDateChange = (name, newDate) => {
+    setFormState(prev => ({ ...prev, [name]: newDate ? newDate.toDate() : null }));
+  };
+
   const handleSubmit = () => {
-    const dataToSubmit = { ...formState };
+    const dataToSubmit = { 
+      ...formState,
+      startDate: formState.startDate ? new Date(formState.startDate).toISOString() : undefined,
+      endDate: formState.endDate ? new Date(formState.endDate).toISOString() : undefined
+    };
     if (!project && user?._id) { // Only add owner if it's a new project
         dataToSubmit.owner = user._id;
     }
@@ -59,24 +71,32 @@ const ProjectDialog = ({ open, onClose, onSubmit, project, user }) => {
               <MenuItem value="archived">Archived</MenuItem>
             </Select>
           </FormControl>
-          <TextField
-            label="Start Date"
-            name="startDate"
-            type="date"
-            value={formState.startDate}
-            onChange={handleChange}
-            InputLabelProps={{ shrink: true }}
-            fullWidth
-          />
-          <TextField
-            label="End Date"
-            name="endDate"
-            type="date"
-            value={formState.endDate}
-            onChange={handleChange}
-            InputLabelProps={{ shrink: true }}
-            fullWidth
-          />
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="Start Date"
+              value={formState.startDate ? dayjs(formState.startDate) : null}
+              onChange={(newDate) => handleDateChange('startDate', newDate)}
+              slotProps={{ 
+                textField: { 
+                  fullWidth: true,
+                  required: false
+                } 
+              }}
+            />
+          </LocalizationProvider>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="End Date"
+              value={formState.endDate ? dayjs(formState.endDate) : null}
+              onChange={(newDate) => handleDateChange('endDate', newDate)}
+              slotProps={{ 
+                textField: { 
+                  fullWidth: true,
+                  required: false
+                } 
+              }}
+            />
+          </LocalizationProvider>
         </Stack>
       </DialogContent>
       <DialogActions>

@@ -3,6 +3,8 @@ import mongooseLoader from './mongoose.js';
 import redisLoader from './redis.js';
 import socketLoader from './socket.js';
 import logger from '../utils/logger.js';
+import ChatService from '../services/chatService.js';
+import aiConfig from '../config/ai.js';
 
 export default async (app) => {
   try {
@@ -17,6 +19,10 @@ export default async (app) => {
     // Initialize Redis
     const redisClient = await redisLoader();
     logger.info('Redis initialized');
+    
+    // Initialize Chat Service with Redis and AI configuration
+    ChatService.initCache(redisClient, aiConfig);
+    logger.info('Chat service initialized with AI capabilities');
 
     // Store redis client in app.locals for global access
     app.locals.redis = redisClient;

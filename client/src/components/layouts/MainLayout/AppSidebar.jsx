@@ -1,11 +1,12 @@
 import { Drawer, Typography, List, ListItem, ListItemIcon, Divider, Tooltip } from "@mui/material"
-import { Dashboard, Assignment, People, DateRange, Settings } from "@mui/icons-material"
+import { Dashboard, Assignment, People, DateRange, Settings, WorkOutline } from "@mui/icons-material"
 import { Link } from "react-router-dom"
 import styles from "./MainLayout.module.css"
 
 const AppSidebar = ({user}) => {
   const menuItems = [
     { text: "Dashboard", icon: <Dashboard />, path: "/dashboard" },
+    { text: "Workspace", icon: <WorkOutline />, path: "/workspace" },
     { text: "Tasks", icon: <Assignment />, path: "/tasks" },
     { text: "Teams", icon: <People />, path: "/teams" },
     { text: "Calendar", icon: <DateRange />, path: "/calendar" },

@@ -4,6 +4,7 @@ import authRoutes from "./authRoutes.js"
 import dashboardRoutes from "./dashboardRoutes.js"
 import projectRoutes from "./projectRoutes.js"
 import userRoutes from "./userRoutes.js"
+import chatRoutes from "./chatRoutes.js"
 const router = express.Router()
 
 router.use("/tasks", taskRoutes)
@@ -11,5 +12,6 @@ router.use("/auth", authRoutes)
 router.use("/dashboard", dashboardRoutes)
 router.use("/projects", projectRoutes)
 router.use("/user", userRoutes)
+router.use("/chat", chatRoutes)
 export default router
 

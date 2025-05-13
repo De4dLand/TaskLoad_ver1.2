@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react"
 import { TextField, FormControl, InputLabel, Select, MenuItem, Button, Grid, Box, FormHelperText } from "@mui/material"
 import { DatePicker } from "@mui/x-date-pickers/DatePicker"
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider"
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
+import dayjs from "dayjs"
 import styles from "./TaskForm.module.css"
 
 const TaskForm = ({ initialValues = {}, onSubmit, loading = false }) => {
@@ -47,7 +50,7 @@ const TaskForm = ({ initialValues = {}, onSubmit, loading = false }) => {
   const handleDateChange = (date) => {
     setFormValues({
       ...formValues,
-      dueDate: date ? new Date(date) : null,
+      dueDate: date ? date.toDate() : null,
     })
 
     if (errors.dueDate) {
@@ -136,14 +139,21 @@ const TaskForm = ({ initialValues = {}, onSubmit, loading = false }) => {
           </FormControl>
         </Grid>
         <Grid item xs={12} sm={6}>
-          <DatePicker
-            label="Due Date"
-            value={formValues.dueDate}
-            onChange={handleDateChange}
-            renderInput={(params) => (
-              <TextField {...params} fullWidth error={!!errors.dueDate} helperText={errors.dueDate} required />
-            )}
-          />
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="Due Date"
+              value={formValues.dueDate ? dayjs(formValues.dueDate) : null}
+              onChange={handleDateChange}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  error: !!errors.dueDate,
+                  helperText: errors.dueDate,
+                  required: true
+                }
+              }}
+            />
+          </LocalizationProvider>
         </Grid>
         <Grid item xs={12}>
           <Box className={styles.buttonContainer}>

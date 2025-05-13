@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import ChatService from '../../services/chatService.js';
 
 /**
  * Handles all chat-related socket events
@@ -44,12 +45,14 @@ export default function chatHandler(io, socket, onlineUsers) {
       };
 
       // Save message to database
-      const savedMessage = await import('../../services/chatService.js')
-        .then(module => module.default.saveMessage(roomId, chatMessage))
+      const savedMessage = await ChatService.saveMessage(roomId, chatMessage)
         .catch(err => {
-          console.error('Error importing chat service:', err);
+          console.error('Error saving chat message:', err);
           return chatMessage; // Fallback to original message if service fails
         });
+        
+      // Note: AI responses will be automatically processed by ChatService
+      // and broadcast through the same channel
 
       // Broadcast to everyone in the room
       io.to(`chat:${roomId}`).emit('chat:message', chatMessage);

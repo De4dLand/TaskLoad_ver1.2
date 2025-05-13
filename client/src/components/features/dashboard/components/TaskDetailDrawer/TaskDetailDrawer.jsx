@@ -15,6 +15,10 @@ import {
   Paper,
   CircularProgress,
 } from "@mui/material";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import dayjs from "dayjs";
 import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
 import KeyboardIcon from "@mui/icons-material/Keyboard";
@@ -319,13 +323,18 @@ const TaskDetailDrawer = ({
             <Grid item xs={6}>
               <Typography variant="subtitle2">Due Date</Typography>
               {editMode ? (
-                <TextField
-                  type="date"
-                  value={editedTask.dueDate ? formatDate(editedTask.dueDate).split('/').reverse().join('-') : ""}
-                  onChange={(e) => handleFieldChange("dueDate", e.target.value)}
-                  size="small"
-                  fullWidth
-                />
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    value={editedTask.dueDate ? dayjs(editedTask.dueDate) : null}
+                    onChange={(date) => handleFieldChange("dueDate", date ? date.toDate() : null)}
+                    slotProps={{
+                      textField: {
+                        size: "small",
+                        fullWidth: true
+                      }
+                    }}
+                  />
+                </LocalizationProvider>
               ) : (
                 <Typography>{formatDate(task.dueDate)}</Typography>
               )}

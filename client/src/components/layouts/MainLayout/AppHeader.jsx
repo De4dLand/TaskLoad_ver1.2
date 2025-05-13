@@ -60,6 +60,9 @@ const AppHeader = () => {
   const handleProfileMenuOpen = (e) => setAnchorEl(e.currentTarget)
   const handleProfileMenuClose = () => setAnchorEl(null)
   
+  // Navigation handlers
+  const handleWorkspaceClick = () => navigate('/workspace')
+  
   // Dialog handlers
   const handleProfileDialogOpen = () => { 
     setProfileDialogOpen(true)
@@ -147,13 +150,28 @@ const AppHeader = () => {
   return (
     <>
       <AppBar position="fixed" className={styles.appBar}>
-        <Toolbar>
-          <IconButton color="inherit" edge="start" className={styles.menuButton}>
+        <Toolbar className={styles.toolbar}>
+          <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            className={styles.menuButton}
+          >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap className={styles.title}>
+          <Typography variant="h6" className={styles.title}>
             TaskLoad
           </Typography>
+          
+          {/* Add Workspace Link */}
+          <Button 
+            color="inherit" 
+            onClick={handleWorkspaceClick}
+            className={styles.navButton}
+          >
+            Workspace
+          </Button>
+          
           <div className={styles.grow} />
           <IconButton color="inherit">
             <Badge badgeContent={4} color="secondary">

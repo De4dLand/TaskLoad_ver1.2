@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, FormControl, InputLabel, Select, MenuItem, Stack, Chip, Box } from '@mui/material';
-// If using @mui/x-date-pickers, uncomment these lines and install the package
-// import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-// import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'; // or AdapterDayjs
-// import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 
 const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], users = [] }) => {
   const [formState, setFormState] = useState({
@@ -50,9 +50,8 @@ const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], users = [] }
   };
 
   const handleDateChange = (newDate) => {
-    // For TextField type="date", newDate is a string 'YYYY-MM-DD'
-    // For a DatePicker component, newDate would be a Date object
-    setFormState(prev => ({ ...prev, dueDate: newDate ? new Date(newDate) : null }));
+    // For DatePicker component, newDate is a dayjs object
+    setFormState(prev => ({ ...prev, dueDate: newDate ? newDate.toDate() : null }));
   };
 
   const handleSubmit = () => {
@@ -89,26 +88,19 @@ const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], users = [] }
               <MenuItem value="high">High</MenuItem>
             </Select>
           </FormControl>
-          <TextField
-            label="Due Date"
-            name="dueDate"
-            type="date"
-            value={formState.dueDate ? new Date(formState.dueDate).toISOString().split('T')[0] : ''}
-            onChange={(e) => handleDateChange(e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            fullWidth
-          />
-          {/* 
-          // Example with @mui/x-date-pickers:
-          // <LocalizationProvider dateAdapter={AdapterDateFns}>
-          //   <DatePicker
-          //     label="Due Date"
-          //     value={formState.dueDate}
-          //     onChange={handleDateChange} // handleDateChange would need to accept Date object directly
-          //     renderInput={(params) => <TextField {...params} fullWidth />}
-          //   />
-          // </LocalizationProvider> 
-          */}
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="Due Date"
+              value={formState.dueDate ? dayjs(formState.dueDate) : null}
+              onChange={handleDateChange}
+              slotProps={{ 
+                textField: { 
+                  fullWidth: true,
+                  required: false
+                } 
+              }}
+            />
+          </LocalizationProvider>
           <FormControl fullWidth required>
             <InputLabel>Project</InputLabel>
             <Select name="project" value={formState.project} onChange={handleChange} label="Project">

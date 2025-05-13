@@ -1,5 +1,6 @@
 import { Server as SocketIOServer } from 'socket.io';
 import chatHandler from './handlers/chatHandler.js';
+import chatbotHandler from './handlers/chatbotHandler.js';
 import notificationHandler from './handlers/notificationHandler.js';
 import timeTrackingHandler from './handlers/timeTrackingHandler.js';
 import { emitDeadlineWarnings, handleCommentEvents } from '../socketTasks.js';
@@ -49,6 +50,9 @@ export default function initializeSocketIO(server) {
         socket.join(`user:${userData.userId}`);
       }
     });
+    
+    // Initialize chatbot handler
+    chatbotHandler(io, socket, onlineUsers);
 
     // Handle disconnection
     socket.on('disconnect', () => {
@@ -67,7 +71,7 @@ export default function initializeSocketIO(server) {
     // Initialize all handlers
     chatHandler(io, socket, onlineUsers);
     notificationHandler(io, socket, onlineUsers);
-    timeTrackingHandler(io, socket);
+    timeTrackingHandler(io, socket, onlineUsers);
   });
 
   // Set up periodic tasks
