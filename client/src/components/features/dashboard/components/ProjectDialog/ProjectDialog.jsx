@@ -43,10 +43,39 @@ const ProjectDialog = ({ open, onClose, onSubmit, project, user }) => {
 
   const handleSubmit = () => {
     const dataToSubmit = { 
-      ...formState,
-      startDate: formState.startDate ? new Date(formState.startDate).toISOString() : undefined,
-      endDate: formState.endDate ? new Date(formState.endDate).toISOString() : undefined
+      ...formState
     };
+    
+    // Safely handle date conversions
+    if (formState.startDate && formState.startDate instanceof Date && !isNaN(formState.startDate)) {
+      dataToSubmit.startDate = formState.startDate.toISOString();
+    } else if (formState.startDate) {
+      // Try to convert to a valid date if it's not already
+      const startDate = new Date(formState.startDate);
+      if (!isNaN(startDate.getTime())) {
+        dataToSubmit.startDate = startDate.toISOString();
+      } else {
+        dataToSubmit.startDate = undefined;
+      }
+    } else {
+      dataToSubmit.startDate = undefined;
+    }
+    
+    // Same safe handling for endDate
+    if (formState.endDate && formState.endDate instanceof Date && !isNaN(formState.endDate)) {
+      dataToSubmit.endDate = formState.endDate.toISOString();
+    } else if (formState.endDate) {
+      // Try to convert to a valid date if it's not already
+      const endDate = new Date(formState.endDate);
+      if (!isNaN(endDate.getTime())) {
+        dataToSubmit.endDate = endDate.toISOString();
+      } else {
+        dataToSubmit.endDate = undefined;
+      }
+    } else {
+      dataToSubmit.endDate = undefined;
+    }
+    
     if (!project && user?._id) { // Only add owner if it's a new project
         dataToSubmit.owner = user._id;
     }

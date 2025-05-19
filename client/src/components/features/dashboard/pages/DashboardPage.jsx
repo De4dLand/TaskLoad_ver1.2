@@ -29,7 +29,7 @@ import AppHeader from "../../../layouts/MainLayout/AppHeader"
 import MemberDialog from '../components/MemberDialog';
 import DeadlineSnackbar from '../components/DeadlineSnackbar';
 import ViewModeSwitcher from '../components/ViewModeSwitcher';
-import TaskDialog from '../components/TaskDialog';
+import TaskDialog from '../components/TaskDialog/TaskDialog';
 import ProjectDialog from '../components/ProjectDialog';
 import ProjectManageDrawer from '../components/ProjectManageDrawer/ProjectManageDrawer';
 import { getSocket, joinRoom } from '../../../../services/socket';
@@ -70,7 +70,7 @@ const DashboardPage = () => {
   // --- End Potential Component: ProjectDialogStateAndHandlers ---
 
   // --- Potential Component: FilterState --- 
-  // Manages the state for filtered tasks.
+  // Manages the state for filtered tasks and selected project.
   const [filteredTasks, setFilteredTasks] = useState([])
   // --- End Potential Component: FilterState ---
 
@@ -101,8 +101,19 @@ const DashboardPage = () => {
   // --- End Potential Component: RealtimeNotifications ---
 
   useEffect(() => {
-    if (dashboardData?.tasks) setFilteredTasks(dashboardData.tasks)
-  }, [dashboardData])
+    if (dashboardData?.tasks) {
+      // If a project is selected, filter tasks for that project
+      if (selectedProject) {
+        const projectTasks = dashboardData.tasks.filter(task => {
+          const projectId = typeof task.project === 'string' ? task.project : task.project?._id;
+          return projectId === selectedProject._id;
+        });
+        setFilteredTasks(projectTasks);
+      } else {
+        setFilteredTasks(dashboardData.tasks);
+      }
+    }
+  }, [dashboardData, selectedProject])
 
   // --- Socket.IO Connection and Event Handlers --- 
   useEffect(() => {
@@ -261,7 +272,7 @@ const DashboardPage = () => {
 
   const handleProjectMenuClose = () => {
     setContextMenu(null)
-    setContextProject(null)
+    // setContextProject(null)
   }
   
   // Get project members for the selected project
@@ -269,6 +280,16 @@ const DashboardPage = () => {
     if (!dashboardData || !dashboardData.projects) return [];
     const project = dashboardData.projects.find(p => p._id === projectId);
     return project?.members || [];
+  }
+  
+  // Handle project selection from sidebar
+  const handleProjectSelect = (project) => {
+    // If clicking the already selected project, deselect it
+    if (selectedProject && selectedProject._id === project._id) {
+      setSelectedProject(null);
+    } else {
+      setSelectedProject(project);
+    }
   }
   // --- End Potential Component: ProjectContextMenuHandlers ---
 
@@ -416,18 +437,44 @@ const DashboardPage = () => {
     setTaskForm(prev => ({ ...prev, [name]: name === "tags" ? value.split(",").map(tag => tag.trim()) : value }))
   }
   const handleDateChange = (date) => {
-    setTaskForm(prev => ({ ...prev, dueDate: date }))
-  }
-  const handleTaskFormSubmit = async () => {
-    try {
-      // Ensure dueDate is ISO string or undefined
-      const formToSend = {
-        ...taskForm,
-        dueDate: taskForm.dueDate ? new Date(taskForm.dueDate).toISOString() : undefined
+    // Handle date from DatePicker (could be a dayjs object or Date object)
+    let processedDate = null;
+    if (date) {
+      // Check if it's a dayjs object (has toDate method)
+      if (typeof date.toDate === 'function') {
+        processedDate = date.toDate();
+      } else if (date instanceof Date) {
+        processedDate = date;
+      } else {
+        // Try to convert to Date if it's a string
+        processedDate = new Date(date);
+        if (isNaN(processedDate.getTime())) {
+          processedDate = null;
+        }
       }
+    }
+    setTaskForm(prev => ({ ...prev, dueDate: processedDate }))
+  }
+  const handleTaskFormSubmit = async (formData, isEdit) => {
+    try {
+      console.log('Received task data in DashboardPage:', formData, 'isEdit:', isEdit);
+      
+      // The formData should already be properly formatted from TaskDialog
+      // but we'll ensure it's in the correct format here as well
+      const formToSend = {
+        ...formData,
+        // Ensure project is a valid ID
+        project: formData.project,
+        // Ensure assignedTo is either a valid ID or null
+        assignedTo: formData.assignedTo || null,
+        // Ensure tags is an array
+        tags: Array.isArray(formData.tags) ? formData.tags : []
+      };
+      
       let updatedTask = null;
-      if (selectedTask) {
-        updatedTask = await updateTask(selectedTask._id, formToSend)
+      if (isEdit && selectedTask) {
+        console.log('Updating task with ID:', selectedTask._id, 'Data:', formToSend);
+        updatedTask = await updateTask(selectedTask._id, formToSend);
         
         // Emit socket event for task update
         if (socket && updatedTask) {
@@ -439,7 +486,8 @@ const DashboardPage = () => {
           });
         }
       } else {
-        const newTask = await createTask(formToSend)
+        console.log('Creating new task with data:', formToSend);
+        const newTask = await createTask(formToSend);
         
         // Emit socket event for task creation
         if (socket && newTask && newTask.assignedTo) {
@@ -451,20 +499,35 @@ const DashboardPage = () => {
           });
         }
       }
+      
       // Optimistically update dashboardData.tasks if updateTask returns the updated task
-      if (selectedTask && updatedTask && dashboardData?.tasks) {
+      if (isEdit && selectedTask && updatedTask && dashboardData?.tasks) {
         setDashboardData({
           ...dashboardData,
           tasks: dashboardData.tasks.map(t => t._id === updatedTask._id ? updatedTask : t)
-        })
+        });
       } else {
-        loadData()
+        // Reload all data for new task creation or if optimistic update isn't possible
+        loadData();
       }
-      handleCloseTaskDialog()
+      
+      // Close the dialog and show success notification
+      handleCloseTaskDialog();
+      setNotification({
+        open: true,
+        message: isEdit ? 'Task updated successfully' : 'Task created successfully',
+        type: 'success'
+      });
     } catch (err) {
       let errorMsg = err?.response?.data?.message || err.message || 'Unknown error';
-      setError(selectedTask ? `Error updating task: ${errorMsg}` : `Error creating task: ${errorMsg}`);
-      console.error(selectedTask ? "Error updating task:" : "Error creating task:", err)
+      console.error(isEdit ? "Error updating task:" : "Error creating task:", err);
+      
+      // Show error notification
+      setNotification({
+        open: true,
+        message: isEdit ? `Error updating task: ${errorMsg}` : `Error creating task: ${errorMsg}`,
+        type: 'error'
+      });
     }
   }
 
@@ -531,16 +594,36 @@ const DashboardPage = () => {
     setSearchError(null)
   }
 
-  const handleSearchUsers = async () => {
-    if (!memberSearchQuery.trim()) return
+  const handleSearchUsers = async (query) => {
+    // Allow passing query directly (from ProjectManageDrawer) or use memberSearchQuery state
+    const searchTerm = query || memberSearchQuery.trim()
+    if (!searchTerm) return
+    
     setSearchLoading(true)
     setSearchError(null)
     try {
-      const users = await searchUsers(memberSearchQuery.trim())
+      const users = await searchUsers(searchTerm)
       setMemberResults(users)
+      
+      // If no users found, show notification
+      if (users.length === 0) {
+        setNotification({
+          open: true,
+          message: `No users found matching "${searchTerm}"`,
+          type: 'info'
+        })
+      }
+      
+      return users // Return users for components that need direct access to results
     } catch (err) {
       console.error("Search users failed", err)
       setSearchError("Failed to fetch users")
+      setNotification({
+        open: true,
+        message: 'Failed to search users. Please try again.',
+        type: 'error'
+      })
+      return []
     } finally {
       setSearchLoading(false)
     }
@@ -621,6 +704,8 @@ const DashboardPage = () => {
             <ProjectSidebar
               sidebarData={dashboardData}
               onProjectContextMenu={handleProjectContextMenu}
+              onProjectSelect={handleProjectSelect}
+              selectedProjectId={selectedProject?._id}
             />
           )}
         </Box>
@@ -657,9 +742,10 @@ const DashboardPage = () => {
             />
             <FilterView
               tasks={dashboardData?.tasks || []}
-              projects={dashboardData?.projects || []}
               user={user}
               onFilter={setFilteredTasks}
+              selectedProject={selectedProject}
+              projectMembers={selectedProject ? getProjectMembers(selectedProject._id) : []}
             />
           </Paper>
 
@@ -731,8 +817,8 @@ const DashboardPage = () => {
             description: formData.description,
             color: formData.color,
             template: formData.template,
-            startDate: formData.startDate ? formData.startDate.toISOString() : null,
-            endDate: formData.dueDate ? formData.dueDate.toISOString() : null,
+            startDate: formData.startDate || null,
+            endDate: formData.dueDate || null,
             owner: user._id
           });
           loadData();
@@ -750,6 +836,10 @@ const DashboardPage = () => {
         typingUsers={typingUsers[drawerTask?._id] || []}
         loading={loading}
         currentUser={user}
+        projectMembers={drawerTask?.project ? getProjectMembers(typeof drawerTask.project === 'string' ? drawerTask.project : drawerTask.project?._id) : []}
+        isProjectOwner={drawerTask?.project && selectedProject ? 
+          (selectedProject.owner === user?._id || 
+          (typeof selectedProject.owner === 'object' && selectedProject.owner?._id === user?._id)) : false}
       />
 
       {/* Deadline Alert */}
@@ -781,11 +871,8 @@ const DashboardPage = () => {
         onClose={handleCloseTaskDialog}
         onSubmit={handleTaskFormSubmit}
         task={selectedTask}
-        taskform={taskForm}
-        onChange={handleTaskFormChange}
-        onDateChange={handleDateChange}
-        projects={dashboardData?.projects}
-        users={dashboardData?.users}
+        projects={dashboardData?.projects || []}
+        users={dashboardData?.users || []}
       />
 
       {/* Context Menus */}
@@ -844,29 +931,106 @@ const DashboardPage = () => {
           project={contextProject}
           onUpdateProject={async (formData) => {
             try {
+              if (!contextProject || !contextProject._id) {
+                throw new Error('Project not found or project ID is missing');
+              }
+              console.log('Updating project with data:', formData);
               await updateProject(contextProject._id, formData);
+              
+              // Emit socket event for project update if socket is available
+              if (socket) {
+                socket.emit('projectUpdate', {
+                  projectId: contextProject._id,
+                  name: formData.name,
+                  updatedBy: user.name
+                });
+              }
+              
+              // Close the drawer after successful update
+              setProjectManageDrawerOpen(false);
+              
+              // Show success notification
+              setNotification({
+                open: true,
+                message: `Project "${formData.name}" has been updated successfully`,
+                type: 'success'
+              });
+              
+              // Reload dashboard data
               loadData();
             } catch (err) {
               console.error('Failed to update project:', err);
+              setNotification({
+                open: true,
+                message: `Failed to update project: ${err.message}`,
+                type: 'error'
+              });
             }
           }}
-          onAddMember={async (user, role) => {
+          onAddMember={async (user, memberData) => {
             try {
-              await addProjectMember(contextProject._id, user._id, role);
+              if (!user || !user._id) {
+                throw new Error('Valid user is required');
+              }
+              
+              if (!contextProject || !contextProject._id) {
+                throw new Error('Project information is missing');
+              }
+              
+              await addProjectMember(contextProject._id, user._id, memberData);
+              
+              // Emit socket event for member added if socket is available
+              if (socket) {
+                socket.emit('memberAdd', {
+                  projectId: contextProject._id,
+                  projectName: contextProject.name,
+                  memberId: user._id,
+                  memberName: user.name,
+                  addedBy: user.name
+                });
+              }
+              
               loadData();
+              setNotification({
+                open: true,
+                message: `${user.name || 'User'} has been added to the project as ${memberData.role}`,
+                type: 'success'
+              });
             } catch (err) {
               console.error('Failed to add member:', err);
+              setNotification({
+                open: true,
+                message: `Failed to add member: ${err.message}`,
+                type: 'error'
+              });
             }
           }}
           onRemoveMember={async (memberId) => {
             try {
+              if (!contextProject || !contextProject._id) {
+                throw new Error('Project not found or project ID is missing');
+              }
+              if (!memberId) {
+                throw new Error('Member ID is required');
+              }
               await removeMember(contextProject._id, memberId);
               loadData();
+              
+              setNotification({
+                open: true,
+                message: `Member has been removed from the project`,
+                type: 'success'
+              });
             } catch (err) {
               console.error('Failed to remove member:', err);
+              setNotification({
+                open: true,
+                message: `Failed to remove member: ${err.message}`,
+                type: 'error'
+              });
             }
           }}
-          onSearchMembers={searchUsers}
+          onSearchMembers={handleSearchUsers}
           searchResults={memberResults}
           searchLoading={searchLoading}
           members={contextProject ? getProjectMembers(contextProject._id) : []}

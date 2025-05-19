@@ -1,11 +1,11 @@
 // Chatbot feature module exports
-import { ChatInterface } from './components';
+import { ChatInterface, ChatBot } from './components';
 import { chatApiService, initializeChatSocket, disconnectChatSocket } from './services';
 import { useChatSocket } from './hooks';
 import { ChatProvider, useChatContext } from './contexts/ChatContext';
 
 // Export components
-export { ChatInterface };
+export { ChatInterface, ChatBot };
 
 // Export services
 export { chatApiService, initializeChatSocket, disconnectChatSocket };

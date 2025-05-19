@@ -61,6 +61,11 @@
   background-color: #e3f2fd;
 }
 
+.aiMessage {
+  align-self: flex-start;
+  background-color: #f0f4c3;
+}
+
 .messageSender {
   font-weight: 600;
   font-size: 0.85rem;
@@ -110,4 +115,56 @@
 
 .sendButton:hover {
   background-color: #1976d2;
+}
+
+.sendButton:disabled {
+  background-color: #bdbdbd;
+  cursor: not-allowed;
+}
+
+.loadingIndicator {
+  align-self: center;
+  padding: 8px 16px;
+  margin: 8px 0;
+}
+
+.typingIndicator {
+  font-size: 0.85rem;
+  color: #757575;
+  font-style: italic;
+  padding: 4px 8px;
+  background-color: #f5f5f5;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.errorMessage {
+  color: #d32f2f;
+  font-size: 0.85rem;
+  margin-left: 12px;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #757575;
+  font-style: italic;
+}
+
+.connected {
+  color: #4caf50;
+  font-size: 0.85rem;
+}
+
+.disconnected {
+  color: #d32f2f;
+  font-size: 0.85rem;
+}
+
+.connectionStatus {
+  margin-left: auto;
+  margin-right: 12px;
 }

@@ -8,7 +8,7 @@ import FiberManualIcon from "@mui/icons-material/FiberManualRecord"
 import { formatDate } from "../../../../../utils/formatters"
 import styles from "./ProjectSidebar.module.css"
 
-const ProjectSidebar = ({ sidebarData, onProjectContextMenu }) => {
+const ProjectSidebar = ({ sidebarData, onProjectContextMenu, onProjectSelect, selectedProjectId }) => {
   const { projects, tasks } = sidebarData
   const [expandedProjects, setExpandedProjects] = useState({})
 
@@ -24,6 +24,16 @@ const ProjectSidebar = ({ sidebarData, onProjectContextMenu }) => {
 
   const toggleProject = (projectId) => {
     setExpandedProjects((prev) => ({ ...prev, [projectId]: !prev[projectId] }))
+  }
+  
+  const handleProjectClick = (e, project) => {
+    // Toggle expansion
+    toggleProject(project._id)
+    
+    // Notify parent component about project selection
+    if (onProjectSelect) {
+      onProjectSelect(project)
+    }
   }
 
   const getStatusIcon = (status) => {
@@ -42,9 +52,9 @@ const ProjectSidebar = ({ sidebarData, onProjectContextMenu }) => {
       {projects.map((project) => (
         <Box key={project._id}>
           <ListItem
-            onClick={() => toggleProject(project._id)}
+            onClick={(e) => handleProjectClick(e, project)}
             onContextMenu={(e) => { e.preventDefault(); onProjectContextMenu && onProjectContextMenu(e, project); }}
-            className={styles.projectItem}
+            className={`${styles.projectItem} ${selectedProjectId === project._id ? styles.selectedProject : ''}`}
             style={{ cursor: 'pointer' }}
           >
             <Box className={styles.projectHeader}>

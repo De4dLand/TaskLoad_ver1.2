@@ -1,6 +1,7 @@
 import Project from "../../../models/Project.js"
 import Task from "../../../models/Task.js"
 import { createError } from "../../../utils/error.js"
+import { hasProjectPermission } from "../../../utils/permissions.js"
 
 const projectController = {
     // Get all projects for current user
@@ -27,8 +28,9 @@ const projectController = {
                 return next(createError(404, "Project not found"))
             }
 
-            // Check if user has access to this project
-            if (!project.hasAccess(req.user._id)) {
+            // Check if user has access to this project using the utility function
+            const userId = req.user._id.toString();
+            if (!hasProjectPermission(project, userId, ['owner', 'admin', 'member', 'supervisor'])) {
                 return next(createError(403, "You don't have access to this project"))
             }
 
@@ -70,8 +72,9 @@ const projectController = {
                 return next(createError(404, "Project not found"))
             }
 
-            // Check if user has permission to update
-            if (!project.hasRole(req.user._id, ["owner", "admin"])) {
+            // Check if user has permission to update using the utility function
+            const userId = req.user._id.toString();
+            if (!hasProjectPermission(project, userId, ['owner', 'admin'])) {
                 return next(createError(403, "You don't have permission to update this project"))
             }
 
@@ -104,8 +107,9 @@ const projectController = {
                 return next(createError(404, "Project not found"))
             }
 
-            // Check if user is the owner
-            if (project.owner.toString() !== req.user._id.toString()) {
+            // Check if user is the owner using the utility function
+            const userId = req.user._id.toString();
+            if (!hasProjectPermission(project, userId, ['owner'])) {
                 return next(createError(403, "Only the project owner can delete the project"))
             }
 
@@ -130,8 +134,9 @@ const projectController = {
                 return next(createError(404, "Project not found"))
             }
 
-            // Check if user has access to this project
-            if (!project.hasAccess(req.user._id)) {
+            // Check if user has access to this project using the utility function
+            const userId = req.user._id.toString();
+            if (!hasProjectPermission(project, userId, ['owner', 'admin', 'member', 'supervisor'])) {
                 return next(createError(403, "You don't have access to this project"))
             }
 
@@ -156,8 +161,9 @@ const projectController = {
                 return next(createError(404, "Project not found"))
             }
 
-            // Check if user has permission to add members
-            if (!project.hasRole(req.user._id, ["owner", "admin"])) {
+            // Check if user has permission to add members using the utility function
+            const currentUserId = req.user._id.toString();
+            if (!hasProjectPermission(project, currentUserId, ['owner', 'admin'])) {
                 return next(createError(403, "You don't have permission to add members"))
             }
 
@@ -189,8 +195,11 @@ const projectController = {
                 return next(createError(404, "Project not found"))
             }
 
-            // Check if user has permission to remove members
-            if (!project.hasRole(req.user._id, ["owner", "admin"]) && req.user._id.toString() !== req.params.userId) {
+            // Check if user has permission to remove members or is removing themselves
+            const currentUserId = req.user._id.toString();
+            const isRemovingSelf = currentUserId === req.params.userId;
+            
+            if (!isRemovingSelf && !hasProjectPermission(project, currentUserId, ['owner', 'admin'])) {
                 return next(createError(403, "You don't have permission to remove members"))
             }
 
@@ -218,7 +227,7 @@ const projectController = {
         try {
             const { role } = req.body
 
-            if (!["admin", "member"].includes(role)) {
+            if (!['admin', 'member', 'supervisor'].includes(role)) {
                 return next(createError(400, "Invalid role"))
             }
 
@@ -228,8 +237,9 @@ const projectController = {
                 return next(createError(404, "Project not found"))
             }
 
-            // Check if user is the owner
-            if (project.owner.toString() !== req.user._id.toString()) {
+            // Check if user is the owner using the utility function
+            const userId = req.user._id.toString();
+            if (!hasProjectPermission(project, userId, ['owner'])) {
                 return next(createError(403, "Only the project owner can change member roles"))
             }
 

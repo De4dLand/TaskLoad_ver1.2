@@ -3,6 +3,7 @@ import Project from "../../../models/Project.js" // Import Project model
 import { createError } from "../../../utils/error.js"
 import redisClient from "../../../loaders/redis.js"
 import mongoose from "mongoose"
+import { hasTaskAccess, canModifyTask, canDeleteTask } from "../../../utils/permissions.js"
 
 // Helper function to set cache with expiration
 const setCacheWithExpiry = async (key, data, ttl = 3600) => {
@@ -285,25 +286,19 @@ export const updateTask = async (req, res, next) => {
     if (!task) {
       return next(createError(404, "Task not found"))
     }
+    
+    // Get the project for permission checking
+    const project = await Project.findById(task.project)
+    if (!project) {
+      return next(createError(404, "Project not found"))
+    }
+    
     // Robustly extract user ID from req.user
     const userId = req.user.userId || req.user.id || req.user._id;
-    console.log('DEBUG permission check:', {
-      taskId: id,
-      currentUser: userId,
-      createdBy: task.createdBy,
-      assignedTo: task.assignedTo,
-      updateAssignedTo: updateData.assignedTo,
-      isCreator: task.createdBy.toString() === userId,
-      isAssignee: task.assignedTo && task.assignedTo.toString() === userId,
-      willBeAssignee: updateData.assignedTo && updateData.assignedTo.toString() === userId
-    });
-    // Check permissions - creator, current assignee, or will-be assignee can update
-    const isCreator = task.createdBy.toString() === userId;
-    const isAssignee = task.assignedTo && task.assignedTo.toString() === userId;
-    const willBeAssignee = updateData.assignedTo && updateData.assignedTo.toString() === userId;
-
-    if (!isCreator && !isAssignee && !willBeAssignee) {
-      return next(createError(403, "You don't have permission to update this task"));
+    
+    // Check permissions using the utility function
+    if (!canModifyTask(task, userId, project)) {
+      return next(createError(403, "You don't have permission to update this task"))
     }
 
     // List of fields that can be updated
@@ -370,12 +365,18 @@ export const deleteTask = async (req, res, next) => {
       return next(createError(404, "Task not found"))
     }
 
-    // Check permissions - creator or assignee can delete
+    // Get the project for permission checking
+    const project = await Project.findById(task.project)
+    if (!project) {
+      return next(createError(404, "Project not found"))
+    }
+    
+    // Robustly extract user ID from req.user
     const userId = req.user.userId || req.user.id || req.user._id;
-    const isCreator = task.createdBy.toString() === userId;
-    const isAssignee = task.assignedTo && task.assignedTo.toString() === userId;
-    if (!isCreator && !isAssignee) {
-      return next(createError(403, "Only the task creator or assignee can delete this task"));
+    
+    // Check permissions using the utility function
+    if (!canDeleteTask(task, userId, project)) {
+      return next(createError(403, "You don't have permission to delete this task"))
     }
 
     // Store assignee ID before deleting for cache invalidation

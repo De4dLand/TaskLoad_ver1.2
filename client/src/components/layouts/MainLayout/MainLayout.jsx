@@ -3,6 +3,8 @@ import { Box, Container } from "@mui/material"
 import AppHeader from "./AppHeader"
 import AppSidebar from "./AppSidebar"
 import ChatButton from "./ChatButton"
+// import ChatRoom from "./ChatRoom"
+// import ChatBot from '../../features/Chatbot/ChatBot'
 import styles from "./MainLayout.module.css"
 
 const MainLayout = () => {
@@ -17,7 +19,8 @@ const MainLayout = () => {
           </Container>
         </Box>
       </Box>
-      <ChatButton />
+      <ChatButton /> 
+      {/* <ChatRoom /> */}
     </Box>
   )
 }

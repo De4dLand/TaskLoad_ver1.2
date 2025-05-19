@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Box, ToggleButtonGroup, ToggleButton, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import { Box, ToggleButtonGroup, ToggleButton, Typography } from "@mui/material";
 
-const FilterView = ({ tasks, projects, user, onFilter }) => {
+const FilterView = ({ tasks, user, onFilter, selectedProject, projectMembers = [] }) => {
   const [filters, setFilters] = useState(["all"]);
-  const [selectedProject, setSelectedProject] = useState("");
 
   // Multi-select filters: reset when needed, drop 'all' if combined
   const handleFilterChange = (e, newFilters) => {
@@ -36,26 +35,41 @@ const FilterView = ({ tasks, projects, user, onFilter }) => {
       onFilter(tasks);
       return;
     }
-    // Project filter
-    if (filters.includes("project") && selectedProject) {
-      result = result.filter((t) => {
-        const pid = typeof t.project === "string" ? t.project : t.project?._id?.toString();
-        return pid === selectedProject;
-      });
-    }
-    // Created filter
+    
+    // Created filter - show tasks created by project members
     if (filters.includes("created")) {
-      result = result.filter((t) => {
-        const creatorId = typeof t.createdBy === "string" ? t.createdBy : t.createdBy?._id;
-        return creatorId === (user._id || user.id);
-      });
+      // If we have project members, filter by them
+      if (projectMembers.length > 0) {
+        const memberIds = projectMembers.map(member => member.user._id || member.user.id);
+        result = result.filter((t) => {
+          const creatorId = typeof t.createdBy === "string" ? t.createdBy : t.createdBy?._id;
+          return memberIds.includes(creatorId);
+        });
+      } else {
+        // Fallback to current user if no project is selected
+        result = result.filter((t) => {
+          const creatorId = typeof t.createdBy === "string" ? t.createdBy : t.createdBy?._id;
+          return creatorId === (user._id || user.id);
+        });
+      }
     }
-    // Assigned filter
+    
+    // Assigned filter - show tasks assigned to project members
     if (filters.includes("assigned")) {
-      result = result.filter((t) => {
-        const assigneeId = typeof t.assignedTo === "string" ? t.assignedTo : t.assignedTo?._id;
-        return assigneeId === (user._id || user.id);
-      });
+      // If we have project members, filter by them
+      if (projectMembers.length > 0) {
+        const memberIds = projectMembers.map(member => member.user._id || member.user.id);
+        result = result.filter((t) => {
+          const assigneeId = typeof t.assignedTo === "string" ? t.assignedTo : t.assignedTo?._id;
+          return memberIds.includes(assigneeId);
+        });
+      } else {
+        // Fallback to current user if no project is selected
+        result = result.filter((t) => {
+          const assigneeId = typeof t.assignedTo === "string" ? t.assignedTo : t.assignedTo?._id;
+          return assigneeId === (user._id || user.id);
+        });
+      }
     }
     // Due soon filter
     if (filters.includes("dueSoon")) {
@@ -75,6 +89,11 @@ const FilterView = ({ tasks, projects, user, onFilter }) => {
 
   return (
     <Box sx={{ my: 2 }}>
+      {selectedProject && (
+        <Typography variant="subtitle2" sx={{ mb: 1 }}>
+          Filtering tasks for project: {selectedProject.name}
+        </Typography>
+      )}
       <ToggleButtonGroup
         value={filters}
         exclusive={false}
@@ -83,28 +102,11 @@ const FilterView = ({ tasks, projects, user, onFilter }) => {
         size="small"
       >
         <ToggleButton value="all">All</ToggleButton>
-        <ToggleButton value="project">Project</ToggleButton>
-        <ToggleButton value="created">Created</ToggleButton>
-        <ToggleButton value="assigned">Assigned</ToggleButton>
+        <ToggleButton value="created">Created by Team</ToggleButton>
+        <ToggleButton value="assigned">Assigned to Team</ToggleButton>
         <ToggleButton value="priority">Priority</ToggleButton>
         <ToggleButton value="dueSoon">Due Soon</ToggleButton>
       </ToggleButtonGroup>
-      {filters.includes("project") && (
-        <FormControl sx={{ ml: 2, minWidth: 120 }} size="small">
-          <InputLabel>Project</InputLabel>
-          <Select
-            value={selectedProject}
-            label="Project"
-            onChange={(e) => setSelectedProject(e.target.value)}
-          >
-            {projects.map((p) => (
-              <MenuItem key={p.id} value={p.id}>
-                {p.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      )}
     </Box>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, FormControl, InputLabel, Select, MenuItem, Stack, Chip, Box } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, FormControl, InputLabel, Select, MenuItem, Stack, Chip, Box, FormHelperText } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -55,12 +55,47 @@ const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], users = [] }
   };
 
   const handleSubmit = () => {
+    // Validate required fields
+    if (!formState.title || !formState.title.trim()) {
+      alert('Title is required');
+      return;
+    }
+    
+    if (!formState.project) {
+      alert('Project is required');
+      return;
+    }
+    
+    // Create a clean copy of the form state to submit
     const dataToSubmit = {
       ...formState,
-      dueDate: formState.dueDate ? new Date(formState.dueDate).toISOString() : undefined,
+      title: formState.title.trim(), // Ensure title is trimmed
       assignedTo: formState.assignedTo || null, // Send null if empty string
-      project: formState.project || null // Send null if empty string, if backend expects it or handle in onSubmit
+      project: formState.project, // Project is required and must be a valid ID
+      estimatedHours: formState.estimatedHours ? Number(formState.estimatedHours) : undefined // Convert to number if present
     };
+    
+    // Safely handle date conversion for dueDate
+    if (formState.dueDate && formState.dueDate instanceof Date && !isNaN(formState.dueDate)) {
+      dataToSubmit.dueDate = formState.dueDate.toISOString();
+    } else if (formState.dueDate) {
+      // Try to convert to a valid date if it's not already
+      const dueDate = new Date(formState.dueDate);
+      if (!isNaN(dueDate.getTime())) {
+        dataToSubmit.dueDate = dueDate.toISOString();
+      } else {
+        dataToSubmit.dueDate = undefined;
+      }
+    } else {
+      dataToSubmit.dueDate = undefined;
+    }
+    
+    // Ensure tags are properly formatted as an array of strings
+    if (Array.isArray(formState.tags)) {
+      dataToSubmit.tags = formState.tags.filter(tag => tag.trim() !== '');
+    }
+    
+    console.log('Submitting task data:', dataToSubmit);
     onSubmit(dataToSubmit, !!task); // Pass a flag indicating if it's an edit
   };
 
@@ -75,9 +110,9 @@ const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], users = [] }
             <InputLabel>Status</InputLabel>
             <Select name="status" value={formState.status} onChange={handleChange} label="Status">
               <MenuItem value="todo">To Do</MenuItem>
-              <MenuItem value="inprogress">In Progress</MenuItem>
-              <MenuItem value="testing">Testing</MenuItem>
-              <MenuItem value="done">Done</MenuItem>
+              <MenuItem value="in_progress">In Progress</MenuItem>
+              <MenuItem value="review">Review</MenuItem>
+              <MenuItem value="completed">Completed</MenuItem>
             </Select>
           </FormControl>
           <FormControl fullWidth>
@@ -101,14 +136,14 @@ const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], users = [] }
               }}
             />
           </LocalizationProvider>
-          <FormControl fullWidth required>
+          <FormControl fullWidth required error={!formState.project}>
             <InputLabel>Project</InputLabel>
-            <Select name="project" value={formState.project} onChange={handleChange} label="Project">
-              <MenuItem value=""><em>None</em></MenuItem>
+            <Select name="project" value={formState.project} onChange={handleChange} label="Project" required>
               {projects.map((p) => (
                 <MenuItem key={p._id} value={p._id}>{p.name}</MenuItem>
               ))}
             </Select>
+            {!formState.project && <FormHelperText>Project is required</FormHelperText>}
           </FormControl>
           <FormControl fullWidth>
             <InputLabel>Assigned To</InputLabel>

@@ -1,6 +1,7 @@
 import express from 'express';
 import { verifyToken } from '../../../middlewares/auth.js';
 import { validate } from '../middlewares/validationMiddleware.js';
+import { checkChatAccess } from '../../../utils/permissionMiddleware.js';
 import {
   getChatRooms,
   getChatRoomById,
@@ -29,15 +30,15 @@ router.get('/', getChatRooms);
 router.post('/', createChatRoomValidator, validate, createChatRoom);
 
 // Get a specific chat room by ID
-router.get('/:roomId', getChatRoomValidator, validate, getChatRoomById);
+router.get('/:roomId', getChatRoomValidator, validate, checkChatAccess(), getChatRoomById);
 
 // Get messages for a specific chat room
-router.get('/:roomId/messages', getChatMessagesValidator, validate, getChatMessages);
+router.get('/:roomId/messages', getChatMessagesValidator, validate, checkChatAccess(), getChatMessages);
 
 // Send a message to a chat room
-router.post('/:roomId/messages', sendMessageValidator, validate, sendMessage);
+router.post('/:roomId/messages', sendMessageValidator, validate, checkChatAccess(), sendMessage);
 
 // Mark messages as read
-router.post('/:roomId/read', markMessagesAsReadValidator, validate, markMessagesAsRead);
+router.post('/:roomId/read', markMessagesAsReadValidator, validate, checkChatAccess(), markMessagesAsRead);
 
 export default router;

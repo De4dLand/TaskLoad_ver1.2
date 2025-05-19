@@ -14,6 +14,9 @@ import {
   Checkbox,
   Paper,
   CircularProgress,
+  Select,
+  MenuItem,
+  FormControl,
 } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -40,6 +43,8 @@ const TaskDetailDrawer = ({
   onAddComment,
   loading = false,
   currentUser = {},
+  projectMembers = [],
+  isProjectOwner = false,
 }) => {
   const [editMode, setEditMode] = useState(false);
   const [editedTask, setEditedTask] = useState(task || {});
@@ -49,6 +54,7 @@ const TaskDetailDrawer = ({
   const [typingUsers, setTypingUsers] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
   const [commentError, setCommentError] = useState(null);
+  const [assignedUsers, setAssignedUsers] = useState([]);
   const socketRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
@@ -152,6 +158,13 @@ const TaskDetailDrawer = ({
   useEffect(() => {
     setLiveComments(comments || []);
   }, [comments, task?._id, open]);
+  
+  // Initialize assigned users when task changes
+  useEffect(() => {
+    if (task) {
+      setAssignedUsers(task.assignedToList || task.assignedTo || []);
+    }
+  }, [task]);
 
   const handleFieldChange = (field, value) => {
     setEditedTask((prev) => ({ ...prev, [field]: value }));
@@ -352,19 +365,114 @@ const TaskDetailDrawer = ({
           {/* Assigned To */}
           <Box mt={2}>
             <Typography variant="subtitle2">Assigned To</Typography>
-            <Stack direction="row" spacing={1} mt={0.5}>
-              {(task.assignedToList || task.assignedTo || []).length > 0 ? (
-                (task.assignedToList || task.assignedTo).map((user, idx) => (
-                  <Chip
-                    key={user._id || user.id || idx}
-                    avatar={<Avatar src={user.profileImage}>{user.firstName?.[0] || user.username?.[0]}</Avatar>}
-                    label={user.firstName || user.username}
-                  />
-                ))
-              ) : (
-                <Typography color="text.secondary">Unassigned</Typography>
-              )}
-            </Stack>
+            {editMode && isProjectOwner ? (
+              <Box mt={1}>
+                <Stack direction="row" spacing={1} flexWrap="wrap" mb={1}>
+                  {assignedUsers.length > 0 ? (
+                    assignedUsers.map((user, idx) => (
+                      <Chip
+                        key={user._id || user.id || idx}
+                        avatar={<Avatar src={user.profileImage}>{user.firstName?.[0] || user.username?.[0]}</Avatar>}
+                        label={user.firstName || user.username}
+                        onDelete={() => {
+                          const newAssignedUsers = assignedUsers.filter((u) => 
+                            (u._id || u.id) !== (user._id || user.id)
+                          );
+                          setAssignedUsers(newAssignedUsers);
+                          handleFieldChange("assignedTo", newAssignedUsers);
+                        }}
+                      />
+                    ))
+                  ) : (
+                    <Typography color="text.secondary">No members assigned</Typography>
+                  )}
+                </Stack>
+                <FormControl fullWidth size="small" sx={{ mt: 1 }}>
+                  <Select
+                    displayEmpty
+                    value=""
+                    onChange={(e) => {
+                      const selectedMemberId = e.target.value;
+                      if (!selectedMemberId) return;
+                      
+                      // Find the selected member from projectMembers
+                      const selectedMember = projectMembers.find(m => 
+                        (m.user._id || m.user.id) === selectedMemberId
+                      )?.user;
+                      
+                      if (selectedMember) {
+                        // Check if user is already assigned
+                        const isAlreadyAssigned = assignedUsers.some(u => 
+                          (u._id || u.id) === (selectedMember._id || selectedMember.id)
+                        );
+                        
+                        if (!isAlreadyAssigned) {
+                          const newAssignedUsers = [...assignedUsers, selectedMember];
+                          setAssignedUsers(newAssignedUsers);
+                          handleFieldChange("assignedTo", newAssignedUsers);
+                        }
+                      }
+                    }}
+                    renderValue={() => "Add team member"}
+                  >
+                    <MenuItem value="" disabled>
+                      <em>Select a team member</em>
+                    </MenuItem>
+                    {projectMembers.map((member) => {
+                      const memberUser = member.user;
+                      const isAlreadyAssigned = assignedUsers.some(u => 
+                        (u._id || u.id) === (memberUser._id || memberUser.id)
+                      );
+                      
+                      if (isAlreadyAssigned) return null;
+                      
+                      return (
+                        <MenuItem 
+                          key={memberUser._id || memberUser.id} 
+                          value={memberUser._id || memberUser.id}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Avatar 
+                              src={memberUser.profileImage} 
+                              sx={{ width: 24, height: 24 }}
+                            >
+                              {memberUser.firstName?.[0] || memberUser.username?.[0]}
+                            </Avatar>
+                            <Typography>
+                              {memberUser.firstName || memberUser.username}
+                            </Typography>
+                          </Box>
+                        </MenuItem>
+                      );
+                    })}
+                  </Select>
+                </FormControl>
+              </Box>
+            ) : (
+              <Stack direction="row" spacing={1} mt={0.5} flexWrap="wrap">
+                {(task.assignedToList || task.assignedTo || []).length > 0 ? (
+                  (task.assignedToList || task.assignedTo).map((user, idx) => (
+                    <Chip
+                      key={user._id || user.id || idx}
+                      avatar={<Avatar src={user.profileImage}>{user.firstName?.[0] || user.username?.[0]}</Avatar>}
+                      label={user.firstName || user.username}
+                    />
+                  ))
+                ) : (
+                  <Typography color="text.secondary">Unassigned</Typography>
+                )}
+                {!editMode && isProjectOwner && (
+                  <Button 
+                    size="small" 
+                    variant="outlined" 
+                    onClick={() => setEditMode(true)}
+                    sx={{ ml: 1 }}
+                  >
+                    Manage Assignments
+                  </Button>
+                )}
+              </Stack>
+            )}
           </Box>
 
           {/* Priority & Tags */}

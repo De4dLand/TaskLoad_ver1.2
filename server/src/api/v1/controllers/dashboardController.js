@@ -58,22 +58,27 @@ export const getActivityData = async (req, res, next) => {
 // Get dashboard data: tasks and projects
 export const getDashboardData = async (req, res, next) => {
   try {
+    const { currentUserOnly = false } = req.query
+    
     // Fetch tasks for user (created or assigned)
-    const tasks = await Task.find({
-      $or: [{ owner: req.user._id }, {createdBy: req.user._id}],
-    })
+    const taskQuery = {
+      $or: [{ owner: req.user._id }, { createdBy: req.user._id }],
+    }
+    
+    const tasks = await Task.find(taskQuery)
       .populate('project', 'name')
       .populate('createdBy', 'username firstName lastName')
       .sort({ createdAt: -1 })
 
     // Fetch projects for user (owner or member)
-    const projects = await Project.find({
+    const projectQuery = {
       $or: [{ owner: req.user._id }, { "members.user": req.user._id }],
-    })
+    }
+    
+    const projects = await Project.find(projectQuery)
       .populate('owner', 'username email')
       .populate('members.user', 'username email')
       .sort({ updatedAt: -1 })
-
 
     return res.status(200).json({ tasks, projects })
   } catch (error) {

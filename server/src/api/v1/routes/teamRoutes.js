@@ -2,6 +2,7 @@ import express from 'express';
 import TeamController from '../controllers/teamController.js';
 import auth from '../../../middlewares/auth.js';
 import { validateTeam } from '../validator/teamValidator.js';
+import { checkTeamPermission } from '../../../utils/permissionMiddleware.js';
 
 const router = express.Router();
 const teamController = new TeamController();
@@ -17,44 +18,44 @@ router
 
 router
     .route('/:id')
-    .get(teamController.getTeam)
-    .patch(validateTeam, teamController.updateTeam)
-    .delete(teamController.deleteTeam);
+    .get(checkTeamPermission(false), teamController.getTeam)
+    .patch(checkTeamPermission(true), validateTeam, teamController.updateTeam)
+    .delete(checkTeamPermission(true), teamController.deleteTeam);
 
 // Team member routes
 router
     .route('/:id/members')
-    .get(teamController.getTeamMembers)
-    .post(teamController.addMember);
+    .get(checkTeamPermission(false), teamController.getTeamMembers)
+    .post(checkTeamPermission(true), teamController.addMember);
 
 router
     .route('/:id/members/:userId')
-    .delete(teamController.removeMember);
+    .delete(checkTeamPermission(true), teamController.removeMember);
 
 // Team project routes
 router
     .route('/:id/projects')
-    .get(teamController.getTeamProjects)
-    .post(teamController.addProject);
+    .get(checkTeamPermission(false), teamController.getTeamProjects)
+    .post(checkTeamPermission(true), teamController.addProject);
 
 router
     .route('/:id/projects/:projectId')
-    .delete(teamController.removeProject);
+    .delete(checkTeamPermission(true), teamController.removeProject);
 
 // Team statistics routes
 router
     .route('/:id/stats')
-    .get(teamController.getTeamStats);
+    .get(checkTeamPermission(false), teamController.getTeamStats);
 
 // Team timeline routes
 router
     .route('/:id/timeline')
-    .get(teamController.getTeamTimeline);
+    .get(checkTeamPermission(false), teamController.getTeamTimeline);
 
 // Team custom fields routes
 router
     .route('/:id/custom-fields')
-    .get(teamController.getCustomFields)
-    .patch(teamController.updateCustomFields);
+    .get(checkTeamPermission(false), teamController.getCustomFields)
+    .patch(checkTeamPermission(true), teamController.updateCustomFields);
 
-export default router; 
+export default router;

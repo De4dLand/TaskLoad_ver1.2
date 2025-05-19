@@ -405,7 +405,7 @@ const CalendarView = ({ tasks = [], onTaskClick, onTaskContextMenu }) => {
                 const droppableId = `${i}-${h}`;
                 
                 return (
-                  <Droppable droppableId={droppableId} key={h}>
+                  <Droppable droppableId={droppableId} key={h} direction="vertical">
                     {(provided) => (
                       <Box 
                         ref={provided.innerRef}
@@ -416,7 +416,7 @@ const CalendarView = ({ tasks = [], onTaskClick, onTaskContextMenu }) => {
                           const due = dayjs(t.dueDate);
                           return due.hour() === h;
                         }).map((t, idx) => (
-                          <Draggable key={t._id} draggableId={t._id} index={idx}>
+                          <Draggable key={t._id} draggableId={t._id} index={idx} isDragDisabled={false}>
                             {(provided, snapshot) => (
                               <Tooltip 
                                 title={

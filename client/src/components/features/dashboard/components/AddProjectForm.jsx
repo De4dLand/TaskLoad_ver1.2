@@ -61,10 +61,39 @@ export default function AddProjectForm({ open, onClose, onSubmit }) {
     e.preventDefault();
     if (validate()) {
       const formData = {
-        ...form,
-        startDate: form.startDate ? new Date(form.startDate).toISOString() : undefined,
-        dueDate: form.dueDate ? new Date(form.dueDate).toISOString() : undefined
+        ...form
       };
+      
+      // Safely handle date conversion for startDate
+      if (form.startDate && form.startDate instanceof Date && !isNaN(form.startDate)) {
+        formData.startDate = form.startDate.toISOString();
+      } else if (form.startDate) {
+        // Try to convert to a valid date if it's not already
+        const startDate = new Date(form.startDate);
+        if (!isNaN(startDate.getTime())) {
+          formData.startDate = startDate.toISOString();
+        } else {
+          formData.startDate = undefined;
+        }
+      } else {
+        formData.startDate = undefined;
+      }
+      
+      // Safely handle date conversion for dueDate
+      if (form.dueDate && form.dueDate instanceof Date && !isNaN(form.dueDate)) {
+        formData.dueDate = form.dueDate.toISOString();
+      } else if (form.dueDate) {
+        // Try to convert to a valid date if it's not already
+        const dueDate = new Date(form.dueDate);
+        if (!isNaN(dueDate.getTime())) {
+          formData.dueDate = dueDate.toISOString();
+        } else {
+          formData.dueDate = undefined;
+        }
+      } else {
+        formData.dueDate = undefined;
+      }
+      
       onSubmit(formData);
     }
   };

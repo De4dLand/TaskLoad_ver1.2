@@ -1,6 +1,7 @@
 import express from "express"
 import auth from "../../../middlewares/auth.js"
 import projectController from "../controllers/projectController.js"
+import { checkProjectPermission } from "../../../utils/permissionMiddleware.js"
 
 const router = express.Router()
 
@@ -10,28 +11,28 @@ router.use(auth)
 // Get all projects for current user
 router.get("/", projectController.getUserProjects)
 
-// Get a specific project
-router.get("/:id", projectController.getProjectById)
+// Get a specific project - any project member can view
+router.get("/:id", checkProjectPermission(['owner', 'admin', 'member', 'supervisor']), projectController.getProjectById)
 
 // Create a new project
 router.post("/", projectController.createProject)
 
-// Update a project
-router.put("/:id", projectController.updateProject)
+// Update a project - only owner and admins can update
+router.put("/:id", checkProjectPermission(['owner', 'admin']), projectController.updateProject)
 
-// Delete a project
-router.delete("/:id", projectController.deleteProject)
+// Delete a project - only owner can delete
+router.delete("/:id", checkProjectPermission(['owner']), projectController.deleteProject)
 
-// Get tasks for a project
-router.get("/:id/tasks", projectController.getProjectTasks)
+// Get tasks for a project - any project member can view tasks
+router.get("/:id/tasks", checkProjectPermission(['owner', 'admin', 'member', 'supervisor']), projectController.getProjectTasks)
 
-// Add a member to a project
-router.post("/:id/members", projectController.addProjectMember)
+// Add a member to a project - only owner and admins can add members
+router.post("/:id/members", checkProjectPermission(['owner', 'admin']), projectController.addProjectMember)
 
-// Remove a member from a project
-router.delete("/:id/members/:userId", projectController.removeProjectMember)
+// Remove a member from a project - only owner and admins can remove members
+router.delete("/:id/members/:userId", checkProjectPermission(['owner', 'admin']), projectController.removeProjectMember)
 
-// Update a member's role in a project
-router.patch("/:id/members/:userId", projectController.updateMemberRole)
+// Update a member's role in a project - only owner can change roles
+router.patch("/:id/members/:userId", checkProjectPermission(['owner']), projectController.updateMemberRole)
 
 export default router

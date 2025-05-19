@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useChatContext } from '../contexts/ChatContext';
-import { useChatbotSocket } from '../hooks';
+import { useChatSocket } from '../hooks';
 import ChatInterface from './ChatInterface';
 import styles from './ChatRoom.module.css';
 
@@ -27,7 +27,7 @@ const ChatRoom = ({ currentUser }) => {
     sendMessage,
     sendTypingStatus,
     markAsRead
-  } = useChatbotSocket(token, currentUser?.id, currentRoomId);
+  } = useChatSocket(token, currentUser?.id, currentRoomId);
 
   // Handle room creation
   const handleCreateRoom = async (e) => {

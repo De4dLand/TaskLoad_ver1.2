@@ -2,8 +2,13 @@ import api from "../../../../services/api"
 
 export const fetchDashboardData = async () => {
   try {
-    // Fetch aggregated dashboard data for current user
-    const response = await api.get("/api/v1/dashboard")
+    // Fetch aggregated dashboard data for current user only
+    // The userId is handled by the auth token in the API request
+    const response = await api.get("/api/v1/dashboard", {
+      params: {
+        currentUserOnly: true // Explicit parameter to ensure only current user data
+      }
+    })
     return {
       tasks: response.data.tasks || [],
       projects: response.data.projects || [],
@@ -48,6 +53,7 @@ export const createProject = async (projectData) => {
 // Create a new task
 export const createTask = async (taskData) => {
   try {
+    console.log("Creating task with data:", taskData)
     const response = await api.post("/api/v1/tasks", taskData)
     return response.data
   } catch (error) {
@@ -112,10 +118,18 @@ export const fetchUserWorkspace = async (userId) => {
 }
 
 // Add a member to a project
-export const addProjectMember = async (projectId, userId, role = 'member') => {
-  console.log("Adding project member:", projectId, userId, role)
+export const addProjectMember = async (projectId, userId, memberData) => {
+  console.log("Adding project member:", projectId, userId, memberData)
   try {
-    const response = await api.post(`/api/v1/projects/${projectId}/members`, { userId, role })
+    // Extract member data or use defaults
+    const { role = 'member', position = '', startDate = new Date().toISOString() } = memberData || {}
+    
+    const response = await api.post(`/api/v1/projects/${projectId}/members`, { 
+      userId, 
+      role,
+      position,
+      startDate
+    })
     return response.data
   } catch (error) {
     console.error("Error adding project member:", error)
@@ -130,6 +144,17 @@ export const searchUsers = async (query) => {
     return response.data
   } catch (error) {
     console.error("Error searching users:", error)
+    throw error
+  }
+}
+
+// Remove a member from a project
+export const removeMember = async (projectId, memberId) => {
+  try {
+    const response = await api.delete(`/api/v1/projects/${projectId}/members/${memberId}`)
+    return response.data
+  } catch (error) {
+    console.error("Error removing project member:", error)
     throw error
   }
 }

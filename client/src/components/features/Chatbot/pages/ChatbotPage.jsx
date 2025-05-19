@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { Box, Typography, Paper } from '@mui/material';
-import { ChatInterface } from '../components';
+import { ChatInterface,ChatRoom,ChatBot } from '../components';
 import { AuthContext } from '../../../../contexts/AuthContext';
 import { ChatProvider } from '../contexts/ChatContext';
 
@@ -16,7 +16,9 @@ const ChatbotPage = () => {
   // In a real application, this could be dynamically determined
   const defaultRoomId = 'ai-assistant';
 
-  return (
+  return (<>
+
+  
     <Box sx={{ 
       display: 'flex', 
       flexDirection: 'column',
@@ -44,6 +46,15 @@ const ChatbotPage = () => {
         </ChatProvider>
       </Paper>
     </Box>
+    <Box>
+        <ChatBot/>
+    </Box>
+    <Box>
+    <ChatProvider>
+        <ChatRoom/>
+    </ChatProvider>
+    </Box>
+    </>
   );
 };
 
