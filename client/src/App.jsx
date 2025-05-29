@@ -23,6 +23,7 @@ import { DashboardPage } from "./components/features/dashboard/pages"
 import WorkspacePage from "./components/features/dashboard/pages/WorkspacePage"
 import { TaskListPage, TaskDetailPage } from "./components/features/tasks/pages"
 import { ChatbotPage } from "./components/features/Chatbot/pages"
+import { ChatbotButton } from "./components/features/Chatbot"
 
 function App() {
   return (
@@ -58,6 +59,7 @@ function App() {
               {/* Not found route */}
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
+            <ChatbotButton />
           </LocalizationProvider>
         </ThemeProvider>
       </AuthProvider>

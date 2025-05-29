@@ -1,11 +1,15 @@
 import User from "../../../models/User.js"
 import { generateToken, verifyToken } from "../../../utils/jwt.js"
 import { sendPasswordResetEmail } from "../../../utils/email.js"
-import { createError } from "../../../utils/error.js"
+import { createError, catchAsync } from "../../../utils/error.js"
 
-// Register a new user
-export const register = async (req, res, next) => {
-  try {
+export class AuthController {
+  constructor() {
+    // Constructor can be used for dependency injection if needed
+  }
+
+  // Register a new user
+  register = catchAsync(async (req, res) => {
     const { username, email, password } = req.body
     const redisClient = req.app.locals.redis
 
@@ -19,10 +23,10 @@ export const register = async (req, res, next) => {
 
     if (existingUser) {
       if (existingUser.email === email) {
-        return next(createError(400, "User with this email already exists"))
+        throw createError(400, "User with this email already exists")
       }
       if (existingUser.username === username) {
-        return next(createError(400, "Username is already taken"))
+        throw createError(400, "Username is already taken")
       }
     }
 
@@ -52,14 +56,10 @@ export const register = async (req, res, next) => {
       token,
       refreshToken,
     })
-  } catch (error) {
-    next(error)
-  }
-}
+  });
 
-// Login user
-export const login = async (req, res, next) => {
-  try {
+  // Login user
+  login = catchAsync(async (req, res) => {
     const { email, password } = req.body
     const redisClient = req.app.locals.redis
 
@@ -108,7 +108,7 @@ export const login = async (req, res, next) => {
     const user = await User.findOne({ email }).select('+password')
     if (!user) {
       console.log('User not found for email:', email);
-      return next(createError(401, "Invalid credentials"))
+      throw createError(401, "Invalid credentials")
     }
 
     console.log('Found user:', user.email);
@@ -125,13 +125,13 @@ export const login = async (req, res, next) => {
 
       if (!isPasswordValid) {
         console.log('Password validation failed');
-        return next(createError(401, "Invalid credentials"));
+        throw createError(401, "Invalid credentials");
       }
 
       console.log('Password validation successful');
     } catch (error) {
       console.error("Password comparison error:", error);
-      return next(createError(500, "Error during authentication"));
+      throw createError(500, "Error during authentication");
     }
 
     // Generate tokens
@@ -151,70 +151,60 @@ export const login = async (req, res, next) => {
       token,
       refreshToken,
     })
-  } catch (error) {
-    next(error)
-  }
-}
+  });
 
-// Logout user
-export const logout = async (req, res, next) => {
-  try {
+  // Logout user
+  logout = catchAsync(async (req, res) => {
     const { refreshToken } = req.body
     const redisClient = req.app.locals.redis
 
     if (!refreshToken) {
-      return next(createError(400, "Refresh token is required"))
+      throw createError(400, "Refresh token is required")
     }
 
     // Verify refresh token
     const decoded = verifyToken(refreshToken, process.env.JWT_REFRESH_SECRET)
     if (!decoded) {
-      return next(createError(401, "Invalid refresh token"))
+      throw createError(401, "Invalid refresh token")
     }
 
     // Remove refresh token from Redis
     await redisClient.del(`refresh_token:${decoded.userId}`)
 
     res.status(200).json({ message: "Logged out successfully" })
-  } catch (error) {
-    next(error)
-  }
-}
+  });
 
-// Get current user
-export const getCurrentUser = async (req, res, next) => {
-  try {
+  // Get current user
+  getCurrentUser = catchAsync(async (req, res) => {
     const user = await User.findById(req.user._id).select("-password")
     if (!user) {
-      return next(createError(404, "User not found"))
+      throw createError(404, "User not found")
     }
 
     res.status(200).json(user)
-  } catch (error) {
-    next(error)
-  }
-}
+  });
 
-// Refresh token
-export const refreshToken = async (req, res, next) => {
-  try {
+  // Refresh token
+  refreshToken = catchAsync(async (req, res) => {
     const { refreshToken } = req.body
     const redisClient = req.app.locals.redis
 
     if (!refreshToken) {
-      return next(createError(400, "Refresh token is required"))
+      throw createError(400, "Refresh token is required")
     }
 
     // Verify refresh token
-    const decoded = verifyToken(refreshToken, process.env.JWT_REFRESH_SECRET)
-    if (!decoded) {
-      return next(createError(401, "Invalid refresh token"))
+    let decoded
+    try {
+      decoded = verifyToken(refreshToken, process.env.JWT_REFRESH_SECRET)
+    } catch (error) {
+      throw createError(401, "Invalid refresh token")
     }
 
     // Check if refresh token exists in Redis
     const storedToken = await redisClient.get(`refresh_token:${decoded.userId}`)
     if (!storedToken || storedToken !== refreshToken) {
-      return next(createError(401, "Invalid refresh token"))
+      throw createError(401, "Invalid refresh token")
     }
 
     // Generate new tokens
@@ -228,14 +218,11 @@ export const refreshToken = async (req, res, next) => {
       token: newToken,
       refreshToken: newRefreshToken,
     })
-  } catch (error) {
-    next(error)
-  }
-}
+  });
 
-// Forgot password
-export const forgotPassword = async (req, res, next) => {
-  try {
+  // Request password reset
+  requestPasswordReset = catchAsync(async (req, res) => {
+
     const { email } = req.body
     const redisClient = req.app.locals.redis
 
@@ -257,14 +244,11 @@ export const forgotPassword = async (req, res, next) => {
     await sendPasswordResetEmail(user.email, user.username, resetUrl)
 
     res.status(200).json({ message: "If your email is registered, you will receive a password reset link" })
-  } catch (error) {
-    next(error)
-  }
-}
+  });
 
-// Reset password
-export const resetPassword = async (req, res, next) => {
-  try {
+  // Reset password
+  resetPassword = catchAsync(async (req, res) => {
+
     const { token } = req.params
     const { password } = req.body
     const redisClient = req.app.locals.redis
@@ -272,19 +256,19 @@ export const resetPassword = async (req, res, next) => {
     // Verify token
     const decoded = verifyToken(token, process.env.JWT_SECRET)
     if (!decoded) {
-      return next(createError(401, "Invalid or expired token"))
+      throw createError(401, "Invalid or expired token")
     }
 
     // Check if reset token exists in Redis
     const storedToken = await redisClient.get(`reset_token:${decoded.userId}`)
     if (!storedToken || storedToken !== token) {
-      return next(createError(401, "Invalid or expired token"))
+      throw createError(401, "Invalid or expired token")
     }
 
     // Find user
     const user = await User.findById(decoded.userId)
     if (!user) {
-      return next(createError(404, "User not found"))
+      throw createError(404, "User not found")
     }
 
     // Hash new password
@@ -298,20 +282,16 @@ export const resetPassword = async (req, res, next) => {
     await redisClient.del(`reset_token:${decoded.userId}`)
 
     res.status(200).json({ message: "Password reset successful" })
-  } catch (error) {
-    next(error)
-  }
-}
+  });
 
-// Update user profile
-export const updateProfile = async (req, res, next) => {
-  try {
+  // Update user profile
+  updateProfile = catchAsync(async (req, res) => {
     const { username, email } = req.body
 
     // Find user
-    const user = await User.findById(req.user._id)
+    const user = await User.findById(req.user.userId)
     if (!user) {
-      return next(createError(404, "User not found"))
+      throw createError(404, "User not found")
     }
 
     // Update user data
@@ -325,7 +305,7 @@ export const updateProfile = async (req, res, next) => {
       username: user.username,
       email: user.email,
     })
-  } catch (error) {
-    next(error)
-  }
+  });
 }
+
+export default new AuthController();

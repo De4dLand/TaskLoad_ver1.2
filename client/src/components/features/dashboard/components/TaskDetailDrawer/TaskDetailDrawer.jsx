@@ -24,8 +24,10 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
 import KeyboardIcon from "@mui/icons-material/Keyboard";
 import { getSocket } from "../../../../../services/socket";
+import { createSubtask, getSubtasksByTask, updateSubtask, deleteSubtask } from "../../../../features/tasks/services/subtaskService";
 
 // Utility to format date as dd/MM/yyyy
 function formatDate(date) {
@@ -55,6 +57,8 @@ const TaskDetailDrawer = ({
   const [isTyping, setIsTyping] = useState(false);
   const [commentError, setCommentError] = useState(null);
   const [assignedUsers, setAssignedUsers] = useState([]);
+  const [subtasks, setSubtasks] = useState([]);
+  const [subtaskLoading, setSubtaskLoading] = useState(false);
   const socketRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
@@ -170,22 +174,97 @@ const TaskDetailDrawer = ({
     setEditedTask((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubtaskToggle = (index) => {
-    const newSubtasks = [...(editedTask.subtasks || [])];
-    newSubtasks[index].completed = !newSubtasks[index].completed;
-    setEditedTask((prev) => ({ ...prev, subtasks: newSubtasks }));
+  // Fetch subtasks when task changes or drawer opens
+  useEffect(() => {
+    if (task && task._id && open) {
+      fetchSubtasks(task._id);
+    }
+  }, [task?._id, open]);
+
+  // Fetch subtasks from the API
+  const fetchSubtasks = async (taskId) => {
+    try {
+      setSubtaskLoading(true);
+      const fetchedSubtasks = await getSubtasksByTask(taskId);
+      setSubtasks(fetchedSubtasks);
+      // Update editedTask with fetched subtasks
+      setEditedTask(prev => ({ ...prev, subtasks: fetchedSubtasks }));
+    } catch (error) {
+      console.error('Error fetching subtasks:', error);
+    } finally {
+      setSubtaskLoading(false);
+    }
   };
 
-  const handleAddSubtask = () => {
-    if (subtaskInput.trim()) {
-      setEditedTask((prev) => ({
+  const handleSubtaskToggle = async (subtaskId, completed) => {
+    try {
+      // Update in the UI optimistically
+      setSubtasks(prev => 
+        prev.map(st => st._id === subtaskId ? { ...st, completed: !completed } : st)
+      );
+      
+      // Update in the editedTask state
+      setEditedTask(prev => ({
         ...prev,
-        subtasks: [
-          ...(prev.subtasks || []),
-          { title: subtaskInput.trim(), completed: false },
-        ],
+        subtasks: (prev.subtasks || []).map(st => 
+          st._id === subtaskId ? { ...st, completed: !completed } : st
+        )
       }));
-      setSubtaskInput("");
+      
+      // Send update to the server
+      await updateSubtask(subtaskId, { completed: !completed });
+    } catch (error) {
+      console.error('Error toggling subtask completion:', error);
+      // Revert the optimistic update if there's an error
+      fetchSubtasks(task._id);
+    }
+  };
+
+  const handleAddSubtask = async () => {
+    if (subtaskInput.trim()) {
+      try {
+        // Create new subtask data
+        const newSubtaskData = {
+          title: subtaskInput.trim(),
+          completed: false,
+          taskId: task._id
+        };
+        
+        // Add to the server
+        const createdSubtask = await createSubtask(newSubtaskData);
+        
+        // Update local state
+        setSubtasks(prev => [...prev, createdSubtask]);
+        setEditedTask(prev => ({
+          ...prev,
+          subtasks: [...(prev.subtasks || []), createdSubtask]
+        }));
+        
+        // Clear input
+        setSubtaskInput("");
+      } catch (error) {
+        console.error('Error adding subtask:', error);
+      }
+    }
+  };
+
+  const handleDeleteSubtask = async (subtaskId) => {
+    try {
+      // Remove from UI optimistically
+      setSubtasks(prev => prev.filter(st => st._id !== subtaskId));
+      
+      // Update in the editedTask state
+      setEditedTask(prev => ({
+        ...prev,
+        subtasks: (prev.subtasks || []).filter(st => st._id !== subtaskId)
+      }));
+      
+      // Delete from the server
+      await deleteSubtask(subtaskId);
+    } catch (error) {
+      console.error('Error deleting subtask:', error);
+      // Revert the optimistic update if there's an error
+      fetchSubtasks(task._id);
     }
   };
 
@@ -494,30 +573,56 @@ const TaskDetailDrawer = ({
           {/* Subtasks */}
           <Box mt={2}>
             <Typography variant="subtitle2">Subtasks</Typography>
-            <Stack spacing={1} mt={1}>
-              {(editedTask.subtasks || []).map((subtask, idx) => (
-                <Paper key={idx} sx={{ p: 1, display: 'flex', alignItems: 'center' }} variant="outlined">
-                  <Checkbox
-                    checked={!!subtask.completed}
-                    onChange={() => editMode && handleSubtaskToggle(idx)}
-                    disabled={!editMode}
-                  />
-                  <Typography sx={{ flex: 1 }}>{subtask.title}</Typography>
-                </Paper>
-              ))}
-              {editMode && (
-                <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                  <TextField
-                    value={subtaskInput}
-                    onChange={e => setSubtaskInput(e.target.value)}
-                    size="small"
-                    placeholder="Subtask title"
-                    fullWidth
-                  />
-                  <Button variant="contained" color="primary" onClick={handleAddSubtask} startIcon={<AddIcon />}>Add</Button>
-                </Box>
-              )}
-            </Stack>
+            {subtaskLoading ? (
+              <Box display="flex" justifyContent="center" my={2}>
+                <CircularProgress size={24} />
+              </Box>
+            ) : (
+              <Stack spacing={1} mt={1}>
+                {(editedTask.subtasks || []).map((subtask) => (
+                  <Paper 
+                    key={subtask._id || subtask.id} 
+                    sx={{ p: 1, display: 'flex', alignItems: 'center' }} 
+                    variant="outlined"
+                  >
+                    <Checkbox
+                      checked={!!subtask.completed}
+                      onChange={() => handleSubtaskToggle(subtask._id, subtask.completed)}
+                      disabled={!editMode}
+                    />
+                    <Typography sx={{ flex: 1 }}>{subtask.title}</Typography>
+                    {editMode && (
+                      <IconButton 
+                        size="small" 
+                        color="error" 
+                        onClick={() => handleDeleteSubtask(subtask._id)}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                  </Paper>
+                ))}
+                {editMode && (
+                  <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                    <TextField
+                      value={subtaskInput}
+                      onChange={e => setSubtaskInput(e.target.value)}
+                      size="small"
+                      placeholder="Subtask title"
+                      fullWidth
+                    />
+                    <Button 
+                      variant="contained" 
+                      color="primary" 
+                      onClick={handleAddSubtask} 
+                      startIcon={<AddIcon />}
+                    >
+                      Add
+                    </Button>
+                  </Box>
+                )}
+              </Stack>
+            )}
           </Box>
 
           {/* Edit/Save Buttons */}

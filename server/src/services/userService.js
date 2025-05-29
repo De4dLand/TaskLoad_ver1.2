@@ -182,8 +182,127 @@ export class UserService {
     async searchUsers(query) {
       const regex = new RegExp(query, 'i');
       const users = await User.find({
-        $or: [{ username: regex }, { email: regex }]
-      }).select('username email _id');
+        $or: [
+          { username: regex }, 
+          { email: regex },
+          { firstName: regex },
+          { lastName: regex }
+        ]
+      }).select('username email firstName lastName profileImage _id');
       return users;
+    }
+
+    // Update user preferences
+    async updateUserPreferences(userId, preferences) {
+      const user = await User.findById(userId);
+      if (!user) {
+        throw createError(404, 'User not found');
+      }
+
+      // Initialize preferences if it doesn't exist
+      if (!user.preferences) {
+        user.preferences = new Map();
+      }
+
+      // Update preferences
+      Object.entries(preferences).forEach(([key, value]) => {
+        user.preferences.set(key, value);
+      });
+
+      await user.save();
+      return user;
+    }
+
+    // Get user statistics
+    async getUserStats(userId) {
+      const user = await User.findById(userId)
+        .populate('teamCount')
+        .populate('projectCount')
+        .populate('taskCount')
+        .populate('createdTaskCount')
+        .populate({
+          path: 'tasksByStatus',
+          select: 'status'
+        });
+
+      if (!user) {
+        throw createError(404, 'User not found');
+      }
+
+      // Calculate task status distribution
+      const taskStatusDistribution = {};
+      if (user.tasksByStatus && user.tasksByStatus.length > 0) {
+        user.tasksByStatus.forEach(task => {
+          if (!taskStatusDistribution[task.status]) {
+            taskStatusDistribution[task.status] = 0;
+          }
+          taskStatusDistribution[task.status]++;
+        });
+      }
+
+      return {
+        teams: user.teamCount || 0,
+        projects: user.projectCount || 0,
+        assignedTasks: user.taskCount || 0,
+        createdTasks: user.createdTaskCount || 0,
+        taskStatusDistribution,
+        lastLogin: user.lastLogin
+      };
+    }
+
+    // Add custom field
+    async addCustomField(userId, name, value) {
+      const user = await User.findById(userId);
+      if (!user) {
+        throw createError(404, 'User not found');
+      }
+
+      // Initialize customFields if it doesn't exist
+      if (!user.customFields) {
+        user.customFields = [];
+      }
+
+      // Check if field already exists
+      const existingFieldIndex = user.customFields.findIndex(field => field.name === name);
+      if (existingFieldIndex !== -1) {
+        throw createError(400, `Field '${name}' already exists. Use update method instead.`);
+      }
+
+      // Add new field
+      user.customFields.push({
+        name,
+        value,
+        createdAt: new Date()
+      });
+
+      await user.save();
+      return user;
+    }
+
+    // Update custom field
+    async updateCustomField(userId, name, value) {
+      const user = await User.findById(userId);
+      if (!user) {
+        throw createError(404, 'User not found');
+      }
+
+      // Check if customFields exists
+      if (!user.customFields || !Array.isArray(user.customFields)) {
+        user.customFields = [];
+        throw createError(404, `Field '${name}' not found`);
+      }
+
+      // Find field
+      const fieldIndex = user.customFields.findIndex(field => field.name === name);
+      if (fieldIndex === -1) {
+        throw createError(404, `Field '${name}' not found`);
+      }
+
+      // Update field
+      user.customFields[fieldIndex].value = value;
+      user.customFields[fieldIndex].updatedAt = new Date();
+
+      await user.save();
+      return user;
     }
 }

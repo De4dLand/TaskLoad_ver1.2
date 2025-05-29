@@ -5,7 +5,6 @@ import { validateTeam } from '../validator/teamValidator.js';
 import { checkTeamPermission } from '../../../utils/permissionMiddleware.js';
 
 const router = express.Router();
-const teamController = new TeamController();
 
 // Protect all routes after this middleware
 router.use(auth.verifyToken);
@@ -13,49 +12,49 @@ router.use(auth.verifyToken);
 // Team routes
 router
     .route('/')
-    .get(teamController.getTeams)
-    .post(validateTeam, teamController.createTeam);
+    .get(TeamController.getTeams)
+    .post(validateTeam, TeamController.createTeam);
 
 router
     .route('/:id')
-    .get(checkTeamPermission(false), teamController.getTeam)
-    .patch(checkTeamPermission(true), validateTeam, teamController.updateTeam)
-    .delete(checkTeamPermission(true), teamController.deleteTeam);
+    .get(checkTeamPermission(false), TeamController.getTeam)
+    .patch(checkTeamPermission(true), validateTeam, TeamController.updateTeam)
+    .delete(checkTeamPermission(true), TeamController.deleteTeam);
 
 // Team member routes
 router
     .route('/:id/members')
-    .get(checkTeamPermission(false), teamController.getTeamMembers)
-    .post(checkTeamPermission(true), teamController.addMember);
+    .get(checkTeamPermission(false), TeamController.getTeamMembers)
+    .post(checkTeamPermission(true), TeamController.addMember);
 
 router
     .route('/:id/members/:userId')
-    .delete(checkTeamPermission(true), teamController.removeMember);
+    .delete(checkTeamPermission(true), TeamController.removeMember);
 
 // Team project routes
 router
     .route('/:id/projects')
-    .get(checkTeamPermission(false), teamController.getTeamProjects)
-    .post(checkTeamPermission(true), teamController.addProject);
+    .get(checkTeamPermission(false), TeamController.getTeamProjects)
+    .post(checkTeamPermission(true), TeamController.addProject);
 
 router
     .route('/:id/projects/:projectId')
-    .delete(checkTeamPermission(true), teamController.removeProject);
+    .delete(checkTeamPermission(true), TeamController.removeProject);
 
 // Team statistics routes
 router
     .route('/:id/stats')
-    .get(checkTeamPermission(false), teamController.getTeamStats);
+    .get(checkTeamPermission(false), TeamController.getTeamStats);
 
 // Team timeline routes
 router
     .route('/:id/timeline')
-    .get(checkTeamPermission(false), teamController.getTeamTimeline);
+    .get(checkTeamPermission(false), TeamController.getTeamTimeline);
 
 // Team custom fields routes
 router
     .route('/:id/custom-fields')
-    .get(checkTeamPermission(false), teamController.getCustomFields)
-    .patch(checkTeamPermission(true), teamController.updateCustomFields);
+    .get(checkTeamPermission(false), TeamController.getCustomFields)
+    .patch(checkTeamPermission(true), TeamController.updateCustomFields);
 
 export default router;

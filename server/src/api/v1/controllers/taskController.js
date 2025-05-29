@@ -1,8 +1,8 @@
-import Task from "../../../models/Task.js"
-import Project from "../../../models/Project.js" // Import Project model
-import { createError } from "../../../utils/error.js"
-import redisClient from "../../../loaders/redis.js"
 import mongoose from "mongoose"
+import Task from "../../../models/Task.js"
+import Project from "../../../models/Project.js"
+import { createError, catchAsync } from "../../../utils/error.js"
+import redisClient from "../../../loaders/redis.js"
 import { hasTaskAccess, canModifyTask, canDeleteTask } from "../../../utils/permissions.js"
 
 // Helper function to set cache with expiration
@@ -46,8 +46,13 @@ const invalidateCache = async (pattern) => {
   }
 }
 
-export const getTasks = async (req, res, next) => {
-  try {
+export class TaskController {
+  constructor() {
+    // Constructor can be used for dependency injection if needed
+  }
+  
+  // Get all tasks with filtering and pagination
+  getTasks = catchAsync(async (req, res) => {
     const {
       status,
       priority,
@@ -161,18 +166,15 @@ export const getTasks = async (req, res, next) => {
     await setCacheWithExpiry(cacheKey, result)
 
     res.json(result)
-  } catch (error) {
-    next(createError(500, `Error fetching tasks: ${error.message}`))
-  }
-}
+  });
 
-export const getTaskById = async (req, res, next) => {
-  try {
+  // Get a specific task by ID
+  getTaskById = catchAsync(async (req, res) => {
     const { id } = req.params
 
     // Validate ID format
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return next(createError(400, "Invalid task ID format"))
+      throw createError(400, "Invalid task ID format")
     }
 
     // Try to get from cache
@@ -193,7 +195,7 @@ export const getTaskById = async (req, res, next) => {
       })
 
     if (!task) {
-      return next(createError(404, "Task not found"))
+      throw createError(404, "Task not found")
     }
 
     // Check permissions - user must be creator, assignee, or team member
@@ -206,7 +208,7 @@ export const getTaskById = async (req, res, next) => {
       const isTeamMember = false // Placeholder
 
       if (!isTeamMember) {
-        return next(createError(403, "You don't have permission to view this task"))
+        throw createError(403, "You don't have permission to view this task")
       }
     }
 
@@ -214,18 +216,16 @@ export const getTaskById = async (req, res, next) => {
     await setCacheWithExpiry(cacheKey, task, 300)
 
     res.json(task)
-  } catch (error) {
-    next(createError(500, `Error fetching task: ${error.message}`))
-  }
-}
+  });
 
-export const createTask = async (req, res, next) => {
-  try {
+
+  // Create a new task
+  createTask = catchAsync(async (req, res) => {
     const { title, description, status, priority, dueDate, project, assignedTo, tags, estimatedHours } = req.body
 
     // Validation
     if (!title) {
-      return next(createError(400, "Task title is required"))
+      throw createError(400, "Task title is required")
     }
 
     // Create task, omit assignedTo if empty to avoid cast errors
@@ -238,13 +238,13 @@ export const createTask = async (req, res, next) => {
       project,
       tags: tags || [],
       estimatedHours,
-      createdBy: req.user._id,
+      createdBy: req.user.userId,
     };
     if (assignedTo !== "") {
       taskData.assignedTo = assignedTo;
     }
     else{
-      taskData.assignedTo = req.user._id
+      taskData.assignedTo = req.user.userId
     }
     const task = new Task(taskData);
 
@@ -265,32 +265,29 @@ export const createTask = async (req, res, next) => {
     }
 
     res.status(201).json(populatedTask)
-  } catch (error) {
-    next(createError(400, `Error creating task: ${error.message}`))
-  }
-}
+  });
 
-export const updateTask = async (req, res, next) => {
-  try {
+  // Update an existing task
+  updateTask = catchAsync(async (req, res) => {
     const { id } = req.params
     const updateData = req.body
 
     // Validate ID format
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return next(createError(400, "Invalid task ID format"))
+      throw createError(400, "Invalid task ID format")
     }
 
     // Find task
     const task = await Task.findById(id)
 
     if (!task) {
-      return next(createError(404, "Task not found"))
+      throw createError(404, "Task not found")
     }
     
     // Get the project for permission checking
     const project = await Project.findById(task.project)
     if (!project) {
-      return next(createError(404, "Project not found"))
+      throw createError(404, "Project not found")
     }
     
     // Robustly extract user ID from req.user
@@ -298,7 +295,7 @@ export const updateTask = async (req, res, next) => {
     
     // Check permissions using the utility function
     if (!canModifyTask(task, userId, project)) {
-      return next(createError(403, "You don't have permission to update this task"))
+      throw createError(403, "You don't have permission to update this task")
     }
 
     // List of fields that can be updated
@@ -344,31 +341,28 @@ export const updateTask = async (req, res, next) => {
     }
 
     res.json(updatedTask)
-  } catch (error) {
-    next(createError(400, `Error updating task: ${error.message}`))
-  }
-}
+  });
 
-export const deleteTask = async (req, res, next) => {
-  try {
+  // Delete a task
+  deleteTask = catchAsync(async (req, res) => {
     const { id } = req.params
 
     // Validate ID format
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return next(createError(400, "Invalid task ID format"))
+      throw createError(400, "Invalid task ID format")
     }
 
     // Find task
     const task = await Task.findById(id)
 
     if (!task) {
-      return next(createError(404, "Task not found"))
+      throw createError(404, "Task not found")
     }
 
     // Get the project for permission checking
     const project = await Project.findById(task.project)
     if (!project) {
-      return next(createError(404, "Project not found"))
+      throw createError(404, "Project not found")
     }
     
     // Robustly extract user ID from req.user
@@ -376,13 +370,13 @@ export const deleteTask = async (req, res, next) => {
     
     // Check permissions using the utility function
     if (!canDeleteTask(task, userId, project)) {
-      return next(createError(403, "You don't have permission to delete this task"))
+      throw createError(403, "You don't have permission to delete this task")
     }
 
     // Store assignee ID before deleting for cache invalidation
     const assigneeId = task.assignedTo
-
-    // Delete the task
+    
+    // Delete task
     await Task.findByIdAndDelete(id)
 
     // Invalidate related caches
@@ -395,13 +389,12 @@ export const deleteTask = async (req, res, next) => {
     }
 
     res.json({ message: "Task deleted successfully" })
-  } catch (error) {
-    next(createError(500, `Error deleting task: ${error.message}`))
-  }
-}
+  });
 
-export const getTaskStats = async (req, res, next) => {
-  try {
+
+
+  // Get task statistics for the current user
+  getTaskStats = catchAsync(async (req, res) => {
     const userId = req.user.userId
 
     // Try to get from cache
@@ -491,13 +484,10 @@ export const getTaskStats = async (req, res, next) => {
     await setCacheWithExpiry(cacheKey, stats, 3600)
 
     res.json(stats)
-  } catch (error) {
-    next(createError(500, `Error fetching task statistics: ${error.message}`))
-  }
-}
+  });
 
-export const getRecentTasks = async (req, res, next) => {
-  try {
+  // Get recent tasks for the current user
+  getRecentTasks = catchAsync(async (req, res) => {
     const { limit = 5 } = req.query
     const userId = req.user.userId
 
@@ -526,13 +516,10 @@ export const getRecentTasks = async (req, res, next) => {
     await setCacheWithExpiry(cacheKey, tasks, 300)
 
     res.json(tasks)
-  } catch (error) {
-    next(createError(500, `Error fetching recent tasks: ${error.message}`))
-  }
-}
+  });
 
-export const getUpcomingDeadlines = async (req, res, next) => {
-  try {
+  // Get upcoming deadlines for the current user
+  getUpcomingDeadlines = catchAsync(async (req, res) => {
     const { limit = 5 } = req.query
     const userId = req.user.userId
 
@@ -567,18 +554,15 @@ export const getUpcomingDeadlines = async (req, res, next) => {
     await setCacheWithExpiry(cacheKey, tasks, 600)
 
     res.json(tasks)
-  } catch (error) {
-    next(createError(500, `Error fetching upcoming deadlines: ${error.message}`))
-  }
-}
+  });
 
-export const getTasksByDateRange = async (req, res, next) => {
-  try {
+  // Get tasks within a date range
+  getTasksByDateRange = catchAsync(async (req, res) => {
     const { startDate, endDate } = req.query
     const userId = req.user.userId
 
     if (!startDate || !endDate) {
-      return next(createError(400, "Both startDate and endDate are required"))
+      throw createError(400, "Both startDate and endDate are required")
     }
 
     // Try to get from cache
@@ -613,31 +597,28 @@ export const getTasksByDateRange = async (req, res, next) => {
     await setCacheWithExpiry(cacheKey, tasks, 900)
 
     res.json(tasks)
-  } catch (error) {
-    next(createError(500, `Error fetching tasks by date range: ${error.message}`))
-  }
-}
+  });
 
-export const updateTaskStatus = async (req, res, next) => {
-  try {
+  // Update task status
+  updateTaskStatus = catchAsync(async (req, res) => {
     const { id } = req.params
     const { status } = req.body
 
     // Validate ID format
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return next(createError(400, "Invalid task ID format"))
+      throw createError(400, "Invalid task ID format")
     }
 
     // Validate status
     if (!["todo", "in_progress", "review", "completed"].includes(status)) {
-      return next(createError(400, "Invalid status value"))
+      throw createError(400, "Invalid status value")
     }
 
     // Find task
     const task = await Task.findById(id)
 
     if (!task) {
-      return next(createError(404, "Task not found"))
+      throw createError(404, "Task not found")
     }
 
     // Check permissions - creator or assignee can update status
@@ -645,7 +626,7 @@ export const updateTaskStatus = async (req, res, next) => {
     const isAssignee = task.assignedTo && task.assignedTo.toString() === req.user.userId
 
     if (!isCreator && !isAssignee) {
-      return next(createError(403, "You don't have permission to update this task's status"))
+      throw createError(403, "You don't have permission to update this task's status")
     }
 
     // Update status
@@ -670,7 +651,7 @@ export const updateTaskStatus = async (req, res, next) => {
     }
 
     res.json(updatedTask)
-  } catch (error) {
-    next(createError(400, `Error updating task status: ${error.message}`))
-  }
+  });
 }
+
+export default new TaskController();

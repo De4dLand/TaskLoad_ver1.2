@@ -1,15 +1,8 @@
 import express from 'express';
-import { verifyToken } from '../../../middlewares/auth.js';
+import auth from '../../../middlewares/auth.js';
 import { validate } from '../middlewares/validationMiddleware.js';
 import { checkChatAccess } from '../../../utils/permissionMiddleware.js';
-import {
-  getChatRooms,
-  getChatRoomById,
-  getChatMessages,
-  createChatRoom,
-  sendMessage,
-  markMessagesAsRead
-} from '../controllers/chatController.js';
+import chatController from '../controllers/chatController.js';
 import {
   createChatRoomValidator,
   getChatRoomValidator,
@@ -21,24 +14,24 @@ import {
 const router = express.Router();
 
 // Apply authentication middleware to all chat routes
-router.use(verifyToken);
+router.use(auth.verifyToken);
 
 // Get all chat rooms for the current user
-router.get('/', getChatRooms);
+router.get('/', chatController.getChatRooms);
 
 // Create a new chat room
-router.post('/', createChatRoomValidator, validate, createChatRoom);
+router.post('/', createChatRoomValidator, validate, chatController.createChatRoom);
 
 // Get a specific chat room by ID
-router.get('/:roomId', getChatRoomValidator, validate, checkChatAccess(), getChatRoomById);
+router.get('/:roomId', getChatRoomValidator, validate, checkChatAccess(), chatController.getChatRoomById);
 
 // Get messages for a specific chat room
-router.get('/:roomId/messages', getChatMessagesValidator, validate, checkChatAccess(), getChatMessages);
+router.get('/:roomId/messages', getChatMessagesValidator, validate, checkChatAccess(), chatController.getChatMessages);
 
 // Send a message to a chat room
-router.post('/:roomId/messages', sendMessageValidator, validate, checkChatAccess(), sendMessage);
+router.post('/:roomId/messages', sendMessageValidator, validate, checkChatAccess(), chatController.sendMessage);
 
 // Mark messages as read
-router.post('/:roomId/read', markMessagesAsReadValidator, validate, checkChatAccess(), markMessagesAsRead);
+router.post('/:roomId/read', markMessagesAsReadValidator, validate, checkChatAccess(), chatController.markMessagesAsRead);
 
 export default router;

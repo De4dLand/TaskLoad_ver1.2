@@ -177,4 +177,6 @@ export const findByLeader = async (leaderId) => {
 
 export const findByMember = async (memberId) => {
     return await Team.find({ members: memberId });
-}; 
+};
+
+export default new TeamService();

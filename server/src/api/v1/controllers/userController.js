@@ -1,5 +1,5 @@
 import { UserService } from '../../../services/userService.js';
-import { catchAsync } from '../../../utils/error.js';
+import { catchAsync, createError } from '../../../utils/error.js';
 
 export class UserController {
   constructor() {
@@ -96,5 +96,83 @@ export class UserController {
     const { query } = req.query;
     const users = await this.userService.searchUsers(query || '');
     res.status(200).json(users);
+  });
+
+  // Get user preferences
+  getUserPreferences = catchAsync(async (req, res) => {
+    const user = await this.userService.getUserById(req.user._id);
+    
+    res.status(200).json({
+      status: 'success',
+      data: { preferences: user.preferences || {} }
+    });
+  });
+
+  // Update user preferences
+  updateUserPreferences = catchAsync(async (req, res) => {
+    const { preferences } = req.body;
+    
+    if (!preferences || typeof preferences !== 'object') {
+      throw createError(400, 'Preferences must be a valid object');
+    }
+    
+    const user = await this.userService.updateUserPreferences(req.user._id, preferences);
+    
+    res.status(200).json({
+      status: 'success',
+      data: { preferences: user.preferences }
+    });
+  });
+
+  // Get user statistics
+  getUserStats = catchAsync(async (req, res) => {
+    const stats = await this.userService.getUserStats(req.user._id);
+    
+    res.status(200).json({
+      status: 'success',
+      data: { stats }
+    });
+  });
+
+  // Get user custom fields
+  getCustomFields = catchAsync(async (req, res) => {
+    const user = await this.userService.getUserById(req.user._id);
+    
+    res.status(200).json({
+      status: 'success',
+      data: { customFields: user.customFields || [] }
+    });
+  });
+
+  // Add custom field
+  addCustomField = catchAsync(async (req, res) => {
+    const { name, value } = req.body;
+    
+    if (!name) {
+      throw createError(400, 'Field name is required');
+    }
+    
+    const user = await this.userService.addCustomField(req.user._id, name, value);
+    
+    res.status(200).json({
+      status: 'success',
+      data: { customFields: user.customFields }
+    });
+  });
+
+  // Update custom field
+  updateCustomField = catchAsync(async (req, res) => {
+    const { name, value } = req.body;
+    
+    if (!name) {
+      throw createError(400, 'Field name is required');
+    }
+    
+    const user = await this.userService.updateCustomField(req.user._id, name, value);
+    
+    res.status(200).json({
+      status: 'success',
+      data: { customFields: user.customFields }
+    });
   });
 }

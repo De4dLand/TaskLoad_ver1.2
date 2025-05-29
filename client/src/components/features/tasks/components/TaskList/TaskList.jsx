@@ -55,7 +55,20 @@ const TaskList = ({ tasks = [], onEdit = () => {}, onDelete = () => {} }) => {
                   {task.title}
                 </Link>
               }
-              secondary={`Due: ${new Date(task.dueDate).toLocaleDateString()}`}
+              secondary={
+                <Box>
+                  <Typography variant="caption" display="block">
+                    Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No due date'}
+                  </Typography>
+                  {task.assignedTo && (
+                    <Typography variant="caption" color="textSecondary">
+                      Assigned to: {task.assignedTo.firstName && task.assignedTo.lastName 
+                        ? `${task.assignedTo.firstName} ${task.assignedTo.lastName}` 
+                        : task.assignedTo.username || 'Unknown'}
+                    </Typography>
+                  )}
+                </Box>
+              }
             />
             <Box className={styles.chipContainer}>
               <Chip size="small" label={task.status} color={getStatusColor(task.status)} className={styles.chip} />

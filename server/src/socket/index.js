@@ -3,6 +3,7 @@ import chatHandler from './handlers/chatHandler.js';
 import chatbotHandler from './handlers/chatbotHandler.js';
 import notificationHandler from './handlers/notificationHandler.js';
 import timeTrackingHandler from './handlers/timeTrackingHandler.js';
+import taskChatHandler from './handlers/taskChatHandler.js';
 import { emitDeadlineWarnings, handleCommentEvents } from '../socketTasks.js';
 
 /**
@@ -72,6 +73,7 @@ export default function initializeSocketIO(server) {
     chatHandler(io, socket, onlineUsers);
     notificationHandler(io, socket, onlineUsers);
     timeTrackingHandler(io, socket, onlineUsers);
+    taskChatHandler(io, socket, onlineUsers);
   });
 
   // Set up periodic tasks

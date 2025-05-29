@@ -2,9 +2,7 @@ import { Outlet } from "react-router-dom"
 import { Box, Container } from "@mui/material"
 import AppHeader from "./AppHeader"
 import AppSidebar from "./AppSidebar"
-import ChatButton from "./ChatButton"
-// import ChatRoom from "./ChatRoom"
-// import ChatBot from '../../features/Chatbot/ChatBot'
+import { ChatbotButton } from "../../features/Chatbot"
 import styles from "./MainLayout.module.css"
 
 const MainLayout = () => {
@@ -19,8 +17,8 @@ const MainLayout = () => {
           </Container>
         </Box>
       </Box>
-      <ChatButton /> 
-      {/* <ChatRoom /> */}
+      {/* AI Assistant chatbot button */}
+      <ChatbotButton />
     </Box>
   )
 }

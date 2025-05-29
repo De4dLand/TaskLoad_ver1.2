@@ -1,10 +1,11 @@
 import Task from "../../../models/Task.js"
 import Project from "../../../models/Project.js"
 import { subDays, startOfDay, endOfDay, format } from "date-fns"
+import { catchAsync } from "../../../utils/error.js"
 
-// Get activity data for the last N days
-export const getActivityData = async (req, res, next) => {
-  try {
+export class DashboardController {
+  // Get activity data for the last N days
+  getActivityData = catchAsync(async (req, res) => {
     const { days = 7 } = req.query
     const daysNum = Number.parseInt(days)
 
@@ -50,24 +51,21 @@ export const getActivityData = async (req, res, next) => {
     await redis.set(cacheKey, JSON.stringify(activityData), "EX", 60 * 60)
 
     res.status(200).json(activityData)
-  } catch (error) {
-    next(error)
-  }
-}
+  });
 
-// Get dashboard data: tasks and projects
-export const getDashboardData = async (req, res, next) => {
-  try {
+  // Get dashboard data: tasks and projects
+  getDashboardData = catchAsync(async (req, res) => {
     const { currentUserOnly = false } = req.query
     
     // Fetch tasks for user (created or assigned)
     const taskQuery = {
-      $or: [{ owner: req.user._id }, { createdBy: req.user._id }],
+      $or: [{ assignedTo: req.user._id }, { createdBy: req.user._id }],
     }
     
     const tasks = await Task.find(taskQuery)
-      .populate('project', 'name')
-      .populate('createdBy', 'username firstName lastName')
+      .populate('project', 'name color')
+      .populate('assignedTo', 'username firstName lastName profileImage')
+      .populate('createdBy', 'username firstName lastName profileImage')
       .sort({ createdAt: -1 })
 
     // Fetch projects for user (owner or member)
@@ -76,12 +74,13 @@ export const getDashboardData = async (req, res, next) => {
     }
     
     const projects = await Project.find(projectQuery)
-      .populate('owner', 'username email')
-      .populate('members.user', 'username email')
+      .populate('owner', 'username firstName lastName email profileImage')
+      .populate('members.user', 'username firstName lastName email profileImage')
+      .populate('tasks', 'title status priority dueDate')
       .sort({ updatedAt: -1 })
 
     return res.status(200).json({ tasks, projects })
-  } catch (error) {
-    next(error)
-  }
+  });
 }
+
+export default new DashboardController();

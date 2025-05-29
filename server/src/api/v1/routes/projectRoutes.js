@@ -6,7 +6,7 @@ import { checkProjectPermission } from "../../../utils/permissionMiddleware.js"
 const router = express.Router()
 
 // Apply authentication middleware to all project routes
-router.use(auth)
+router.use(auth.verifyToken)
 
 // Get all projects for current user
 router.get("/", projectController.getUserProjects)

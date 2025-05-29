@@ -1,11 +1,12 @@
 import Chat from '../../../models/Chat.js';
-import { createError } from '../../../utils/error.js';
+import { createError, catchAsync } from '../../../utils/error.js';
 
 /**
  * Controller for chat-related API endpoints
  */
-export const getChatRooms = async (req, res, next) => {
-  try {
+export class ChatController {
+  // Get all chat rooms for the current user
+  getChatRooms = catchAsync(async (req, res) => {
     const userId = req.user._id;
     
     // Find all chat rooms where the user is a participant
@@ -19,13 +20,10 @@ export const getChatRooms = async (req, res, next) => {
       results: chatRooms.length,
       data: chatRooms
     });
-  } catch (error) {
-    next(error);
-  }
-};
+  });
 
-export const getChatRoomById = async (req, res, next) => {
-  try {
+  // Get a specific chat room by ID
+  getChatRoomById = catchAsync(async (req, res, next) => {
     const { roomId } = req.params;
     const userId = req.user._id;
     
@@ -43,13 +41,10 @@ export const getChatRoomById = async (req, res, next) => {
       status: 'success',
       data: chatRoom
     });
-  } catch (error) {
-    next(error);
-  }
-};
+  });
 
-export const getChatMessages = async (req, res, next) => {
-  try {
+  // Get messages from a specific chat room
+  getChatMessages = catchAsync(async (req, res, next) => {
     const { roomId } = req.params;
     const userId = req.user._id;
     const { limit = 50, before } = req.query;
@@ -79,13 +74,10 @@ export const getChatMessages = async (req, res, next) => {
       results: messages.length,
       data: messages
     });
-  } catch (error) {
-    next(error);
-  }
-};
+  });
 
-export const createChatRoom = async (req, res, next) => {
-  try {
+  // Create a new chat room
+  createChatRoom = catchAsync(async (req, res) => {
     const { type, participants, name } = req.body;
     const userId = req.user._id;
     
@@ -123,13 +115,10 @@ export const createChatRoom = async (req, res, next) => {
       status: 'success',
       data: newChatRoom
     });
-  } catch (error) {
-    next(error);
-  }
-};
+  });
 
-export const sendMessage = async (req, res, next) => {
-  try {
+  // Send a message to a chat room
+  sendMessage = catchAsync(async (req, res, next) => {
     const { roomId } = req.params;
     const { content } = req.body;
     const userId = req.user._id;
@@ -160,13 +149,10 @@ export const sendMessage = async (req, res, next) => {
       status: 'success',
       data: message
     });
-  } catch (error) {
-    next(error);
-  }
-};
+  });
 
-export const markMessagesAsRead = async (req, res, next) => {
-  try {
+  // Mark messages as read
+  markMessagesAsRead = catchAsync(async (req, res, next) => {
     const { roomId } = req.params;
     const { messageIds } = req.body;
     const userId = req.user._id;
@@ -198,7 +184,7 @@ export const markMessagesAsRead = async (req, res, next) => {
       status: 'success',
       message: 'Messages marked as read'
     });
-  } catch (error) {
-    next(error);
-  }
-};
+  });
+}
+
+export default new ChatController();

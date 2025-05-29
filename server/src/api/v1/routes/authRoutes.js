@@ -1,30 +1,24 @@
 import express from "express"
-import {
-    register,
-    login,
-    logout,
-    refreshToken,
-    forgotPassword,
-    resetPassword,
-    getCurrentUser,
-    updateProfile
-} from "../controllers/authController.js"
 import auth from "../../../middlewares/auth.js"
-import { validateRegister, validateLogin, validatePassword } from "../validator/authValidator.js"
+import { validateRegister, validateLogin } from "../validator/authValidator.js"
+import authController from "../controllers/authController.js"
 
 const router = express.Router()
 
 // Public routes
-router.post("/register", validateRegister, register)
-router.post("/login", validateLogin, login)
-router.post("/logout", logout)
-router.post("/refresh-token", refreshToken)
-router.post("/forgot-password", forgotPassword)
-router.post("/reset-password/:token", validatePassword, resetPassword)
+router.post("/register", validateRegister, authController.register)
+router.post("/login", validateLogin, authController.login)
+router.post("/forgot-password", authController.requestPasswordReset)
+// router.post("/reset-password/:token", validatePasswordReset, authController.resetPassword)
 
 // Protected routes
-router.get("/me", auth, getCurrentUser)
-router.put("/profile", auth, updateProfile)
+router.use(auth.verifyToken)
+router.post("/logout", authController.logout)
+router.post("/refresh-token", authController.refreshToken)
+
+// Protected routes
+router.get("/me", authController.getCurrentUser)
+router.put("/me", authController.updateProfile)
 
 export default router
 

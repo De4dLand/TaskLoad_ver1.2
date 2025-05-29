@@ -1,20 +1,30 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { TextField, FormControl, InputLabel, Select, MenuItem, Button, Grid, Box, FormHelperText } from "@mui/material"
+import { TextField, FormControl, InputLabel, Select, MenuItem, Button, Grid, Box, FormHelperText, Chip, OutlinedInput } from "@mui/material"
 import { DatePicker } from "@mui/x-date-pickers/DatePicker"
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider"
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
 import dayjs from "dayjs"
 import styles from "./TaskForm.module.css"
+import { useProjects } from "../../../../../hooks/useProjects"
+import { useTeamMembers } from "../../../../../hooks/useTeamMembers"
 
 const TaskForm = ({ initialValues = {}, onSubmit, loading = false }) => {
+  const { projects, loading: projectsLoading } = useProjects()
+  const [selectedProject, setSelectedProject] = useState(initialValues.project || "")
+  const { members, loading: membersLoading } = useTeamMembers(selectedProject)
+
   const [formValues, setFormValues] = useState({
     title: "",
     description: "",
     status: "todo",
     priority: "medium",
     dueDate: initialValues.dueDate ? new Date(initialValues.dueDate) : null,
+    project: "",
+    assignedTo: "",
+    tags: [],
+    estimatedHours: "",
     ...initialValues,
   })
 
@@ -27,8 +37,16 @@ const TaskForm = ({ initialValues = {}, onSubmit, loading = false }) => {
       status: "todo",
       priority: "medium",
       dueDate: initialValues.dueDate ? new Date(initialValues.dueDate) : null,
+      project: "",
+      assignedTo: "",
+      tags: [],
+      estimatedHours: "",
       ...initialValues,
     })
+    
+    if (initialValues.project) {
+      setSelectedProject(initialValues.project)
+    }
   }, [initialValues])
 
   const handleChange = (e) => {
@@ -68,6 +86,10 @@ const TaskForm = ({ initialValues = {}, onSubmit, loading = false }) => {
       newErrors.title = "Title is required"
     }
 
+    if (!formValues.project) {
+      newErrors.project = "Project is required"
+    }
+
     if (!formValues.dueDate) {
       newErrors.dueDate = "Due date is required"
     }
@@ -80,13 +102,41 @@ const TaskForm = ({ initialValues = {}, onSubmit, loading = false }) => {
     e.preventDefault()
 
     if (validateForm()) {
-      // Convert dueDate to ISO string if present
+      // Format data to match backend expectations
       const submitValues = {
-        ...formValues,
+        title: formValues.title,
+        description: formValues.description,
+        status: formValues.status,
+        priority: formValues.priority,
         dueDate: formValues.dueDate ? formValues.dueDate.toISOString() : null,
+        project: formValues.project,
+        assignedTo: formValues.assignedTo || "",
+        tags: formValues.tags || [],
+        estimatedHours: formValues.estimatedHours ? Number(formValues.estimatedHours) : undefined
       }
       onSubmit(submitValues)
     }
+  }
+  
+  const handleProjectChange = (e) => {
+    const projectId = e.target.value
+    setSelectedProject(projectId)
+    setFormValues({
+      ...formValues,
+      project: projectId,
+      // Reset assignedTo when project changes
+      assignedTo: ""
+    })
+  }
+  
+  const handleTagChange = (e) => {
+    const tagInput = e.target.value
+    const tagArray = tagInput.split(',').map(tag => tag.trim()).filter(Boolean)
+    
+    setFormValues({
+      ...formValues,
+      tags: tagArray
+    })
   }
 
   return (
@@ -119,9 +169,11 @@ const TaskForm = ({ initialValues = {}, onSubmit, loading = false }) => {
           <FormControl fullWidth error={!!errors.status}>
             <InputLabel>Status</InputLabel>
             <Select name="status" value={formValues.status} onChange={handleChange} label="Status">
+              <MenuItem value="new">New</MenuItem>
+              <MenuItem value="assigned">Assigned</MenuItem>
               <MenuItem value="todo">To Do</MenuItem>
               <MenuItem value="in_progress">In Progress</MenuItem>
-              <MenuItem value="review">Review</MenuItem>
+              <MenuItem value="reviewing">Reviewing</MenuItem>
               <MenuItem value="completed">Completed</MenuItem>
             </Select>
             {errors.status && <FormHelperText>{errors.status}</FormHelperText>}
@@ -154,6 +206,72 @@ const TaskForm = ({ initialValues = {}, onSubmit, loading = false }) => {
               }}
             />
           </LocalizationProvider>
+        </Grid>
+        
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth error={!!errors.project}>
+            <InputLabel>Project *</InputLabel>
+            <Select
+              name="project"
+              value={formValues.project}
+              onChange={handleProjectChange}
+              label="Project *"
+              required
+            >
+              {projectsLoading ? (
+                <MenuItem disabled>Loading projects...</MenuItem>
+              ) : (
+                projects.map((project) => (
+                  <MenuItem key={project._id} value={project._id}>
+                    {project.name}
+                  </MenuItem>
+                ))
+              )}
+            </Select>
+            {errors.project && <FormHelperText>{errors.project}</FormHelperText>}
+          </FormControl>
+        </Grid>
+        
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth>
+            <InputLabel>Assign To</InputLabel>
+            <Select
+              name="assignedTo"
+              value={formValues.assignedTo}
+              onChange={handleChange}
+              label="Assign To"
+              disabled={!formValues.project || membersLoading}
+            >
+              <MenuItem value="">Unassigned</MenuItem>
+              {!membersLoading && members.map((member) => (
+                <MenuItem key={member._id} value={member._id}>
+                  {member.firstName ? `${member.firstName} ${member.lastName}` : member.username}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        
+        <Grid item xs={12} sm={6}>
+          <TextField
+            name="estimatedHours"
+            label="Estimated Hours"
+            type="number"
+            fullWidth
+            value={formValues.estimatedHours}
+            onChange={handleChange}
+            inputProps={{ min: 0, step: 0.5 }}
+          />
+        </Grid>
+        
+        <Grid item xs={12}>
+          <TextField
+            name="tags"
+            label="Tags (comma separated)"
+            fullWidth
+            value={formValues.tags.join(', ')}
+            onChange={handleTagChange}
+          />
         </Grid>
         <Grid item xs={12}>
           <Box className={styles.buttonContainer}>

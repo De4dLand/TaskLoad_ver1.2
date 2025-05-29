@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Box, Typography, Button, CircularProgress, Paper, ToggleButtonGroup, ToggleButton, Snackbar, Alert } from "@mui/material"
-import { Add as AddIcon, ViewList, ViewModule, CalendarToday, Timeline, BarChart } from "@mui/icons-material"
+import { Add as AddIcon, ViewList, ViewModule, CalendarToday, Timeline, BarChart, GroupAdd as GroupAddIcon } from "@mui/icons-material"
 import TaskList from "../components/TaskList/TaskList"
 import TaskGrid from "../components/TaskGrid/TaskGrid"
 //
@@ -16,9 +16,10 @@ import StatsView from "../components/ViewMode/StatsView"
 import ProjectSidebar from "../components/ProjectSidebar/ProjectSidebar"
 import DataNotFound from "../../../common/DataNotFound"
 import { fetchDashboardData, createProject, updateProject, deleteProject, createTask, updateTask, deleteTask, addProjectMember, searchUsers } from "../services/dashboardService"
+import teamService from "../services/teamService"
 import useAuth from "../../../../hooks/useAuth"
 import FilterView from "../components/FilterView/FilterView"
-import { Dialog, DialogTitle, DialogContent, DialogActions, Stack, Menu, MenuItem, TextField } from "@mui/material"
+import { Dialog, DialogTitle, DialogContent, DialogActions, Stack, Menu, MenuItem, TextField, Divider } from "@mui/material"
 import FormInput from "../../../common/FormInput"
 import AddProjectForm from "../components/AddProjectForm"
 import AnalysisLayout from "../components/AnalysisLayout/AnalysisLayout";
@@ -32,6 +33,7 @@ import ViewModeSwitcher from '../components/ViewModeSwitcher';
 import TaskDialog from '../components/TaskDialog/TaskDialog';
 import ProjectDialog from '../components/ProjectDialog';
 import ProjectManageDrawer from '../components/ProjectManageDrawer/ProjectManageDrawer';
+import { TeamManagementButton } from '../components/TeamManagement';
 import { getSocket, joinRoom } from '../../../../services/socket';
 import ProjectMemberInfo from '../components/ProjectMemberInfo/ProjectMemberInfo';
 
@@ -82,6 +84,13 @@ const DashboardPage = () => {
   const [searchLoading, setSearchLoading] = useState(false)
   const [searchError, setSearchError] = useState(null)
   const [selectedMembers, setSelectedMembers] = useState([]); // [{ user, role, position, startDate }]
+  
+  // Team management state
+  const [teamManagementOpen, setTeamManagementOpen] = useState(false)
+  const [teamMembers, setTeamMembers] = useState([])
+  const [currentTeam, setCurrentTeam] = useState(null)
+  const [teamLoading, setTeamLoading] = useState(false)
+  const [teamError, setTeamError] = useState(null)
   // --- End Potential Component: MemberManagementStateAndHandlers ---
 
   // --- Potential Component: TaskDetailDrawerState --- 
@@ -257,6 +266,175 @@ const DashboardPage = () => {
     }
   }
   // --- End Potential Hook: useDashboardLoader ---
+
+  // --- Potential Component: TeamManagementHandlers --- 
+  // Handlers for team management functionality
+  const handleOpenTeamManagement = () => {
+    if (selectedProject) {
+      // Load team members for the selected project
+      loadTeamMembers();
+      setTeamManagementOpen(true);
+    } else {
+      setNotification({
+        open: true,
+        message: "Please select a project first",
+        type: "warning"
+      });
+    }
+  };
+
+  const loadTeamMembers = async () => {
+    if (!selectedProject) return;
+    
+    setTeamLoading(true);
+    setTeamError(null);
+    
+    try {
+      // First check if the project has a team associated with it
+      if (selectedProject.team) {
+        const members = await teamService.getTeamMembers(selectedProject.team);
+        setTeamMembers(members);
+        setCurrentTeam(selectedProject.team);
+      } else {
+        // If no team exists, use the project members
+        setTeamMembers(selectedProject.members || []);
+      }
+    } catch (err) {
+      console.error("Error loading team members:", err);
+      setTeamError("Failed to load team members. Please try again.");
+    } finally {
+      setTeamLoading(false);
+    }
+  };
+  
+  const handleSearchTeamMembers = async (query) => {
+    if (!query.trim()) return;
+    
+    setSearchLoading(true);
+    setSearchError(null);
+    
+    try {
+      const results = await searchUsers(query);
+      setMemberResults(results);
+    } catch (err) {
+      console.error("Error searching users:", err);
+      setSearchError("Failed to search users. Please try again.");
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+  
+  const handleAddTeamMember = async (userId, role) => {
+    if (!selectedProject) return;
+    
+    try {
+      if (currentTeam) {
+        // If a team exists, add the member to the team
+        await teamService.addTeamMember(currentTeam, userId);
+      } else {
+        // Otherwise add the member to the project
+        await addProjectMember(selectedProject._id, userId, role);
+      }
+      
+      // Reload data to reflect changes
+      await loadData();
+      await loadTeamMembers();
+      
+      setNotification({
+        open: true,
+        message: "Team member added successfully",
+        type: "success"
+      });
+    } catch (err) {
+      console.error("Error adding team member:", err);
+      throw new Error(err.message || "Failed to add team member");
+    }
+  };
+  
+  const handleRemoveTeamMember = async (userId) => {
+    if (!selectedProject) return;
+    
+    try {
+      if (currentTeam) {
+        // If a team exists, remove the member from the team
+        await teamService.removeTeamMember(currentTeam, userId);
+      } else {
+        // Otherwise remove the member from the project
+        // This API endpoint would need to be implemented
+        await fetch(`${import.meta.env.VITE_API_URL}/api/projects/${selectedProject._id}/members/${userId}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+      }
+      
+      // Reload data to reflect changes
+      await loadData();
+      await loadTeamMembers();
+      
+      setNotification({
+        open: true,
+        message: "Team member removed successfully",
+        type: "success"
+      });
+    } catch (err) {
+      console.error("Error removing team member:", err);
+      throw new Error(err.message || "Failed to remove team member");
+    }
+  };
+  
+  const handleUpdateMemberRole = async (userId, role) => {
+    if (!selectedProject) return;
+    
+    try {
+      if (currentTeam) {
+        // If a team exists, update the member's role in the team
+        await teamService.updateMemberRole(currentTeam, userId, role);
+      } else {
+        // Otherwise update the member's role in the project
+        // This API endpoint would need to be implemented
+        await fetch(`${import.meta.env.VITE_API_URL}/api/projects/${selectedProject._id}/members/${userId}/role`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ role })
+        });
+      }
+      
+      // Reload data to reflect changes
+      await loadData();
+      await loadTeamMembers();
+      
+      setNotification({
+        open: true,
+        message: "Member role updated successfully",
+        type: "success"
+      });
+    } catch (err) {
+      console.error("Error updating member role:", err);
+      throw new Error(err.message || "Failed to update member role");
+    }
+  };
+  
+  const handleAssignTask = async (taskId, userId) => {
+    try {
+      await updateTask(taskId, { assignedTo: userId || null });
+      
+      // Reload data to reflect changes
+      await loadData();
+      
+      setNotification({
+        open: true,
+        message: userId ? "Task assigned successfully" : "Task unassigned successfully",
+        type: "success"
+      });
+    } catch (err) {
+      console.error("Error assigning task:", err);
+      throw new Error(err.message || "Failed to assign task");
+    }
+  };
+  // --- End Potential Component: TeamManagementHandlers ---
 
   // --- Potential Component: ProjectContextMenuHandlers --- 
   // Handlers for project context menu.
@@ -735,6 +913,24 @@ const DashboardPage = () => {
               >
                 Add Task
               </Button>
+              {selectedProject && (
+                <TeamManagementButton
+                  project={selectedProject}
+                  team={currentTeam}
+                  members={selectedProject?.members || []}
+                  tasks={filteredTasks}
+                  onAddMember={handleAddTeamMember}
+                  onRemoveMember={handleRemoveTeamMember}
+                  onUpdateMemberRole={handleUpdateMemberRole}
+                  onAssignTask={handleAssignTask}
+                  onSearchUsers={handleSearchTeamMembers}
+                  searchResults={memberResults}
+                  searchLoading={searchLoading}
+                  searchError={searchError}
+                  currentUser={user}
+                  badgeCount={teamError ? 1 : 0}
+                />
+              )}
             </Box>
             <ProjectMemberInfo 
               user={user}

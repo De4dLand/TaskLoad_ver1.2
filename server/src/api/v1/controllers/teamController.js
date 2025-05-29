@@ -2,101 +2,105 @@ import Team from "../../../models/Team.js";
 import Project from '../../../models/Project.js';
 import logger from '../../../utils/logger.js';
 import TeamService from '../../../services/teamServices.js';
-import { catchAsync } from '../../../utils/error.js';
+import { catchAsync, createError } from '../../../utils/error.js';
 
-// Tạo team mới
-export const createTeam = catchAsync(async (req, res, next) => {
-    const team = await TeamService.createTeam({
-        ...req.body,
-        leader: req.user._id,
-        members: [req.user._id]
+export class TeamController {
+    constructor() {
+        this.teamService = TeamService;
+    }
+
+    // Tạo team mới
+    createTeam = catchAsync(async (req, res) => {
+        const team = await this.teamService.createTeam({
+            ...req.body,
+            leader: req.user._id,
+            members: [req.user._id]
+        });
+
+        res.status(201).json({
+            status: 'success',
+            data: team
+        });
     });
 
-    res.status(201).json({
-        status: 'success',
-        data: team
+    // Lấy danh sách teams
+    getTeams = catchAsync(async (req, res) => {
+        const result = await this.teamService.getTeams(req.query);
+
+        res.status(200).json({
+            status: 'success',
+            results: result.teams.length,
+            pagination: {
+                total: result.total,
+                page: result.page,
+                pages: result.pages
+            },
+            data: result.teams
+        });
     });
-});
 
-// Lấy danh sách teams
-export const getTeams = catchAsync(async (req, res, next) => {
-    const result = await TeamService.getTeams(req.query);
+    // Lấy thông tin team theo ID
+    getTeam = catchAsync(async (req, res) => {
+        const team = await this.teamService.getTeamById(req.params.id);
 
-    res.status(200).json({
-        status: 'success',
-        results: result.teams.length,
-        pagination: {
-            total: result.total,
-            page: result.page,
-            pages: result.pages
-        },
-        data: result.teams
+        res.status(200).json({
+            status: 'success',
+            data: team
+        });
     });
-});
 
-// Lấy thông tin team theo ID
-export const getTeam = catchAsync(async (req, res, next) => {
-    const team = await TeamService.getTeamById(req.params.id);
+    // Cập nhật thông tin team
+    updateTeam = catchAsync(async (req, res) => {
+        const team = await this.teamService.updateTeam(req.params.id, req.body);
 
-    res.status(200).json({
-        status: 'success',
-        data: team
+        res.status(200).json({
+            status: 'success',
+            data: team
+        });
     });
-});
 
-// Cập nhật thông tin team
-export const updateTeam = catchAsync(async (req, res, next) => {
-    const team = await TeamService.updateTeam(req.params.id, req.body);
+    // Xóa team
+    deleteTeam = catchAsync(async (req, res) => {
+        await this.teamService.deleteTeam(req.params.id);
 
-    res.status(200).json({
-        status: 'success',
-        data: team
+        res.status(204).json({
+            status: 'success',
+            data: null
+        });
     });
-});
 
-// Xóa team
-export const deleteTeam = catchAsync(async (req, res, next) => {
-    await TeamService.deleteTeam(req.params.id);
+    // Thêm thành viên mới
+    addMember = catchAsync(async (req, res) => {
+        const team = await this.teamService.addMember(req.params.id, req.body.userId);
 
-    res.status(204).json({
-        status: 'success',
-        data: null
+        res.status(200).json({
+            status: 'success',
+            data: team
+        });
     });
-});
 
-// Thêm thành viên mới
-export const addMember = catchAsync(async (req, res, next) => {
-    const team = await TeamService.addMember(req.params.id, req.body.userId);
+    // Xóa thành viên
+    removeMember = catchAsync(async (req, res) => {
+        const team = await this.teamService.removeMember(req.params.id, req.params.userId);
 
-    res.status(200).json({
-        status: 'success',
-        data: team
+        res.status(200).json({
+            status: 'success',
+            data: team
+        });
     });
-});
 
-// Xóa thành viên
-export const removeMember = catchAsync(async (req, res, next) => {
-    const team = await TeamService.removeMember(req.params.id, req.params.userId);
-
-    res.status(200).json({
-        status: 'success',
-        data: team
-    });
-});
-
-// Cập nhật vai trò thành viên
-export const updateMemberRole = async (req, res) => {
-    try {
+    // Cập nhật vai trò thành viên
+    updateMemberRole = catchAsync(async (req, res) => {
         const { role } = req.body;
         const team = await Team.findById(req.params.id);
 
         if (!team) {
-            return res.status(404).json({ message: 'Team not found' });
+            throw createError(404, 'Team not found');
         }
 
         // Kiểm tra quyền cập nhật vai trò
         if (team.owner.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ message: 'Only team owner can update member roles' });
+            throw createError(403, 'Only team owner can update member roles');
         }
 
         const member = team.members.find(
@@ -104,7 +108,7 @@ export const updateMemberRole = async (req, res) => {
         );
 
         if (!member) {
-            return res.status(404).json({ message: 'Member not found' });
+            throw createError(404, 'Member not found');
         }
 
         member.role = role;
@@ -112,24 +116,19 @@ export const updateMemberRole = async (req, res) => {
 
         logger.info(`Member role updated in team: ${team._id}`);
         res.json(team);
-    } catch (error) {
-        logger.error(`Error updating member role: ${error.message}`);
-        res.status(500).json({ message: 'Error updating member role' });
-    }
-};
+    });
 
-// Rời khỏi team
-export const leaveTeam = async (req, res) => {
-    try {
+    // Rời khỏi team
+    leaveTeam = catchAsync(async (req, res) => {
         const team = await Team.findById(req.params.id);
 
         if (!team) {
-            return res.status(404).json({ message: 'Team not found' });
+            throw createError(404, 'Team not found');
         }
 
         // Không cho phép owner rời team
         if (team.owner.toString() === req.user._id.toString()) {
-            return res.status(400).json({ message: 'Team owner cannot leave the team' });
+            throw createError(400, 'Team owner cannot leave the team');
         }
 
         team.members = team.members.filter(
@@ -139,88 +138,87 @@ export const leaveTeam = async (req, res) => {
 
         logger.info(`User left team: ${team._id}`);
         res.json({ message: 'Left team successfully' });
-    } catch (error) {
-        logger.error(`Error leaving team: ${error.message}`);
-        res.status(500).json({ message: 'Error leaving team' });
-    }
-};
-
-// Lấy danh sách thành viên
-export const getTeamMembers = catchAsync(async (req, res, next) => {
-    const members = await TeamService.getTeamMembers(req.params.id);
-
-    res.status(200).json({
-        status: 'success',
-        data: members
     });
-});
 
-// Lấy danh sách dự án của team
-export const getTeamProjects = catchAsync(async (req, res, next) => {
-    const projects = await TeamService.getTeamProjects(req.params.id);
+    // Lấy danh sách thành viên
+    getTeamMembers = catchAsync(async (req, res) => {
+        const members = await this.teamService.getTeamMembers(req.params.id);
 
-    res.status(200).json({
-        status: 'success',
-        data: projects
+        res.status(200).json({
+            status: 'success',
+            data: members
+        });
     });
-});
 
-// Lấy team statistics
-export const getTeamStats = catchAsync(async (req, res, next) => {
-    const stats = await TeamService.getTeamStats(req.params.id);
+    // Lấy danh sách dự án của team
+    getTeamProjects = catchAsync(async (req, res) => {
+        const projects = await this.teamService.getTeamProjects(req.params.id);
 
-    res.status(200).json({
-        status: 'success',
-        data: stats
+        res.status(200).json({
+            status: 'success',
+            data: projects
+        });
     });
-});
 
-// Lấy team timeline
-export const getTeamTimeline = catchAsync(async (req, res, next) => {
-    const timeline = await TeamService.getTeamTimeline(req.params.id);
+    // Lấy team statistics
+    getTeamStats = catchAsync(async (req, res) => {
+        const stats = await this.teamService.getTeamStats(req.params.id);
 
-    res.status(200).json({
-        status: 'success',
-        data: timeline
+        res.status(200).json({
+            status: 'success',
+            data: stats
+        });
     });
-});
 
-// Lấy team custom fields
-export const getCustomFields = catchAsync(async (req, res, next) => {
-    const customFields = await TeamService.getCustomFields(req.params.id);
+    // Lấy team timeline
+    getTeamTimeline = catchAsync(async (req, res) => {
+        const timeline = await this.teamService.getTeamTimeline(req.params.id);
 
-    res.status(200).json({
-        status: 'success',
-        data: customFields
+        res.status(200).json({
+            status: 'success',
+            data: timeline
+        });
     });
-});
 
-// Update team custom fields
-export const updateCustomFields = catchAsync(async (req, res, next) => {
-    const customFields = await TeamService.updateCustomFields(req.params.id, req.body);
+    // Lấy team custom fields
+    getCustomFields = catchAsync(async (req, res) => {
+        const customFields = await this.teamService.getCustomFields(req.params.id);
 
-    res.status(200).json({
-        status: 'success',
-        data: customFields
+        res.status(200).json({
+            status: 'success',
+            data: customFields
+        });
     });
-});
 
-// Add project to team
-export const addProject = catchAsync(async (req, res, next) => {
-    const team = await TeamService.addProject(req.params.id, req.body.projectId);
+    // Update team custom fields
+    updateCustomFields = catchAsync(async (req, res) => {
+        const customFields = await this.teamService.updateCustomFields(req.params.id, req.body);
 
-    res.status(200).json({
-        status: 'success',
-        data: team
+        res.status(200).json({
+            status: 'success',
+            data: customFields
+        });
     });
-});
 
-// Remove project from team
-export const removeProject = catchAsync(async (req, res, next) => {
-    const team = await TeamService.removeProject(req.params.id, req.params.projectId);
+    // Add project to team
+    addProject = catchAsync(async (req, res) => {
+        const team = await this.teamService.addProject(req.params.id, req.body.projectId);
 
-    res.status(200).json({
-        status: 'success',
-        data: team
+        res.status(200).json({
+            status: 'success',
+            data: team
+        });
     });
-}); 
+
+    // Remove project from team
+    removeProject = catchAsync(async (req, res) => {
+        const team = await this.teamService.removeProject(req.params.id, req.params.projectId);
+
+        res.status(200).json({
+            status: 'success',
+            data: team
+        });
+    });
+}
+
+export default new TeamController();

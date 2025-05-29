@@ -101,7 +101,11 @@ const taskSchema = new mongoose.Schema(
     customFields: [{
       name: String,
       value: mongoose.Schema.Types.Mixed
-    }]
+    }],
+    chatRoomId: {
+      type: String,
+      index: true
+    }
   },
   {
     timestamps: true,
@@ -165,22 +169,64 @@ taskSchema.pre('save', async function(next) {
   }
 })
 
+// Create notification when a new task is created
+taskSchema.post('save', async function() {
+  try {
+    if (this.isNew) {
+      // Dynamically import to avoid circular dependency issues
+      const NotificationService = (await import('../services/notificationService.js')).default;
+      await NotificationService.createTaskNotification(this);
+    }
+  } catch (error) {
+    console.error('Error creating task notification:', error);
+    // Don't throw the error to prevent disrupting the main task flow
+  }
+})
+
+// Create chat room for new tasks
+taskSchema.post('save', async function() {
+  try {
+    if (this.isNew || !this.chatRoomId) {
+      // Dynamically import to avoid circular dependency issues
+      const TaskChatService = (await import('../services/taskChatService.js')).default;
+      await TaskChatService.createOrGetTaskChatRoom(this);
+    }
+  } catch (error) {
+    console.error('Error creating task chat room:', error);
+    // Don't throw the error to prevent disrupting the main task flow
+  }
+})
+
 // Methods
 taskSchema.methods.updateProgress = async function () {
-  if (this.subtasks.length === 0) {
-    return
+  try {
+    // Get the Subtask model
+    const Subtask = mongoose.model('Subtask')
+    
+    // Count total subtasks for this task
+    const totalSubtasks = await Subtask.countDocuments({ task: this._id })
+    
+    if (totalSubtasks === 0) {
+      return
+    }
+    
+    // Count completed subtasks
+    const completedSubtasks = await Subtask.countDocuments({ task: this._id, completed: true })
+    
+    // Calculate progress percentage
+    const progress = Math.round((completedSubtasks / totalSubtasks) * 100)
+    
+    // Update task status based on progress
+    if (progress === 100) {
+      this.status = 'completed'
+    } else if (progress > 0) {
+      this.status = 'in_progress'
+    }
+    
+    await this.save()
+  } catch (error) {
+    console.error('Error updating task progress:', error)
   }
-
-  const completedSubtasks = this.subtasks.filter(subtask => subtask.completed).length
-  const progress = Math.round((completedSubtasks / this.subtasks.length) * 100)
-
-  if (progress === 100) {
-    this.status = 'completed'
-  } else if (progress > 0) {
-    this.status = 'in_progress'
-  }
-
-  await this.save()
 }
 
 // Post-remove hook to clean up references in User model
