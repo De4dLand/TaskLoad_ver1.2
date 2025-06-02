@@ -95,8 +95,14 @@ export const checkTaskModifyPermission = () => {
     try {
       const taskId = req.params.id || req.params.taskId;
       
+      // Check if taskId is provided and is a valid MongoDB ID format
       if (!taskId) {
         return next(createError(400, "Task ID is required"));
+      }
+
+      // Check if the ID is a valid MongoDB ID format
+      if (!/^[0-9a-fA-F]{24}$/.test(taskId)) {
+        return next(createError(400, "Invalid Task ID format"));
       }
       
       const task = await Task.findById(taskId);
@@ -108,8 +114,16 @@ export const checkTaskModifyPermission = () => {
       // Get project for permission checking
       const project = await Project.findById(task.project);
       
+      if (!project) {
+        return next(createError(404, "Project not found for this task"));
+      }
+      
       // Get user ID from request
-      const userId = req.user._id.toString();
+      const userId = req.user?._id?.toString();
+      
+      if (!userId) {
+        return next(createError(401, "Authentication required"));
+      }
       
       // Check if user can modify this task
       if (!canModifyTask(task, userId, project)) {
@@ -121,6 +135,10 @@ export const checkTaskModifyPermission = () => {
       req.project = project;
       next();
     } catch (error) {
+      // Handle specific MongoDB cast errors
+      if (error.name === 'CastError' && error.kind === 'ObjectId') {
+        return next(createError(400, "Invalid Task ID format"));
+      }
       next(createError(500, `Permission check error: ${error.message}`));
     }
   };

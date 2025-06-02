@@ -28,6 +28,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import KeyboardIcon from "@mui/icons-material/Keyboard";
 import { getSocket } from "../../../../../services/socket";
 import { createSubtask, getSubtasksByTask, updateSubtask, deleteSubtask } from "../../../../features/tasks/services/subtaskService";
+import { updateTask } from "../../../../features/tasks/services/taskService";
 
 // Utility to format date as dd/MM/yyyy
 function formatDate(date) {
@@ -175,11 +176,11 @@ const TaskDetailDrawer = ({
   };
 
   // Fetch subtasks when task changes or drawer opens
-  useEffect(() => {
-    if (task && task._id && open) {
-      fetchSubtasks(task._id);
-    }
-  }, [task?._id, open]);
+  // useEffect(() => {
+  //   if (task && task._id && open) {
+  //     fetchSubtasks(task._id);
+  //   }
+  // }, [task?._id, open]);
 
   // Fetch subtasks from the API
   const fetchSubtasks = async (taskId) => {
@@ -269,7 +270,8 @@ const TaskDetailDrawer = ({
   };
 
   const handleSave = () => {
-    if (onUpdate) onUpdate(editedTask);
+    // console.log(editedTask)
+    if (onUpdate) onUpdate(task._id, editedTask);
     setEditMode(false);
   };
 

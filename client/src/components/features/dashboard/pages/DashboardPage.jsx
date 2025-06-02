@@ -488,22 +488,53 @@ const DashboardPage = () => {
     // TODO: fetch comments for this task from API if needed
     setDrawerComments([]);
   };
+
+  // Handle task updates from the TaskDetailDrawer
+  const handleTaskUpdate = async (taskId, updatedTask) => {
+    console.log("Updated task:", updatedTask);
+    try {
+      // Call the updateTask service with the task ID and updated task data
+      const result = await updateTask(taskId, updatedTask);
+      
+      // Update the local state to reflect the changes
+      setDashboardData(prevData => ({
+        ...prevData,
+        tasks: prevData.tasks.map(task => 
+          task._id === taskId ? { ...task, ...result } : task
+        )
+      }));
+      
+      // Update the drawer task if it's the same task
+      if (drawerTask && drawerTask._id === taskId) {
+        setDrawerTask(prev => ({ ...prev, ...result }));
+      }
+      
+      // Show success notification
+      setNotification({
+        open: true,
+        message: 'Task updated successfully',
+        type: 'success'
+      });
+      
+      return result;
+    } catch (error) {
+      console.error('Error updating task:', error);
+      
+      // Show error notification
+      setNotification({
+        open: true,
+        message: error.response?.data?.message || 'Failed to update task',
+        type: 'error'
+      });
+      
+      throw error; // Re-throw to allow the drawer to handle the error if needed
+    }
+  };
+
   const handleDrawerClose = () => {
     setTaskDrawerOpen(false);
     setDrawerTask(null);
     setDrawerComments([]);
-  };
-  const handleTaskUpdate = async (updatedTask) => {
-    try {
-      const result = await updateTask(updatedTask._id, updatedTask);
-      setDashboardData((prev) => ({
-        ...prev,
-        tasks: prev.tasks.map((t) => (t._id === result._id ? result : t)),
-      }));
-      setDrawerTask(result);
-    } catch (err) {
-      // Optionally show error notification
-    }
   };
   const handleAddComment = async (commentText) => {
     if (!drawerTask || !commentText.trim()) return;
@@ -729,6 +760,7 @@ const DashboardPage = () => {
   const handleTaskContextMenu = (event, task) => {
     event.preventDefault()
     setContextTask(task)
+    setDrawerTask(task)
     setContextMenu(
       contextMenu === null
         ? { mouseX: event.clientX - 2, mouseY: event.clientY - 4 }

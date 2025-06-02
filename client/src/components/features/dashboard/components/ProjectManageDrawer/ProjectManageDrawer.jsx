@@ -474,7 +474,7 @@ const ProjectManageDrawer = ({
                   />
                 </Grid>
                 
-                <Grid item xs={12} sm={6}>
+                {/* <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
                     type="number"
@@ -500,7 +500,7 @@ const ProjectManageDrawer = ({
                       startAdornment: <InputAdornment position="start">$</InputAdornment>,
                     }}
                   />
-                </Grid>
+                </Grid> */}
                 
                 <Grid item xs={12}>
                   <Typography variant="subtitle1" sx={{ mb: 1, mt: 2 }}>Tags</Typography>

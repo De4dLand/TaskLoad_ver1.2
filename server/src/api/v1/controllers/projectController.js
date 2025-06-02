@@ -56,7 +56,10 @@ class ProjectController {
 
     // Update a project
     updateProject = catchAsync(async (req, res) => {
-        const { name, description, color, status, startDate, endDate, team, tags, budget, customFields, settings } = req.body
+        const { name, description, color, status, startDate, endDate, 
+            // team, tags, budget, customFields, settings 
+
+        } = req.body
 
         const project = await Project.findById(req.params.id)
 
@@ -77,11 +80,11 @@ class ProjectController {
         if (status) project.status = status
         if (startDate) project.startDate = new Date(startDate)
         if (endDate) project.endDate = new Date(endDate)
-        if (team) project.team = team
-        if (Array.isArray(tags)) project.tags = tags
-        if (budget) project.budget = budget
-        if (Array.isArray(customFields)) project.customFields = customFields
-        if (settings) project.settings = settings
+        // if (team) project.team = team
+        // if (Array.isArray(tags)) project.tags = tags
+        // if (budget) project.budget = budget
+        // if (Array.isArray(customFields)) project.customFields = customFields
+        // if (settings) project.settings = settings
 
         await project.save()
         res.json(project)

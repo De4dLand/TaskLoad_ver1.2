@@ -18,7 +18,7 @@ router.get("/:id", checkProjectPermission(['owner', 'admin', 'member', 'supervis
 router.post("/", projectController.createProject)
 
 // Update a project - only owner and admins can update
-router.put("/:id", checkProjectPermission(['owner', 'admin']), projectController.updateProject)
+router.patch("/:id", checkProjectPermission(['owner', 'admin']), projectController.updateProject)
 
 // Delete a project - only owner can delete
 router.delete("/:id", checkProjectPermission(['owner']), projectController.deleteProject)
