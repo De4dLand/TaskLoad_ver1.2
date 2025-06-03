@@ -25,6 +25,13 @@ export const validateTask = [
     .optional({ nullable: true })
     .custom(value => value === null || typeof value === 'undefined' || /^[a-fA-F0-9]{24}$/.test(value))
     .withMessage('Assigned user ID must be a valid ID or null'),
+  body('startDate')
+    .optional()
+    .isISO8601().withMessage('Invalid date format')
+    .custom(value => new Date(value) >= new Date()).withMessage('Start date cannot be in the past'),
+  body('createdBy')
+    .optional()
+    .isMongoId().withMessage('Created by ID must be a valid ID'),
   body('tags')
     .optional()
     .isArray().withMessage('Tags must be an array'),

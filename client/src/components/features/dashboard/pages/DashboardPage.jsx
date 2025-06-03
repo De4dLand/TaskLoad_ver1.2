@@ -51,7 +51,7 @@ const DashboardPage = () => {
   // --- Potential Component: TaskDialogStateAndHandlers --- 
   // Manages state and handlers for the task creation/editing dialog.
   const [taskDialogOpen, setTaskDialogOpen] = useState(false)
-  const [taskForm, setTaskForm] = useState({ title: "", description: "", status: "todo", priority: "medium", dueDate: null, project: "", assignedTo: null, tags: [], estimatedHours: "" })
+  const [taskForm, setTaskForm] = useState({ title: "", description: "", status: "todo", priority: "medium", startDate: null, dueDate: null, project: "", assignedTo: null, tags: [], estimatedHours: "" })
   const [selectedTask, setSelectedTask] = useState(null)
   // --- End Potential Component: TaskDialogStateAndHandlers ---
 
@@ -633,13 +633,13 @@ const DashboardPage = () => {
   // Handlers for the task creation/editing dialog.
   const handleAddTask = () => {
     setSelectedTask(null)
-    setTaskForm({ title: "", description: "", status: "todo", priority: "medium", dueDate: null, project: "", assignedTo: null, tags: [], estimatedHours: "" })
+    setTaskForm({ title: "", description: "", status: "todo", priority: "medium", startDate: null, dueDate: null, project: "", assignedTo: null, tags: [], estimatedHours: "" })
     setTaskDialogOpen(true)
   }
 
   const handleCloseTaskDialog = () => {
     setTaskDialogOpen(false)
-    setTaskForm({ title: "", description: "", status: "todo", priority: "medium", dueDate: null, project: "", assignedTo: null, tags: [], estimatedHours: "" })
+    setTaskForm({ title: "", description: "", status: "todo", priority: "medium", startDate: null, dueDate: null, project: "", assignedTo: null, tags: [], estimatedHours: "" })
   }
   const handleTaskFormChange = (e) => {
     const { name, value } = e.target
@@ -662,9 +662,10 @@ const DashboardPage = () => {
         }
       }
     }
+    setTaskForm(prev => ({ ...prev, startDate: processedDate }))
     setTaskForm(prev => ({ ...prev, dueDate: processedDate }))
   }
-  const handleTaskFormSubmit = async (formData, isEdit) => {
+  const handleTaskFormSubmit = async (formData, isEdit = false) => {
     try {
       console.log('Received task data in DashboardPage:', formData, 'isEdit:', isEdit);
       
@@ -680,40 +681,27 @@ const DashboardPage = () => {
         tags: Array.isArray(formData.tags) ? formData.tags : []
       };
       
-      let updatedTask = null;
-      if (isEdit && selectedTask) {
+      let result;
+      if (isEdit && selectedTask) { 
         console.log('Updating task with ID:', selectedTask._id, 'Data:', formToSend);
-        updatedTask = await updateTask(selectedTask._id, formToSend);
-        
-        // Emit socket event for task update
-        if (socket && updatedTask) {
-          socket.emit('taskUpdate', {
-            taskId: updatedTask._id,
-            title: updatedTask.title,
-            updatedBy: user.name,
-            assignedTo: updatedTask.assignedTo?._id
-          });
-        }
+        result = await updateTask(selectedTask._id, formToSend);
       } else {
-        console.log('Creating new task with data:', formToSend);
-        const newTask = await createTask(formToSend);
-        
-        // Emit socket event for task creation
-        if (socket && newTask && newTask.assignedTo) {
-          socket.emit('taskAssign', {
-            taskId: newTask._id,
-            title: newTask.title,
-            assignedTo: newTask.assignedTo._id,
-            assignedBy: user.name
-          });
-        }
+        // For new tasks, include the current user's ID as createdBy
+        const newTaskData = {
+          ...formToSend,
+          createdBy: user?.id || user?._id, // Handle both id and _id for user object
+          status: 'todo' // Ensure status is set for new tasks
+        };
+        console.log('Creating new task with data:', newTaskData);
+        result = await createTask(newTaskData);
       }
       
-      // Optimistically update dashboardData.tasks if updateTask returns the updated task
-      if (isEdit && selectedTask && updatedTask && dashboardData?.tasks) {
+      // Update the UI
+      if (isEdit && selectedTask && dashboardData?.tasks) {
+        // Optimistic update for task edit
         setDashboardData({
           ...dashboardData,
-          tasks: dashboardData.tasks.map(t => t._id === updatedTask._id ? updatedTask : t)
+          tasks: dashboardData.tasks.map(t => t._id === selectedTask._id ? result : t)
         });
       } else {
         // Reload all data for new task creation or if optimistic update isn't possible
@@ -727,16 +715,27 @@ const DashboardPage = () => {
         message: isEdit ? 'Task updated successfully' : 'Task created successfully',
         type: 'success'
       });
+      
+      return result;
     } catch (err) {
       let errorMsg = err?.response?.data?.message || err.message || 'Unknown error';
       console.error(isEdit ? "Error updating task:" : "Error creating task:", err);
       
-      // Show error notification
+      // Show error notification with more details
       setNotification({
         open: true,
         message: isEdit ? `Error updating task: ${errorMsg}` : `Error creating task: ${errorMsg}`,
-        type: 'error'
+        type: 'error',
+        autoHideDuration: 10000 // Show error for longer
       });
+      
+      // Log the full error for debugging
+      console.error('Full error object:', err);
+      if (err.response) {
+        console.error('Error response data:', err.response.data);
+      }
+      
+      throw err; // Re-throw to allow the form to handle the error
     }
   }
 
@@ -922,6 +921,44 @@ const DashboardPage = () => {
 
         {/* Main Content Area */}
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 3, overflowY: 'auto' }}>
+          {/* Info Bar */}
+          <Paper
+            elevation={0}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              p: 2,
+              mb: 3,
+              borderRadius: 2,
+              bgcolor: 'background.paper'
+            }}
+          >
+            <ProjectMemberInfo 
+              user={user}
+              projectMembers={dashboardData?.projects?.find(p => p._id === selectedProject?._id)?.members || []}
+            />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              {selectedProject && (
+                <TeamManagementButton
+                  project={selectedProject}
+                  team={currentTeam}
+                  members={selectedProject?.members || []}
+                  tasks={filteredTasks}
+                  onAddMember={handleAddTeamMember}
+                  onRemoveMember={handleRemoveTeamMember}
+                  onUpdateMemberRole={handleUpdateMemberRole}
+                  onAssignTask={handleAssignTask}
+                  onSearchUsers={handleSearchTeamMembers}
+                  searchResults={memberResults}
+                  searchLoading={searchLoading}
+                  searchError={searchError}
+                  currentUser={user}
+                  badgeCount={teamError ? 1 : 0}
+                />
+              )}
+            </Box>
+          </Paper>
           {/* Toolbar */}
           <Paper
             elevation={0}
@@ -945,29 +982,7 @@ const DashboardPage = () => {
               >
                 Thêm công việc
               </Button>
-              {selectedProject && (
-                <TeamManagementButton
-                  project={selectedProject}
-                  team={currentTeam}
-                  members={selectedProject?.members || []}
-                  tasks={filteredTasks}
-                  onAddMember={handleAddTeamMember}
-                  onRemoveMember={handleRemoveTeamMember}
-                  onUpdateMemberRole={handleUpdateMemberRole}
-                  onAssignTask={handleAssignTask}
-                  onSearchUsers={handleSearchTeamMembers}
-                  searchResults={memberResults}
-                  searchLoading={searchLoading}
-                  searchError={searchError}
-                  currentUser={user}
-                  badgeCount={teamError ? 1 : 0}
-                />
-              )}
             </Box>
-            <ProjectMemberInfo 
-              user={user}
-              projectMembers={dashboardData?.projects?.find(p => p._id === selectedProject?._id)?.members || []}
-            />
             <FilterView
               tasks={dashboardData?.tasks || []}
               user={user}

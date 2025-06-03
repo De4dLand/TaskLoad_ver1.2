@@ -221,7 +221,10 @@ export class TaskController {
 
   // Create a new task
   createTask = catchAsync(async (req, res) => {
-    const { title, description, status, priority, dueDate, project, assignedTo, tags, estimatedHours } = req.body
+    const { title, description, status, priority, dueDate, startDate, project, assignedTo, tags, estimatedHours } = req.body
+
+    // Get the current user ID from the request (set by auth middleware)
+    const createdBy = req.user._id;
 
     // Validation
     if (!title) {
@@ -229,30 +232,25 @@ export class TaskController {
     }
 
     // Create task, omit assignedTo if empty to avoid cast errors
-    const taskData = {
+    const task = await Task.create({
       title,
-      description,
+      description: description || "",
       status: status || "todo",
       priority: priority || "medium",
       dueDate,
+      startDate,
       project,
       tags: tags || [],
       estimatedHours,
-      createdBy: req.user.userId,
-    };
-    if (assignedTo !== "") {
-      taskData.assignedTo = assignedTo;
-    }
-    else{
-      taskData.assignedTo = req.user.userId
-    }
-    const task = new Task(taskData);
+      createdBy, // Use the createdBy from the authenticated user
+      assignedTo: assignedTo || null
+    })
 
     await task.save()
 
     // Populate references for response
     const populatedTask = await Task.findById(task._id)
-      .populate("assignedTo", "username firstName lastName profileImage")
+      .populate("assignedTo", "username firstName lastName ")
       .populate("createdBy", "username firstName lastName")
       .populate("project", "name")
 
@@ -304,6 +302,7 @@ export class TaskController {
       "description",
       "status",
       "priority",
+      "startDate",
       "dueDate",
       "assignedTo",
       "tags",
@@ -323,7 +322,7 @@ export class TaskController {
 
     // Populate for response
     const updatedTask = await Task.findById(id)
-      .populate("assignedTo", "username firstName lastName profileImage")
+      .populate("assignedTo", "username firstName lastName ")
       .populate("createdBy", "username firstName lastName")
       .populate("project", "name")
 

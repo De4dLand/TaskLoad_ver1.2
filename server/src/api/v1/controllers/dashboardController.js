@@ -64,8 +64,8 @@ export class DashboardController {
     
     const tasks = await Task.find(taskQuery)
       .populate('project', 'name color')
-      .populate('assignedTo', 'username firstName lastName profileImage')
-      .populate('createdBy', 'username firstName lastName profileImage')
+      .populate('assignedTo', 'username firstName lastName ')
+      .populate('createdBy', 'username firstName lastName ')
       .sort({ createdAt: -1 })
 
     // Fetch projects for user (owner or member)
@@ -74,8 +74,8 @@ export class DashboardController {
     }
     
     const projects = await Project.find(projectQuery)
-      .populate('owner', 'username firstName lastName email profileImage')
-      .populate('members.user', 'username firstName lastName email profileImage')
+      .populate('owner', 'username firstName lastName')
+      .populate('members.user', 'username firstName lastName')
       .populate('tasks', 'title status priority dueDate')
       .sort({ updatedAt: -1 })
 

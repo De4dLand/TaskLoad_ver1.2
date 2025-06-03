@@ -28,7 +28,6 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import KeyboardIcon from "@mui/icons-material/Keyboard";
 import { getSocket } from "../../../../../services/socket";
 import { createSubtask, getSubtasksByTask, updateSubtask, deleteSubtask } from "../../../../features/tasks/services/subtaskService";
-import { updateTask } from "../../../../features/tasks/services/taskService";
 
 // Utility to format date as dd/MM/yyyy
 function formatDate(date) {
@@ -412,7 +411,22 @@ const TaskDetailDrawer = ({
           <Grid container spacing={2} mt={2}>
             <Grid item xs={6}>
               <Typography variant="subtitle2">Start Date</Typography>
-              <Typography>{formatDate(task.startDate)}</Typography>
+              {editMode ? (
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    value={editedTask.startDate ? dayjs(editedTask.startDate) : null}
+                    onChange={(date) => handleFieldChange("startDate", date ? date.toDate() : null)}
+                    slotProps={{
+                      textField: {
+                        size: "small",
+                        fullWidth: true
+                      }
+                    }}
+                  />
+                </LocalizationProvider>
+              ) : (
+                <Typography>{formatDate(task.startDate)}</Typography>
+              )}
             </Grid>
             <Grid item xs={6}>
               <Typography variant="subtitle2">Due Date</Typography>

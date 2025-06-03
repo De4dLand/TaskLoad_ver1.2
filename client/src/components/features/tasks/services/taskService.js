@@ -60,7 +60,7 @@ export const updateTask = async (id, taskData) => {
     // Ensure data matches the backend model requirements
     const formattedData = formatTaskData(taskData)
     
-    const response = await api.patch(API_ENDPOINTS.TASKS.getById(id), formattedData)
+    const response = await api.put(API_ENDPOINTS.TASKS.getById(id), formattedData)
     return response.data
   } catch (error) {
     console.error(`Error updating task ${id}:`, error)
@@ -120,6 +120,10 @@ const formatTaskData = (taskData) => {
   }
   
   // Only include optional fields if they have values
+  if (taskData.startDate) {
+    formattedData.startDate = taskData.startDate
+  }
+  
   if (taskData.dueDate) {
     formattedData.dueDate = taskData.dueDate
   }

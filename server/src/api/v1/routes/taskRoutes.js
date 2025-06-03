@@ -29,7 +29,7 @@ router.post("/", [...validateTask, async (req, res) => {
 }]);
 
 // PUT routes
-router.patch("/:id", checkTaskModifyPermission(), [...validateTaskUpdate, async (req, res) => {
+router.put("/:id", checkTaskModifyPermission(), [...validateTaskUpdate, async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });

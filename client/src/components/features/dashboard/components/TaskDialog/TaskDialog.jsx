@@ -11,6 +11,7 @@ const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], users = [] }
     description: "",
     status: "todo",
     priority: "medium",
+    startDate: null,
     dueDate: null,
     project: "",
     assignedTo: null,
@@ -25,6 +26,7 @@ const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], users = [] }
         description: task.description || "",
         status: task.status || "todo",
         priority: task.priority || "medium",
+        startDate: task.startDate ? new Date(task.startDate) : null,
         dueDate: task.dueDate ? new Date(task.dueDate) : null,
         project: task.project?._id || task.project || "",
         assignedTo: task.assignedTo?._id || task.assignedTo || "", // Ensure it's an empty string for Select if null/undefined
@@ -34,7 +36,7 @@ const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], users = [] }
     } else {
       setFormState({
         title: "", description: "", status: "todo", priority: "medium",
-        dueDate: null, project: "", assignedTo: "", tags: [], estimatedHours: ""
+        startDate: null, dueDate: null, project: "", assignedTo: "", tags: [], estimatedHours: ""
       });
     }
   }, [task, open]);
@@ -50,7 +52,6 @@ const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], users = [] }
   };
 
   const handleDateChange = (newDate) => {
-    // For DatePicker component, newDate is a dayjs object
     setFormState(prev => ({ ...prev, dueDate: newDate ? newDate.toDate() : null }));
   };
 
@@ -89,7 +90,7 @@ const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], users = [] }
     } else {
       dataToSubmit.dueDate = undefined;
     }
-    
+
     // Ensure tags are properly formatted as an array of strings
     if (Array.isArray(formState.tags)) {
       dataToSubmit.tags = formState.tags.filter(tag => tag.trim() !== '');
@@ -123,6 +124,19 @@ const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], users = [] }
               <MenuItem value="high">High</MenuItem>
             </Select>
           </FormControl>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="Start Date"
+              value={formState.startDate ? dayjs(formState.startDate) : null}
+              onChange={handleDateChange}
+              slotProps={{ 
+                textField: { 
+                  fullWidth: true,
+                  required: false
+                } 
+              }}
+            />
+          </LocalizationProvider>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
               label="Due Date"

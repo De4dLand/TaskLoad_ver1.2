@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { TASK_STATUS, TASK_PRIORITY, TASK_PRIORITY_LABELS } from '../../../../../../../shared/constants/taskStatus';
 import axios from 'axios';
-import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
+import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 
 dayjs.extend(relativeTime);
 
@@ -389,6 +389,7 @@ const CalendarView = ({ tasks = [], onTaskClick, onTaskContextMenu }) => {
       </Snackbar>
       {mode === 'week' ? (
         <DragDropContext onDragEnd={handleDragEnd}>
+        {/* StrictModeDroppable is not needed with @hello-pangea/dnd */}
           <Box sx={{ display: 'grid', gridTemplateColumns: '60px repeat(7, 1fr)', border: '1px solid #444', borderRadius: 2, overflow: 'hidden', background: '#181818' }}>
           <Box sx={{ borderRight: '1px solid #333', bgcolor: '#121212' }}>
             <Box sx={{ height: 40 }} />
