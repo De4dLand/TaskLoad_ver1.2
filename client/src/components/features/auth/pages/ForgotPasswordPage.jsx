@@ -26,11 +26,11 @@ const ForgotPasswordPage = () => {
   //validate email
   const validateEmail = () => {
     if (!email) {
-      setError("Email is required")
+      setError("Email không được để trống")
       return false
     }
     if (!/\S+@\S+\.\S+/.test(email)) {
-      setError("Please enter a valid email address")
+      setError("Vui lòng nhập một địa chỉ email hợp lệ")
       return false
     }
     return true
@@ -65,26 +65,26 @@ const ForgotPasswordPage = () => {
         </Box>
 
         <Typography component="h1" variant="h4" className={styles.title}>
-          Reset Your Password
+          Quên Mật Khẩu
         </Typography>
 
         {success ? (
           <Box className={styles.successContainer}>
             <Alert severity="success" className={styles.successAlert}>
-              If an account exists with this email, we've sent password reset instructions.
+              Nếu có tài khoản với email này, chúng tôi đã gửi hướng dẫn khôi phục mật khẩu đến email của bạn.
             </Alert>
             <Typography variant="body2" className={styles.instructionText}>
-              Please check your email inbox and follow the instructions to reset your password. If you don't receive an
-              email within a few minutes, check your spam folder.
+              Vui lòng kiểm tra hộp thư đến của bạn và theo dõi hướng dẫn để khôi phục mật khẩu. Nếu bạn không nhận được
+              email trong vài phút, hãy kiểm tra thư mục spam.
             </Typography>
             <Button component={Link} to="/login" startIcon={<ArrowBack />} className={styles.backButton}>
-              Back to Login
+              Quay lại đăng nhập
             </Button>
           </Box>
         ) : (
           <Box component="form" onSubmit={handleSubmit} className={styles.form}>
             <Typography variant="body2" className={styles.instructionText}>
-              Enter your email address and we'll send you instructions to reset your password.
+              Vui lòng nhập email của bạn và chúng tôi sẽ gửi hướng dẫn khôi phục mật khẩu đến email của bạn.
             </Typography>
 
             {error && (
@@ -95,7 +95,7 @@ const ForgotPasswordPage = () => {
 
             <Box className={styles.formGroup}>
               <Typography variant="subtitle1" className={styles.label}>
-                Email Address
+                Email
               </Typography>
               <TextField
                 fullWidth
@@ -105,7 +105,7 @@ const ForgotPasswordPage = () => {
                   setError("")
                 }}
                 error={!!error}
-                placeholder="Enter your email"
+                placeholder="Nhập email"
                 variant="outlined"
                 className={styles.textField}
                 InputProps={{
@@ -131,13 +131,13 @@ const ForgotPasswordPage = () => {
               disabled={isSubmitting}
               className={styles.submitButton}
             >
-              {isSubmitting ? "Sending..." : "Send Reset Instructions"}
+              {isSubmitting ? "Đang gửi..." : "Gửi hướng dẫn khôi phục mật khẩu"}
             </Button>
 
             <Box className={styles.loginLinkContainer}>
               <Link to="/login" className={styles.loginLink}>
                 <ArrowBack fontSize="small" className={styles.backIcon} />
-                Back to Login
+                  Quay lại đăng nhập
               </Link>
             </Box>
           </Box>

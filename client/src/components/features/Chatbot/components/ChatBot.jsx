@@ -24,16 +24,15 @@ import styles from './ChatInterface.module.css';
  * ChatBot component provides an AI chat interface using Google's Gemini API
  * Includes message history, input area, and loading states
  * @param {Object} props - Component props
- * @param {string} props.userId - User ID for the current user
  */
-const ChatBot = ({ userId }) => {
+const ChatBot = () => {
   const theme = useTheme();
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const chatContainerRef = useRef(null);
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyDjOqnhYwDG4iOGC8KuqL5rg5T_Mgd2MTg';
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCpWGM4YgvBosMZnHP7onfyeln-2sfh45E';
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -67,7 +66,7 @@ const ChatBot = ({ userId }) => {
     try {
       // Initialize Gemini API
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-preview-04-17" });
 
       // Format message history for Gemini
       const chat = model.startChat({

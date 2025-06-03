@@ -908,7 +908,7 @@ const DashboardPage = () => {
             onClick={handleAddProject}
             sx={{ mb: 3 }}
           >
-            New Project
+            Tạo dự án
           </Button>
           {dashboardData?.projects && (
             <ProjectSidebar
@@ -943,7 +943,7 @@ const DashboardPage = () => {
                 onClick={handleAddTask}
                 size="small"
               >
-                Add Task
+                Thêm công việc
               </Button>
               {selectedProject && (
                 <TeamManagementButton

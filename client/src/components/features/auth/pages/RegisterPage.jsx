@@ -60,37 +60,37 @@ const RegisterPage = () => {
 
     // Username validation
     if (!formData.username) {
-      newErrors.username = "Username is required"
+      newErrors.username = "Tên Người Dùng là Bắt buộc"
     } else if (formData.username.length < 3) {
-      newErrors.username = "Username must be at least 3 characters"
+      newErrors.username = "Tên Người Dùng phải có ít nhất 3 ký tự"
     } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
-      newErrors.username = "Username can only contain letters, numbers, and underscores"
+      newErrors.username = "Tên Người Dùng chỉ có thể chứa chữ, số và dấu gạch dưới"
     }
 
     // Email validation
     if (!formData.email) {
-      newErrors.email = "Email is required"
+      newErrors.email = "Email là Bắt buộc"
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address."
+      newErrors.email = "Vui lòng nhập một địa chỉ email hợp lệ."
     }
 
     // Password validation
     if (!formData.password) {
-      newErrors.password = "Password is required"
+      newErrors.password = "Mật Khẩu là Bắt buộc"
     } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters"
+      newErrors.password = "Mật Khẩu phải có ít nhất 6 ký tự"
     }
 
     // Confirm password validation
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Please confirm your password"
+      newErrors.confirmPassword = "Xác nhận Mật Khẩu là Bắt buộc"
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match"
+      newErrors.confirmPassword = "Mật Khẩu và Xác nhận Mật Khẩu không khớp"
     }
 
     // Terms agreement validation
     if (!formData.agreeToTerms) {
-      newErrors.agreeToTerms = "You must agree to the Terms of Service and Privacy Policy"
+      newErrors.agreeToTerms = " Bạn phải đồng ý với Điều khoản Dịch vụ và Chính sách Bảo mật"
     }
 
     setErrors(newErrors)
@@ -159,13 +159,13 @@ const RegisterPage = () => {
         </Box>
 
         <Typography component="h1" variant="h4" className={styles.title}>
-          Create Your Account
+          Tạo Tài Khoản
         </Typography>
 
         <Box component="form" onSubmit={handleSubmit} className={styles.form}>
           <Box className={styles.formGroup}>
             <Typography variant="subtitle1" className={styles.label}>
-              Username
+              Tên Người Dùng
             </Typography>
             <TextField
               fullWidth
@@ -173,7 +173,7 @@ const RegisterPage = () => {
               value={formData.username}
               onChange={handleChange}
               error={!!errors.username}
-              placeholder="Choose a username"
+              placeholder="Nhập Tên Người Dùng"
               variant="outlined"
               className={styles.textField}
               InputProps={{
@@ -193,7 +193,7 @@ const RegisterPage = () => {
 
           <Box className={styles.formGroup}>
             <Typography variant="subtitle1" className={styles.label}>
-              Email Address
+              Địa chỉ Email
             </Typography>
             <TextField
               fullWidth
@@ -201,7 +201,7 @@ const RegisterPage = () => {
               value={formData.email}
               onChange={handleChange}
               error={!!errors.email}
-              placeholder="Enter your email"
+              placeholder="Nhập Địa chỉ Email"
               variant="outlined"
               className={styles.textField}
               InputProps={{
@@ -221,7 +221,7 @@ const RegisterPage = () => {
 
           <Box className={styles.formGroup}>
             <Typography variant="subtitle1" className={styles.label}>
-              Password
+              Mật Khẩu
             </Typography>
             <TextField
               fullWidth
@@ -230,7 +230,7 @@ const RegisterPage = () => {
               value={formData.password}
               onChange={handleChange}
               error={!!errors.password}
-              placeholder="Create a password"
+              placeholder="Nhập Mật Khẩu"
               variant="outlined"
               className={styles.textField}
               InputProps={{
@@ -257,7 +257,7 @@ const RegisterPage = () => {
 
           <Box className={styles.formGroup}>
             <Typography variant="subtitle1" className={styles.label}>
-              Confirm Password
+                Xác nhận Mật Khẩu
             </Typography>
             <TextField
               fullWidth
@@ -266,7 +266,7 @@ const RegisterPage = () => {
               value={formData.confirmPassword}
               onChange={handleChange}
               error={!!errors.confirmPassword}
-              placeholder="Confirm your password"
+              placeholder="Xác nhận Mật Khẩu"
               variant="outlined"
               className={styles.textField}
               InputProps={{
@@ -307,13 +307,13 @@ const RegisterPage = () => {
               }
               label={
                 <Typography variant="body2" className={styles.termsText}>
-                  I agree to the{" "}
+                  Tôi đồng ý với{" "}
                   <Link to="/terms" className={styles.termsLink}>
-                    Terms of Service
+                    Điều khoản Dịch vụ
                   </Link>{" "}
-                  and{" "}
+                  và{" "}
                   <Link to="/privacy" className={styles.termsLink}>
-                    Privacy Policy
+                    Chính sách Bảo mật
                   </Link>
                 </Typography>
               }
@@ -339,7 +339,7 @@ const RegisterPage = () => {
             disabled={isSubmitting}
             className={styles.submitButton}
           >
-            {isSubmitting ? "Creating Account..." : "Create Account"}
+            {isSubmitting ? "Đang Tạo Tài Khoản..." : "Tạo Tài Khoản"}
           </Button>
 
           <Box className={styles.socialLoginContainer}>
@@ -361,16 +361,16 @@ const RegisterPage = () => {
 
           <Box className={styles.loginLinkContainer}>
             <Typography variant="body2" className={styles.loginText}>
-              Already have an account?{" "}
+              Bạn đã có tài khoản?{" "}
               <Link to="/login" className={styles.loginLink}>
-                Log in
+                Đăng nhập
               </Link>
             </Typography>
           </Box>
 
           <Box className={styles.footerContainer}>
             <Link to="/privacy" className={styles.privacyLink}>
-              Privacy Policy
+              Chính sách Bảo mật
             </Link>
           </Box>
         </Box>

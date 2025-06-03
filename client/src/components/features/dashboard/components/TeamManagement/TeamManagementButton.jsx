@@ -35,7 +35,7 @@ const TeamManagementButton = ({
 
   return (
     <>
-      <Tooltip title="Manage Team Members">
+      <Tooltip title="Quản lý thành viên">
         <Badge badgeContent={badgeCount} color="error" invisible={badgeCount === 0}>
           <Button
             variant="outlined"
@@ -43,7 +43,7 @@ const TeamManagementButton = ({
             onClick={handleOpenDialog}
             size="small"
           >
-            Team Members
+            Quản lý thành viên
           </Button>
         </Badge>
       </Tooltip>

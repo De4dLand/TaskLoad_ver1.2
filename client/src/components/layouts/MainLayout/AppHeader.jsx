@@ -102,10 +102,10 @@ const AppHeader = () => {
   // Validate profile form
   const validateProfileForm = () => {
     const errors = {}
-    if (!profileForm.username) errors.username = "Username is required"
-    if (!profileForm.email) errors.email = "Email is required"
+    if (!profileForm.username) errors.username = "Tên người dùng là bắt buộc"
+    if (!profileForm.email) errors.email = "Email là bắt buộc"
     if (profileForm.email && !/^\S+@\S+\.\S+$/.test(profileForm.email)) {
-      errors.email = "Invalid email format"
+      errors.email = "Email không hợp lệ"
     }
     
     setFormErrors(errors)
@@ -203,11 +203,11 @@ const AppHeader = () => {
         <Divider />
         <MenuItem onClick={handleProfileDialogOpen}>
           <Person fontSize="small" sx={{ mr: 1 }} />
-          Edit Profile
+          Chỉnh sửa thông tin
         </MenuItem>
         <MenuItem onClick={handleSettingsDialogOpen}>
           <Settings fontSize="small" sx={{ mr: 1 }} />
-          Settings
+          Cài đặt
         </MenuItem>
         <Divider />
         <MenuItem onClick={() => { logout(); handleProfileMenuClose() }}>Logout</MenuItem>
@@ -217,8 +217,8 @@ const AppHeader = () => {
       <Dialog open={profileDialogOpen} onClose={handleProfileDialogClose} fullWidth maxWidth="md">
         <DialogTitle>
           <Tabs value={profileTabValue} onChange={handleProfileTabChange} aria-label="profile tabs">
-            <Tab label="Basic Info" id="profile-tab-0" />
-            <Tab label="Work Details" id="profile-tab-1" />
+            <Tab label="Thông tin cơ bản" id="profile-tab-0" />
+            <Tab label="Chi tiết công việc" id="profile-tab-1" />
           </Tabs>
         </DialogTitle>
         <DialogContent>
@@ -226,7 +226,7 @@ const AppHeader = () => {
             {profileTabValue === 0 && (
               <Stack spacing={2}>
                 <TextField 
-                  label="Username" 
+                  label="Tên người dùng" 
                   name="username" 
                   value={profileForm.username} 
                   onChange={handleFormChange} 
@@ -248,14 +248,14 @@ const AppHeader = () => {
                 />
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                   <TextField 
-                    label="First Name" 
+                    label="Tên" 
                     name="firstName" 
                     value={profileForm.firstName} 
                     onChange={handleFormChange} 
                     fullWidth 
                   />
                   <TextField 
-                    label="Last Name" 
+                    label="Họ" 
                     name="lastName" 
                     value={profileForm.lastName} 
                     onChange={handleFormChange} 
@@ -263,7 +263,7 @@ const AppHeader = () => {
                   />
                 </Stack>
                 <TextField 
-                  label="Bio" 
+                  label="Giới thiệu" 
                   name="bio" 
                   value={profileForm.bio} 
                   onChange={handleFormChange} 
@@ -277,7 +277,7 @@ const AppHeader = () => {
             {profileTabValue === 1 && (
               <Stack spacing={2}>
                 <TextField 
-                  label="Job Title" 
+                  label="Chức vụ chính" 
                   name="jobTitle" 
                   value={profileForm.jobTitle} 
                   onChange={handleFormChange} 
@@ -304,9 +304,9 @@ const AppHeader = () => {
                   </Select>
                 </FormControl>
                 <TextField 
-                  label="Phone Number" 
+                  label="Số điện thoại" 
                   name="phoneNumber" 
-                  value={profileForm.phoneNumber} 
+                  value={profileForm.phoneNumber}   
                   onChange={handleFormChange} 
                   fullWidth 
                 />
@@ -315,7 +315,7 @@ const AppHeader = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleProfileDialogClose}>Cancel</Button>
+          <Button onClick={handleProfileDialogClose}>Hủy</Button>
           <Button 
             variant="contained" 
             onClick={handleProfileSubmit} 
@@ -329,10 +329,10 @@ const AppHeader = () => {
       
       {/* Settings Dialog */}
       <Dialog open={settingsDialogOpen} onClose={handleSettingsDialogClose} fullWidth maxWidth="sm">
-        <DialogTitle>Settings</DialogTitle>
+        <DialogTitle>Cài đặt</DialogTitle>
         <DialogContent>
           <Stack spacing={3} sx={{ mt: 2 }}>
-            <Typography variant="h6" gutterBottom>Theme Settings</Typography>
+            <Typography variant="h6" gutterBottom>Cài đặt giao diện</Typography>
             
             <FormControlLabel
               control={
@@ -346,52 +346,52 @@ const AppHeader = () => {
               label={themeSettings.mode === "light" ? (
                 <Stack direction="row" spacing={1} alignItems="center">
                   <Brightness7 />
-                  <Typography>Light Mode</Typography>
+                  <Typography>Chế độ sáng</Typography>
                 </Stack>
               ) : (
                 <Stack direction="row" spacing={1} alignItems="center">
                   <Brightness4 />
-                  <Typography>Dark Mode</Typography>
+                  <Typography>Chế độ tối</Typography>
                 </Stack>
               )}
             />
             
             <FormControl fullWidth>
-              <InputLabel id="primary-color-label">Primary Color</InputLabel>
+              <InputLabel id="primary-color-label">Màu chủ đạo</InputLabel>
               <Select
                 labelId="primary-color-label"
                 name="primaryColor"
                 value={themeSettings.primaryColor}
-                label="Primary Color"
+                label="Màu chủ đạo"
                 onChange={handleThemeChange}
                 startAdornment={<ColorLens style={{ color: themeSettings.primaryColor, marginRight: 8 }} />}
               >
-                <MenuItem value="#1a56db">Blue</MenuItem>
-                <MenuItem value="#10b981">Green</MenuItem>
-                <MenuItem value="#ef4444">Red</MenuItem>
-                <MenuItem value="#f59e0b">Amber</MenuItem>
-                <MenuItem value="#8b5cf6">Purple</MenuItem>
+                <MenuItem value="#1a56db">Xanh dương</MenuItem>
+                <MenuItem value="#10b981">Xanh lá</MenuItem>
+                <MenuItem value="#ef4444">Đỏ</MenuItem>
+                <MenuItem value="#f59e0b">Vàng</MenuItem>
+                <MenuItem value="#8b5cf6">Tím</MenuItem>
               </Select>
             </FormControl>
             
             <FormControl fullWidth>
-              <InputLabel id="font-size-label">Font Size</InputLabel>
+              <InputLabel id="font-size-label">Kích thước chữ</InputLabel>
               <Select
                 labelId="font-size-label"
                 name="fontSize"
                 value={themeSettings.fontSize}
-                label="Font Size"
+                label="Kích thước chữ"
                 onChange={handleThemeChange}
               >
-                <MenuItem value="small">Small</MenuItem>
-                <MenuItem value="medium">Medium</MenuItem>
-                <MenuItem value="large">Large</MenuItem>
+                <MenuItem value="small">Nhỏ</MenuItem>
+                <MenuItem value="medium">Trung bình</MenuItem>
+                <MenuItem value="large">Lớn</MenuItem>
               </Select>
             </FormControl>
             
             <Divider />
             
-            <Typography variant="h6" gutterBottom>Notification Settings</Typography>
+            <Typography variant="h6" gutterBottom>Thiết lập thông báo</Typography>
             
             <FormControlLabel
               control={
@@ -403,19 +403,19 @@ const AppHeader = () => {
                   name="notifications"
                 />
               }
-              label="Enable Notifications"
+              label="Bật thông báo"
             />
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleSettingsDialogClose}>Cancel</Button>
+          <Button onClick={handleSettingsDialogClose}>Hủy</Button>
           <Button 
             variant="contained" 
             onClick={handleThemeSubmit}
             disabled={isSubmitting}
             startIcon={isSubmitting ? <CircularProgress size={20} /> : null}
           >
-            {isSubmitting ? 'Saving...' : 'Save'}
+            {isSubmitting ? 'Đang lưu...' : 'Lưu'}
           </Button>
         </DialogActions>
       </Dialog>

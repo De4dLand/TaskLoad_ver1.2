@@ -1,14 +1,19 @@
 import { Box, Typography, Avatar, AvatarGroup, Tooltip, Chip } from '@mui/material';
 import { Person as PersonIcon } from '@mui/icons-material';
-
+import { useState, useEffect } from 'react';
 const ProjectMemberInfo = ({ user, projectMembers = [] }) => {
+  const [role, setRole] = useState('');
+  useEffect(() => {
+    const member = projectMembers.find((member) => member.user._id === user._id);
+    setRole(member?.role || 'Member');
+  }, [projectMembers, user]);
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
       {/* User Role */}
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
         <PersonIcon sx={{ mr: 1, fontSize: 20 }} />
         <Typography variant="body2" color="text.secondary">
-          Role: <Chip size="small" label={user?.role || 'Member'} />
+          Role: <Chip size="small" label={role} />
         </Typography>
       </Box>
 

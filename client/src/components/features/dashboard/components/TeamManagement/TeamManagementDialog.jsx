@@ -107,7 +107,7 @@ const TeamManagementDialog = ({
   // Handle adding a member
   const handleAddMember = async () => {
     if (!selectedUser) {
-      setAddMemberError('Please select a user to add');
+      setAddMemberError('Vui lòng chọn người dùng để thêm');
       return;
     }
     
@@ -167,7 +167,7 @@ const TeamManagementDialog = ({
       className={styles.teamManagementDialog}
     >
       <DialogTitle className={styles.dialogTitle}>
-        <Typography variant="h6">Team Management</Typography>
+        <Typography variant="h6">Quản lý thành viên</Typography>
         <IconButton onClick={onClose} size="small">
           <CloseIcon />
         </IconButton>
@@ -191,13 +191,13 @@ const TeamManagementDialog = ({
         {activeTab === 0 && (
           <Box className={styles.tabContent}>
             <Typography variant="h6" gutterBottom>
-              Project Members
+              Thành viên dự án
             </Typography>
             
             {/* Add Member Section */}
             <Paper elevation={0} className={styles.addMemberSection}>
               <Typography variant="subtitle1" gutterBottom>
-                Add New Member
+                Thêm thành viên
               </Typography>
               
               <Grid container spacing={2} alignItems="center">
@@ -217,7 +217,7 @@ const TeamManagementDialog = ({
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Search Users"
+                        label="Tìm kiếm người dùng"
                         variant="outlined"
                         fullWidth
                         InputProps={{
@@ -251,12 +251,12 @@ const TeamManagementDialog = ({
                 
                 <Grid item xs={12} md={3}>
                   <FormControl fullWidth>
-                    <InputLabel id="member-role-label">Role</InputLabel>
+                    <InputLabel id="member-role-label">Vai trò</InputLabel>
                     <Select
                       labelId="member-role-label"
                       value={selectedRole}
                       onChange={(e) => setSelectedRole(e.target.value)}
-                      label="Role"
+                      label="Vai trò"
                     >
                       <MenuItem value="member">Member</MenuItem>
                       <MenuItem value="admin">Admin</MenuItem>
@@ -273,7 +273,7 @@ const TeamManagementDialog = ({
                       onClick={handleSearch}
                       disabled={searchLoading || !searchQuery.trim()}
                     >
-                      Search
+                      Tìm kiếm
                     </Button>
                     <Button
                       variant="contained"
@@ -282,7 +282,7 @@ const TeamManagementDialog = ({
                       disabled={!selectedUser}
                       color="primary"
                     >
-                      Add
+                      Thêm
                     </Button>
                   </Box>
                 </Grid>
@@ -304,12 +304,12 @@ const TeamManagementDialog = ({
             {/* Members List */}
             <Paper elevation={0} className={styles.membersListSection}>
               <Typography variant="subtitle1" gutterBottom>
-                Current Members
+                Thành viên hiện tại
               </Typography>
               
               {members.length === 0 ? (
                 <Alert severity="info">
-                  No members in this project yet. Add members using the form above.
+                  Không có thành viên nào trong dự án này. Thêm thành viên bằng cách sử dụng form trên.
                 </Alert>
               ) : (
                 <List>
@@ -376,12 +376,12 @@ const TeamManagementDialog = ({
         {activeTab === 1 && (
           <Box className={styles.tabContent}>
             <Typography variant="h6" gutterBottom>
-              Task Assignment
+              Giao việc
             </Typography>
             
             {tasks.length === 0 ? (
               <Alert severity="info">
-                No tasks available for assignment. Create tasks first.
+                Không có công việc nào để giao. Hãy tạo công việc trước.
               </Alert>
             ) : (
               <Paper elevation={0} className={styles.taskAssignmentSection}>
@@ -400,7 +400,7 @@ const TeamManagementDialog = ({
                             label="Assign To"
                           >
                             <MenuItem value="">
-                              <em>Unassigned</em>
+                              <em>Không giao</em>
                             </MenuItem>
                             {members.map((member) => (
                               <MenuItem key={member._id} value={member._id}>
@@ -460,7 +460,7 @@ const TeamManagementDialog = ({
         {activeTab === 2 && (
           <Box className={styles.tabContent}>
             <Typography variant="h6" gutterBottom>
-              Team Information
+              Thông tin nhóm
             </Typography>
             
             <Paper elevation={0} className={styles.teamInfoSection}>
@@ -512,12 +512,12 @@ const TeamManagementDialog = ({
                 
                 <Grid item xs={12} md={6}>
                   <Typography variant="subtitle1" gutterBottom>
-                    Team Statistics
+                    Thông tin thống kê
                   </Typography>
                   
                   <Box className={styles.infoItem}>
                     <Typography variant="body2" color="text.secondary">
-                      Total Members
+                      Tổng thành viên
                     </Typography>
                     <Typography variant="body1">
                       {members.length}
@@ -526,7 +526,7 @@ const TeamManagementDialog = ({
                   
                   <Box className={styles.infoItem}>
                     <Typography variant="body2" color="text.secondary">
-                      Total Tasks
+                      Tổng công việc
                     </Typography>
                     <Typography variant="body1">
                       {tasks.length}
@@ -535,7 +535,7 @@ const TeamManagementDialog = ({
                   
                   <Box className={styles.infoItem}>
                     <Typography variant="body2" color="text.secondary">
-                      Completed Tasks
+                      Hoàn thành
                     </Typography>
                     <Typography variant="body1">
                       {tasks.filter(task => task.status === 'done').length} 
@@ -548,7 +548,7 @@ const TeamManagementDialog = ({
                   
                   <Box className={styles.infoItem}>
                     <Typography variant="body2" color="text.secondary">
-                      Overdue Tasks
+                      Quá hạn
                     </Typography>
                     <Typography variant="body1" color="error.main">
                       {tasks.filter(task => 

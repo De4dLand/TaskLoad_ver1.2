@@ -68,14 +68,14 @@ const LoginPage = () => {
 
     // Email validation
     if (!formData.email) {
-      newErrors.email = "Email is required"
+      newErrors.email = "Email là Bắt buộc"
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address"
+      newErrors.email = "Vui lòng nhập một địa chỉ email hợp lệ."
     }
 
     // Password validation
     if (!formData.password) {
-      newErrors.password = "Password is required"
+      newErrors.password = "Mật Khẩu là Bắt buộc"
     }
 
     setErrors(newErrors)
@@ -110,7 +110,7 @@ const LoginPage = () => {
           setErrors(prev => ({ ...prev, password: msg }))
         }
       } else {
-        setLoginError(error.message || "Login failed. Please check your credentials and try again.")
+        setLoginError(error.message || "Đăng nhập thất bại. Vui lòng kiểm tra thông tin và thử lại.")
       }
     } finally {
       setIsSubmitting(false)
@@ -137,7 +137,7 @@ const LoginPage = () => {
         </Box>
 
         <Typography component="h1" variant="h4" className={styles.title}>
-          Welcome Back
+          Chào mừng đến với TaskLoad
         </Typography>
 
         {loginError && (
@@ -149,7 +149,7 @@ const LoginPage = () => {
         <Box component="form" onSubmit={handleSubmit} className={styles.form}>
           <Box className={styles.formGroup}>
             <Typography variant="subtitle1" className={styles.label}>
-              Email Address
+              Địa chỉ Email
             </Typography>
             <TextField
               fullWidth
@@ -157,7 +157,7 @@ const LoginPage = () => {
               value={formData.email}
               onChange={handleChange}
               error={!!errors.email}
-              placeholder="Enter your email"
+              placeholder="Nhập Địa chỉ Email"
               variant="outlined"
               className={styles.textField}
               InputProps={{
@@ -177,7 +177,7 @@ const LoginPage = () => {
 
           <Box className={styles.formGroup}>
             <Typography variant="subtitle1" className={styles.label}>
-              Password
+              Mật Khẩu
             </Typography>
             <TextField
               fullWidth
@@ -186,7 +186,7 @@ const LoginPage = () => {
               value={formData.password}
               onChange={handleChange}
               error={!!errors.password}
-              placeholder="Enter your password"
+              placeholder="Nhập Mật Khẩu"
               variant="outlined"
               className={styles.textField}
               InputProps={{
@@ -223,12 +223,12 @@ const LoginPage = () => {
               }
               label={
                 <Typography variant="body2" className={styles.checkboxLabel}>
-                  Remember me
+                  Ghi nhớ mật khẩu
                 </Typography>
               }
             />
             <Link to="/forgot-password" className={styles.forgotPasswordLink}>
-              Forgot password?
+              Quên Mật Khẩu?
             </Link>
           </Box>
 
@@ -240,13 +240,13 @@ const LoginPage = () => {
             disabled={isSubmitting}
             className={styles.submitButton}
           >
-            {isSubmitting ? "Signing In..." : "Sign In"}
+            {isSubmitting ? "Đang Đăng nhập..." : "Đăng nhập"}
           </Button>
 
           <Box className={styles.dividerContainer}>
             <div className={styles.divider}></div>
             <Typography variant="body2" className={styles.dividerText}>
-              OR
+              Hoặc
             </Typography>
             <div className={styles.divider}></div>
           </Box>
@@ -259,24 +259,15 @@ const LoginPage = () => {
               className={styles.socialButton}
               onClick={() => console.log("Google sign-in")}
             >
-              Sign in with Google
-            </Button>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<AppleIcon />}
-              className={styles.socialButton}
-              onClick={() => console.log("Apple sign-in")}
-            >
-              Sign in with Apple
+              Đăng nhập với Google
             </Button>
           </Box>
 
           <Box className={styles.registerLinkContainer}>
             <Typography variant="body2" className={styles.registerText}>
-              Don't have an account?{" "}
+              Bạn chưa có tài khoản?{" "}
               <Link to="/register" className={styles.registerLink}>
-                Sign up
+                Đăng ký
               </Link>
             </Typography>
           </Box>

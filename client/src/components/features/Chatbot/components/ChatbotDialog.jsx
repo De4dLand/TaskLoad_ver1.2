@@ -28,7 +28,7 @@ import { ChatProvider } from '../contexts/ChatContext';
  * @param {Object} props.currentUser - Current user object
  * @param {Function} props.onClose - Function to call when dialog is closed
  */
-const ChatbotDialog = ({ currentUser, onClose }) => {
+const ChatbotDialog = ({ onClose }) => {
   const [minimized, setMinimized] = useState(false);
   const [open, setOpen] = useState(true);
   const theme = useTheme();
@@ -98,43 +98,9 @@ const ChatbotDialog = ({ currentUser, onClose }) => {
 
         {!minimized && (
           <DialogContent className={styles.dialogContent}>
-            {currentUser ? (
-              <ChatProvider>
-                <ChatBot userId={currentUser.id} />
-              </ChatProvider>
-            ) : (
-              <Box sx={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                height: '100%',
-                p: 3,
-                textAlign: 'center'
-              }}>
-                <SmartToyIcon sx={{ fontSize: 60, color: theme.palette.primary.main, mb: 2 }} />
-                <Typography variant="h6" gutterBottom>
-                  Please log in to use the AI Assistant
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Our AI assistant is available to help you manage your tasks and projects.
-                </Typography>
-                <Tooltip title="Go to login page">
-                  <Fab 
-                    color="primary" 
-                    variant="extended" 
-                    size="medium"
-                    onClick={() => {
-                      handleClose();
-                      window.location.href = '/login';
-                    }}
-                  >
-                    <ChatIcon sx={{ mr: 1 }} />
-                    Login to Chat
-                  </Fab>
-                </Tooltip>
-              </Box>
-            )}
+            <ChatProvider>
+              <ChatBot />
+            </ChatProvider>
           </DialogContent>
         )}
       </Dialog>

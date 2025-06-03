@@ -56,56 +56,56 @@ const LandingPage = () => {
   const features = [
     {
       icon: <Dashboard fontSize="large" className={styles.featureIcon} />,
-      title: "Intuitive Dashboard",
-      description: "Get a clear overview of all your tasks, projects, and deadlines at a glance.",
+      title: "Dashboard",
+      description: "Tổng hợp công việc, dự án, các vấn đề của bạn tại cùng một nơi để quản lý",
     },
     {
       icon: <Assignment fontSize="large" className={styles.featureIcon} />,
-      title: "Task Management",
-      description: "Create, organize, and prioritize tasks with ease. Track progress and never miss a deadline.",
+      title: "Quản lý công việc",
+      description: "Tạo, tổ chức và ưu tiên công việc dễ dàng. Theo dõi tiến trình và không bỏ lỡ hạn chót.",
     },
     {
       icon: <People fontSize="large" className={styles.featureIcon} />,
-      title: "Team Collaboration",
-      description: "Work seamlessly with your team. Assign tasks, share updates, and monitor progress together.",
+      title: "Tương tác với đội ngũ",
+      description: "Làm việc cùng đội ngũ một cách hiệu quả. Giao phó công việc, chia sẻ cập nhật và theo dõi tiến trình cùng nhau.",
     },
     {
       icon: <DateRange fontSize="large" className={styles.featureIcon} />,
-      title: "Calendar Integration",
-      description: "Visualize your schedule and manage your time effectively with our integrated calendar.",
+      title: "Tích hợp lịch",
+      description: "Hiển thị lịch của bạn và quản lý thời gian một cách hiệu quả với lịch được tích hợp.",
     },
     {
       icon: <Notifications fontSize="large" className={styles.featureIcon} />,
-      title: "Smart Notifications",
-      description: "Stay on top of your work with timely reminders and notifications about important deadlines.",
+      title: "Thông báo thông minh",
+      description: "Theo dõi công việc của bạn với thông báo kịp thời và thông báo về các hạn chót quan trọng.",
     },
     {
       icon: <CheckCircleOutline fontSize="large" className={styles.featureIcon} />,
-      title: "Progress Tracking",
-      description: "Monitor your productivity and celebrate your achievements with detailed progress reports.",
+      title: "Theo dõi tiến trình",
+      description: "Theo dõi tiến trình và vinh danh thành tích của bạn với báo cáo tiến trình chi tiết.",
     },
   ]
 
-  const testimonials = [
-    {
-      name: "Sarah Johnson",
-      role: "Project Manager",
-      content:
-        "TaskLoad has transformed how our team manages projects. The intuitive interface and powerful features have boosted our productivity by 30%.",
-    },
-    {
-      name: "Michael Chen",
-      role: "Software Developer",
-      content:
-        "As a developer juggling multiple tasks, TaskLoad helps me stay organized and focused. The task prioritization feature is a game-changer.",
-    },
-    {
-      name: "Emily Rodriguez",
-      role: "Marketing Director",
-      content:
-        "TaskLoad has simplified our campaign management process. The collaborative features make it easy to coordinate with team members across departments.",
-    },
-  ]
+  // const testimonials = [
+  //   {
+  //     name: "Sarah Johnson",
+  //     role: "Project Manager",
+  //     content:
+  //       "TaskLoad has transformed how our team manages projects. The intuitive interface and powerful features have boosted our productivity by 30%.",
+  //   },
+  //   {
+  //     name: "Michael Chen",
+  //     role: "Software Developer",
+  //     content:
+  //       "As a developer juggling multiple tasks, TaskLoad helps me stay organized and focused. The task prioritization feature is a game-changer.",
+  //   },
+  //   {
+  //     name: "Emily Rodriguez",
+  //     role: "Marketing Director",
+  //     content:
+  //       "TaskLoad has simplified our campaign management process. The collaborative features make it easy to coordinate with team members across departments.",
+  //   },
+  // ]
 
   return (
     <Box className={styles.landingPage}>
@@ -142,10 +142,10 @@ const LandingPage = () => {
                   <Divider />
                   <List>
                     <ListItem button component={RouterLink} to="/login">
-                      <ListItemText primary="Login" />
+                      <ListItemText primary="Đăng nhập" />
                     </ListItem>
                     <ListItem button component={RouterLink} to="/register">
-                      <ListItemText primary="Register" className={styles.registerText} />
+                      <ListItemText primary="Đăng ký" className={styles.registerText} />
                     </ListItem>
                   </List>
                 </Drawer>
@@ -153,7 +153,7 @@ const LandingPage = () => {
             ) : (
               <Box className={styles.navButtons}>
                 <Button component={RouterLink} to="/login" color="inherit" className={styles.loginButton}>
-                  Login
+                  Đăng nhập
                 </Button>
                 <Button
                   component={RouterLink}
@@ -162,7 +162,7 @@ const LandingPage = () => {
                   color="primary"
                   className={styles.registerButton}
                 >
-                  Register
+                  Đăng ký
                 </Button>
               </Box>
             )}
@@ -176,10 +176,10 @@ const LandingPage = () => {
           <Grid container spacing={4} alignItems="center">
             <Grid item xs={12} md={6}>
               <Typography variant="h2" component="h1" className={styles.heroTitle}>
-                Manage Tasks with Ease and Efficiency
+                Quản lý công việc dễ dàng và hiệu quả
               </Typography>
               <Typography variant="h6" className={styles.heroSubtitle}>
-                TaskLoad helps you organize your work, collaborate with your team, and boost productivity.
+                TaskLoad giúp bạn tổ chức công việc, hợp tác với đội ngũ và tăng hiệu quả làm việc.
               </Typography>
               <Box className={styles.heroCta}>
                 <Button
@@ -190,7 +190,7 @@ const LandingPage = () => {
                   size="large"
                   className={styles.heroRegisterButton}
                 >
-                  Get Started
+                  Đăng ký miễn phí
                 </Button>
                 <Button
                   component={RouterLink}
@@ -199,7 +199,7 @@ const LandingPage = () => {
                   size="large"
                   className={styles.heroLoginButton}
                 >
-                  Login
+                  Đăng nhập
                 </Button>
               </Box>
             </Grid>
@@ -220,10 +220,10 @@ const LandingPage = () => {
       <Box className={styles.featuresSection}>
         <Container maxWidth="lg">
           <Typography variant="h3" component="h2" className={styles.sectionTitle}>
-            Powerful Features
+            Tính năng mạnh mẽ
           </Typography>
           <Typography variant="h6" className={styles.sectionSubtitle}>
-            Everything you need to manage your tasks effectively
+            Mọi thứ bạn cần để quản lý công việc hiệu quả
           </Typography>
 
           <Grid container spacing={4} className={styles.featuresGrid}>
@@ -250,7 +250,7 @@ const LandingPage = () => {
       <Box className={styles.howItWorksSection}>
         <Container maxWidth="lg">
           <Typography variant="h3" component="h2" className={styles.sectionTitle}>
-            How It Works
+            Hướng dẫn sử dụng
           </Typography>
 
           <Grid container spacing={4} alignItems="center">
@@ -267,37 +267,37 @@ const LandingPage = () => {
               <Box className={styles.howItWorksList}>
                 <Box className={styles.howItWorksItem}>
                   <Typography variant="h6" component="h3" className={styles.howItWorksTitle}>
-                    1. Create Your Account
+                    1. Tạo tài khoản
                   </Typography>
                   <Typography variant="body1" className={styles.howItWorksDescription}>
-                    Sign up for TaskLoad in seconds and set up your profile.
+                    Đăng ký TaskLoad trong vài giây và thiết lập hồ sơ của bạn.
                   </Typography>
                 </Box>
 
                 <Box className={styles.howItWorksItem}>
                   <Typography variant="h6" component="h3" className={styles.howItWorksTitle}>
-                    2. Add Your Tasks
+                    2. Thêm công việc
                   </Typography>
                   <Typography variant="body1" className={styles.howItWorksDescription}>
-                    Create tasks, set priorities, and assign deadlines.
+                    Tạo công việc, ưu tiên và gán hạn chót.
                   </Typography>
                 </Box>
 
                 <Box className={styles.howItWorksItem}>
                   <Typography variant="h6" component="h3" className={styles.howItWorksTitle}>
-                    3. Collaborate with Your Team
+                    3. Tương tác với đội ngũ
                   </Typography>
                   <Typography variant="body1" className={styles.howItWorksDescription}>
-                    Invite team members and assign tasks to collaborate effectively.
+                    Mời thành viên đội ngũ và giao phó công việc để làm việc hiệu quả cùng nhau.
                   </Typography>
                 </Box>
 
                 <Box className={styles.howItWorksItem}>
                   <Typography variant="h6" component="h3" className={styles.howItWorksTitle}>
-                    4. Track Progress
+                    4. Theo dõi tiến trình
                   </Typography>
                   <Typography variant="body1" className={styles.howItWorksDescription}>
-                    Monitor task completion and celebrate your achievements.
+                    Theo dõi tiến trình và vinh danh thành tích của bạn.
                   </Typography>
                 </Box>
               </Box>
@@ -307,7 +307,7 @@ const LandingPage = () => {
       </Box>
 
       {/* Testimonials Section */}
-      <Box className={styles.testimonialsSection}>
+      {/* <Box className={styles.testimonialsSection}>
         <Container maxWidth="lg">
           <Typography variant="h3" component="h2" className={styles.sectionTitle}>
             What Our Users Say
@@ -335,16 +335,16 @@ const LandingPage = () => {
             ))}
           </Grid>
         </Container>
-      </Box>
+      </Box> */}
 
       {/* CTA Section */}
       <Box className={styles.ctaSection}>
         <Container maxWidth="md">
           <Typography variant="h3" component="h2" className={styles.ctaTitle}>
-            Ready to Boost Your Productivity?
+            Hãy đẩy mạnh tiềm năng của bạn!
           </Typography>
           <Typography variant="h6" className={styles.ctaSubtitle}>
-            Join thousands of users who are already managing their tasks efficiently with TaskLoad.
+            Tham gia hàng nghìn người dùng đã quản lý công việc của mình hiệu quả với TaskLoad.
           </Typography>
           <Box className={styles.ctaButtons}>
             <Button
@@ -355,7 +355,7 @@ const LandingPage = () => {
               size="large"
               className={styles.ctaRegisterButton}
             >
-              Get Started for Free
+              Đăng ký miễn phí
             </Button>
             <Button
               component={RouterLink}
@@ -364,7 +364,7 @@ const LandingPage = () => {
               size="large"
               className={styles.ctaLoginButton}
             >
-              Login
+              Đăng nhập
             </Button>
           </Box>
         </Container>
@@ -382,24 +382,24 @@ const LandingPage = () => {
                 </Typography>
               </Box>
               <Typography variant="body2" className={styles.footerDescription}>
-                TaskLoad is a powerful task management application designed to help individuals and teams organize their
-                work efficiently.
+                TaskLoad là một ứng dụng quản lý công việc mạnh mẽ được thiết kế để giúp cá nhân và đội ngũ tổ chức
+                tổ chức công việc hiệu quả.
               </Typography>
             </Grid>
 
             <Grid item xs={12} sm={6} md={4}>
               <Typography variant="h6" className={styles.footerSectionTitle}>
-                Quick Links
+                Nhanh chóng
               </Typography>
               <Box component="ul" className={styles.footerLinks}>
                 <Box component="li">
                   <RouterLink to="/register" className={styles.footerLink}>
-                    Get Started
+                    Đăng ký
                   </RouterLink>
                 </Box>
                 <Box component="li">
                   <RouterLink to="/login" className={styles.footerLink}>
-                    Login
+                    Đăng nhập
                   </RouterLink>
                 </Box>
               </Box>
@@ -407,14 +407,14 @@ const LandingPage = () => {
 
             <Grid item xs={12} sm={6} md={4}>
               <Typography variant="h6" className={styles.footerSectionTitle}>
-                Contact
+                Liên hệ
               </Typography>
               <Box component="ul" className={styles.footerLinks}>
                 <Box component="li" className={styles.footerContactItem}>
                   Email: support@taskload.com
                 </Box>
                 <Box component="li" className={styles.footerContactItem}>
-                  Phone: (123) 456-7890
+                  Phone: 0909090909
                 </Box>
               </Box>
             </Grid>
