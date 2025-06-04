@@ -694,6 +694,20 @@ const DashboardPage = () => {
         };
         console.log('Creating new task with data:', newTaskData);
         result = await createTask(newTaskData);
+        
+        // If task was created successfully and has a project, add it to the project's tasks array
+        if (result && result._id && newTaskData.project) {
+          try {
+            await updateProject(newTaskData.project, {
+              $addToSet: { tasks: result._id }
+            });
+            console.log('Task added to project successfully');
+          } catch (error) {
+            console.error('Error adding task to project:', error);
+            // Don't throw the error to prevent the task creation from failing
+            // The task was created successfully, just the project update failed
+          }
+        }
       }
       
       // Update the UI
@@ -1115,7 +1129,8 @@ const DashboardPage = () => {
         onSubmit={handleTaskFormSubmit}
         task={selectedTask}
         projects={dashboardData?.projects || []}
-        users={dashboardData?.users || []}
+        members={getProjectMembers(selectedProject?._id) || []}
+        selectedProject={selectedProject}
       />
 
       {/* Context Menus */}

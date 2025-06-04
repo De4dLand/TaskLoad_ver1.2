@@ -194,113 +194,6 @@ const TeamManagementDialog = ({
               Thành viên dự án
             </Typography>
             
-            {/* Add Member Section */}
-            <Paper elevation={0} className={styles.addMemberSection}>
-              <Typography variant="subtitle1" gutterBottom>
-                Thêm thành viên
-              </Typography>
-              
-              <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} md={5}>
-                  <Autocomplete
-                    value={selectedUser}
-                    onChange={(event, newValue) => {
-                      setSelectedUser(newValue);
-                      setAddMemberError(null);
-                    }}
-                    inputValue={searchQuery}
-                    onInputChange={(event, newInputValue) => {
-                      setSearchQuery(newInputValue);
-                    }}
-                    options={searchResults}
-                    getOptionLabel={(option) => option.username || option.email || ''}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Tìm kiếm người dùng"
-                        variant="outlined"
-                        fullWidth
-                        InputProps={{
-                          ...params.InputProps,
-                          endAdornment: (
-                            <>
-                              {searchLoading ? <CircularProgress size={20} /> : null}
-                              {params.InputProps.endAdornment}
-                            </>
-                          ),
-                        }}
-                      />
-                    )}
-                    renderOption={(props, option) => (
-                      <li {...props}>
-                        <Box display="flex" alignItems="center">
-                          <Avatar sx={{ width: 32, height: 32, mr: 1 }}>
-                            {option.username?.[0]?.toUpperCase() || 'U'}
-                          </Avatar>
-                          <Box>
-                            <Typography variant="body1">{option.username}</Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {option.email}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </li>
-                    )}
-                  />
-                </Grid>
-                
-                <Grid item xs={12} md={3}>
-                  <FormControl fullWidth>
-                    <InputLabel id="member-role-label">Vai trò</InputLabel>
-                    <Select
-                      labelId="member-role-label"
-                      value={selectedRole}
-                      onChange={(e) => setSelectedRole(e.target.value)}
-                      label="Vai trò"
-                    >
-                      <MenuItem value="member">Member</MenuItem>
-                      <MenuItem value="admin">Admin</MenuItem>
-                      <MenuItem value="viewer">Viewer</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                
-                <Grid item xs={12} md={4}>
-                  <Box display="flex" gap={1}>
-                    <Button
-                      variant="outlined"
-                      startIcon={<SearchIcon />}
-                      onClick={handleSearch}
-                      disabled={searchLoading || !searchQuery.trim()}
-                    >
-                      Tìm kiếm
-                    </Button>
-                    <Button
-                      variant="contained"
-                      startIcon={<PersonAddIcon />}
-                      onClick={handleAddMember}
-                      disabled={!selectedUser}
-                      color="primary"
-                    >
-                      Thêm
-                    </Button>
-                  </Box>
-                </Grid>
-              </Grid>
-              
-              {addMemberError && (
-                <Alert severity="error" sx={{ mt: 2 }}>
-                  {addMemberError}
-                </Alert>
-              )}
-              
-              {searchError && (
-                <Alert severity="error" sx={{ mt: 2 }}>
-                  {searchError}
-                </Alert>
-              )}
-            </Paper>
-            
             {/* Members List */}
             <Paper elevation={0} className={styles.membersListSection}>
               <Typography variant="subtitle1" gutterBottom>
@@ -315,10 +208,11 @@ const TeamManagementDialog = ({
                 <List>
                   {members.map((member) => (
                     <ListItem
-                      key={member._id}
+                      key={member._id}  
                       secondaryAction={
                         member._id !== currentUser?._id && (
-                          <Box display="flex" gap={1}>
+                          <Box display="flex" gap={1}>  
+
                             <FormControl size="small" sx={{ minWidth: 120 }}>
                               <Select
                                 value={member.role || 'member'}
@@ -327,8 +221,7 @@ const TeamManagementDialog = ({
                                 displayEmpty
                               >
                                 <MenuItem value="member">Member</MenuItem>
-                                <MenuItem value="admin">Admin</MenuItem>
-                                <MenuItem value="viewer">Viewer</MenuItem>
+                                <MenuItem value="owner">Owner</MenuItem>
                               </Select>
                             </FormControl>
                             <IconButton 
@@ -349,11 +242,11 @@ const TeamManagementDialog = ({
                         </Avatar>
                       </ListItemAvatar>
                       <ListItemText
-                        primary={member.username}
+                        primary={member.user.username}
                         secondary={
                           <Box>
                             <Typography variant="body2" component="span">
-                              {member.email}
+                              {member.user.email}
                             </Typography>
                             <Chip
                               label={member._id === currentUser?._id ? 'You' : member.role || 'Member'}
@@ -392,19 +285,18 @@ const TeamManagementDialog = ({
                       divider
                       secondaryAction={
                         <FormControl sx={{ minWidth: 200 }}>
-                          <InputLabel id={`assign-task-${task._id}-label`}>Assign To</InputLabel>
+                          <InputLabel value={task.assignedTo?.username || ''}>{task.assignedTo?.username || 'Assign To'}</InputLabel>
                           <Select
                             labelId={`assign-task-${task._id}-label`}
-                            value={taskAssignments[task._id] || task.assignedTo?._id || ''}
+                            value={taskAssignments[task._id] || task.assignedTo?.user?._id || ''}
                             onChange={(e) => handleAssignTask(task._id, e.target.value)}
-                            label="Assign To"
                           >
                             <MenuItem value="">
                               <em>Không giao</em>
                             </MenuItem>
                             {members.map((member) => (
-                              <MenuItem key={member._id} value={member._id}>
-                                {member.username} {member._id === currentUser?._id && '(You)'}
+                              <MenuItem key={member.user._id} value={member.user._id} >
+                                {member.user.username} {member.user._id === currentUser?._id && '(You)'}
                               </MenuItem>
                             ))}
                           </Select>

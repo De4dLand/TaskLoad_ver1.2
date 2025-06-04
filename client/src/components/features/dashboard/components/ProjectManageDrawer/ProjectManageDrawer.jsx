@@ -621,13 +621,13 @@ const ProjectManageDrawer = ({
                       >
                         <Avatar 
                           src={member.profileImage || member.user?.profileImage} 
-                          alt={(member.name || member.user?.name || 'User').charAt(0)} 
+                          alt={(member.username || member.user?.username || 'User').charAt(0)} 
                           sx={{ mr: 2 }} 
                         />
                         <ListItemText
                           primary={
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Typography variant="body1">{member.name || member.user?.name}</Typography>
+                              <Typography variant="body1">{member.  username || member.user?.username}</Typography>
                               <Chip 
                                 label={member.role || 'Member'} 
                                 size="small" 
@@ -699,7 +699,7 @@ const ProjectManageDrawer = ({
                           sx={{ mr: 2 }}
                         />
                         <ListItemText
-                          primary={user.name}
+                          primary={user.username}
                           secondary={user.email}
                         />
                       </ListItem>

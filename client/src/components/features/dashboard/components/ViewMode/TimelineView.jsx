@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Box, Typography, Avatar, Paper, Tooltip, IconButton } from '@mui/material';
-import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
+import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import dayjs from 'dayjs';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
@@ -23,6 +23,13 @@ function getProjectColor(projectId, projects) {
   return colors[idx % colors.length] || '#888';
 }
 
+// Get avatars for task assignees
+const getAvatars = (task) => {
+  if (!task.assignees && !task.assignedTo) return [];
+  const users = Array.isArray(task.assignees) ? task.assignees : [task.assignedTo];
+  return users.filter(Boolean);
+};
+
 const TimelineView = ({ tasks = [], projects = [], onTaskClick, onTaskContextMenu }) => {
   // Timeline range: show 2 weeks by default
   const [start] = useState(dayjs().startOf('week').subtract(1, 'day'));
@@ -34,59 +41,7 @@ const TimelineView = ({ tasks = [], projects = [], onTaskClick, onTaskContextMen
   // State for tracking modified tasks
   const [modifiedTasks, setModifiedTasks] = useState({});
   
-  // Handle refresh button click
-  const handleRefresh = () => {
-    console.log('Refreshing timeline data...');
-    
-    // Log detailed information about modified tasks
-    if (Object.keys(modifiedTasks).length > 0) {
-      console.log('Changes detected:');
-      
-      Object.entries(modifiedTasks).forEach(([taskId, modifiedTask]) => {
-        // Find original task to compare with
-        const originalTask = tasks.find(t => t._id === taskId);
-        if (originalTask) {
-          console.log(`Task modified: ${originalTask.title} (ID: ${taskId})`);
-          
-          // Compare and log specific changes
-          if (originalTask.dueDate !== modifiedTask.dueDate) {
-            console.log(`  - Due date changed: ${dayjs(originalTask.dueDate).format('MMM D, YYYY')} → ${dayjs(modifiedTask.dueDate).format('MMM D, YYYY')}`);
-          }
-          
-          // Log other changed properties if needed
-          console.log('  - Original task:', originalTask);
-          console.log('  - Modified task:', modifiedTask);
-        }
-      });
-      
-      // Here you would typically call an API to save changes
-      // For example: saveTaskChanges(modifiedTasks);
-    } else {
-      console.log('No local changes detected');
-    }
-    
-    // Log current tasks for reference
-    console.log('Current tasks:', tasks);
-  };
-
-
-  // Today column index
-  const todayIdx = days.findIndex(d => d.isSame(dayjs(), 'day'));
-
-  // Map projectId to project
-  const projectMap = useMemo(() => Object.fromEntries(projects.map(p => [p._id, p])), [projects]);
-
-  // Sort tasks by project, then by start date
-  const sortedTasks = useMemo(() => {
-    return [...tasks].sort((a, b) => {
-      const aProj = typeof a.project === 'object' ? a.project._id : a.project;
-      const bProj = typeof b.project === 'object' ? b.project._id : b.project;
-      if (aProj !== bProj) return String(aProj || '').localeCompare(String(bProj || ''));
-      return dayjs(a.dueDate).diff(dayjs(b.dueDate));
-    });
-  }, [tasks]);
-  
-  // Handle drag end for task repositioning
+  // Handle drag end
   const handleDragEnd = (result) => {
     if (!result.destination) return;
     
@@ -96,30 +51,145 @@ const TimelineView = ({ tasks = [], projects = [], onTaskClick, onTaskContextMen
     
     if (!task) return;
     
-    // Extract day from destination
-    const day = parseInt(destination.droppableId);
-    const targetDate = days[day].toDate();
+    // Calculate new date based on drop position
+    const dayIndex = parseInt(destination.droppableId);
+    const newDate = days[dayIndex].toDate();
     
-    // Update the modified tasks state
+    // Update the task's date
+    const updatedTask = { ...task, dueDate: newDate, _modified: true };
+    
+    // Update modified tasks state
     setModifiedTasks(prev => ({
       ...prev,
-      [taskId]: {
-        ...task,
-        dueDate: targetDate,
-        _modified: true
-      }
+      [taskId]: updatedTask
     }));
-    
-    // Here you would typically call a function to save the changes
-    // For now, we'll just log the change
-    console.log('Task moved:', task.title, 'to', targetDate);
   };
+  
+  // Handle refresh button click
+  const handleRefresh = () => {
+    if (Object.keys(modifiedTasks).length > 0) {
+      console.log('Changes to save:', modifiedTasks);
+      // Here you would typically make an API call to save the changes
+      setModifiedTasks({});
+    }
+  };
+  
+  // Today column index for highlighting
+  const todayIdx = days.findIndex(d => d.isSame(dayjs(), 'day'));
+  
+  // Sort tasks by project and date
+  const sortedTasks = useMemo(() => {
+    return [...tasks].sort((a, b) => {
+      const aProj = typeof a.project === 'object' ? a.project._id : a.project;
+      const bProj = typeof b.project === 'object' ? b.project._id : b.project;
+      if (aProj !== bProj) return String(aProj || '').localeCompare(String(bProj || ''));
+      return dayjs(a.dueDate).diff(dayjs(b.dueDate));
+    });
+  }, [tasks]);
 
-  // Get unique users for avatars (optional)
-  const getAvatars = (task) => {
-    if (!task.assignees && !task.assignedTo) return [];
-    const users = Array.isArray(task.assignees) ? task.assignees : [task.assignedTo];
-    return users.filter(Boolean);
+  // Group tasks by project for rendering
+  const tasksByProject = useMemo(() => {
+    const groups = {};
+    projects.forEach(project => {
+      groups[project._id] = sortedTasks.filter(task => {
+        const taskProjectId = typeof task.project === 'object' ? task.project._id : task.project;
+        return taskProjectId === project._id;
+      });
+    });
+    return groups;
+  }, [projects, sortedTasks]);
+
+  // Render task item
+  const renderTask = (task, project, index) => {
+    const taskToRender = modifiedTasks[task._id] || task;
+    const start = dayjs(taskToRender.startDate || taskToRender.createdAt || taskToRender.dueDate);
+    const end = dayjs(taskToRender.dueDate);
+    const color = getProjectColor(project._id, projects);
+    
+    // Calculate position and width
+    const startIndex = days.findIndex(d => d.isSame(start, 'day'));
+    const endIndex = days.findIndex(d => d.isSame(end, 'day'));
+    
+    if (startIndex === -1 && endIndex === -1) {
+      return null;
+    }
+    
+    const visibleStart = Math.max(0, startIndex);
+    const visibleEnd = Math.min(days.length - 1, endIndex);
+    const span = Math.max(1, visibleEnd - visibleStart + 1);
+    
+    return (
+      <Draggable key={task._id} draggableId={task._id} index={index}>
+        {(provided, snapshot) => (
+          <div
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+            style={{
+              ...provided.draggableProps.style,
+              position: 'absolute',
+              left: `calc(${visibleStart * 100}% / 14 + 2px)`,
+              width: `calc(${span * 100}% / 14 - 4px)`,
+              zIndex: snapshot.isDragging ? 100 : 1,
+              height: '32px',
+            }}
+          >
+            <Tooltip title={`${task.title} (${start.format('MMM D')} - ${end.format('MMM D')})`}>
+              <Paper
+                elevation={snapshot.isDragging ? 3 : 1}
+                sx={{
+                  bgcolor: color,
+                  color: '#fff',
+                  height: '100%',
+                  borderRadius: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  px: 1.5,
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  ...(taskToRender._modified && {
+                    border: '1px dashed #ffeb3b',
+                    boxShadow: '0 0 5px rgba(255, 235, 59, 0.5)'
+                  }),
+                }}
+                onClick={(e) => onTaskClick?.(taskToRender, e)}
+                onContextMenu={(e) => onTaskContextMenu?.(e, taskToRender)}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                  {getAvatars(taskToRender).map((user, i) => (
+                    <Avatar 
+                      key={i} 
+                      src={user?.avatar} 
+                      sx={{ 
+                        width: 20, 
+                        height: 20, 
+                        mr: 0.5, 
+                        border: '1px solid #fff',
+                        fontSize: '0.6rem',
+                      }} 
+                    />
+                  ))}
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      ml: 0.5, 
+                      fontWeight: 500, 
+                      fontSize: '0.75rem',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {taskToRender.title}
+                  </Typography>
+                </Box>
+              </Paper>
+            </Tooltip>
+          </div>
+        )}
+      </Draggable>
+    );
   };
 
   return (
@@ -137,15 +207,21 @@ const TimelineView = ({ tasks = [], projects = [], onTaskClick, onTaskContextMen
             >
               <RefreshIcon />
             </IconButton>
-            <Typography variant="body2" sx={{ color: '#888' }}>{days[0].format('D MMM')} - {days[days.length - 1].format('D MMM YYYY')}</Typography>
+            <Typography variant="body2" sx={{ color: '#888' }}>
+              {days[0].format('D MMM')} - {days[days.length - 1].format('D MMM YYYY')}
+            </Typography>
           </Box>
         </Box>
+
         {/* Timeline header */}
         <Box sx={{ display: 'grid', gridTemplateColumns: '180px repeat(14, 1fr)', alignItems: 'center', mb: 1, position: 'relative' }}>
           <Box />
           {days.map((d, i) => (
-            <Box key={i} sx={{ textAlign: 'center', color: '#888', fontWeight: 500, fontSize: 13, position: 'relative', zIndex: 1 }}>{d.format('D')}</Box>
+            <Box key={i} sx={{ textAlign: 'center', color: '#888', fontWeight: 500, fontSize: 13, position: 'relative', zIndex: 1 }}>
+              {d.format('D')}
+            </Box>
           ))}
+          
           {/* Today line */}
           {todayIdx !== -1 && (
             <Box sx={{
@@ -158,9 +234,12 @@ const TimelineView = ({ tasks = [], projects = [], onTaskClick, onTaskContextMen
               zIndex: 10,
               pointerEvents: 'none',
             }}>
-              <Box sx={{ position: 'absolute', top: -18, left: -28, bgcolor: '#7B61FF', color: '#fff', px: 1, py: 0.2, borderRadius: 1, fontSize: 12 }}>Today</Box>
+              <Box sx={{ position: 'absolute', top: -18, left: -28, bgcolor: '#7B61FF', color: '#fff', px: 1, py: 0.2, borderRadius: 1, fontSize: 12 }}>
+                Today
+              </Box>
             </Box>
           )}
+          
           {/* Mouse hover line */}
           {hoverCol !== null && (
             <Box sx={{
@@ -176,159 +255,59 @@ const TimelineView = ({ tasks = [], projects = [], onTaskClick, onTaskContextMen
             }} />
           )}
         </Box>
+
         {/* Timeline body */}
-        {projects.map((proj, pi) => (
-          <Box key={proj._id} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-            {/* Project name */}
-            <Box sx={{ width: 180, pr: 1, fontWeight: 700, color: '#444', fontSize: 15 }}>{proj.name}</Box>
-            {/* Tasks for this project */}
-            <Box
-              sx={{ display: 'grid', gridTemplateColumns: 'repeat(14, 1fr)', alignItems: 'center', position: 'relative', minHeight: 36 }}
-              onMouseLeave={() => setHoverCol(null)}
-              onMouseMove={e => {
-                const bounds = e.currentTarget.getBoundingClientRect();
-                const x = e.clientX - bounds.left;
-                const col = Math.floor(x / (bounds.width / 14));
-                if (col >= 0 && col < 14) setHoverCol(col); else setHoverCol(null);
-              }}
-            >
-              {/* Make each day column droppable */}
-              {days.map((day, dayIndex) => (
-                <Droppable key={dayIndex} droppableId={String(dayIndex)} type="DEFAULT" direction="vertical">
-                  {(provided) => (
-                    <Box
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      sx={{ position: 'relative', height: '100%', minHeight: 36 }}
-                    >
-                      {provided.placeholder}
-                    </Box>
-                  )}
-                </Droppable>
-              ))}
+        <Box sx={{ position: 'relative' }}>
+          {projects.map((project) => (
+            <Box key={project._id} sx={{ display: 'flex', mb: 1 }}>
+              {/* Project name */}
+              <Box sx={{ width: 180, pr: 2, fontWeight: 600, color: '#444', fontSize: 14, pt: 1 }}>
+                {project.name}
+              </Box>
               
-              {sortedTasks.filter(t => t.project === proj._id).map((task, ti) => {
-                // Check if task has been modified
-                const modifiedTask = modifiedTasks[task._id];
-                const taskToRender = modifiedTask || task;
-                
-                // Use createdAt as start date if startDate is not available
-                // This ensures all tasks have a start point on the timeline
-                const start = dayjs(taskToRender.startDate || taskToRender.createdAt || taskToRender.dueDate);
-                const end = dayjs(taskToRender.dueDate);
-                const color = getProjectColor(proj._id, projects);
-                
-                // Calculate left offset and span - find the closest day in our visible range
-                // This handles tasks that might start before or end after our visible timeline
-                const left = days.findIndex(d => d.isSame(start, 'day'));
-                const right = days.findIndex(d => d.isSame(end, 'day'));
-                
-                // If both dates are outside our range, check if the task spans our visible timeline
-                if (left === -1 && right === -1) {
-                  // If task ends before our timeline starts or starts after our timeline ends, don't show it
-                  if (end.isBefore(days[0]) || start.isAfter(days[days.length - 1])) {
-                    return null;
-                  }
-                  
-                  // Task spans across our timeline, show it from start to end of our visible range
-                  const visibleLeft = 0;
-                  const visibleRight = days.length - 1;
-                  
-                  return (
-                    <Draggable key={task._id} draggableId={task._id} index={ti} isDragDisabled={false} type="DEFAULT" disableInteractiveElementBlocking={false}>
-                      {(provided, snapshot) => (
-                        <Tooltip title={`${task.title} (${start.format('MMM D')} - ${end.format('MMM D')})`} arrow>
-                          <Paper
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            sx={{
-                              bgcolor: color,
-                              color: '#fff',
-                              position: 'absolute',
-                              left: `calc(${visibleLeft} * 100% / 14 + 2px)`,
-                              width: `calc(${visibleRight - visibleLeft + 1} * 100% / 14 - 4px)`,
-                              height: 32,
-                              borderRadius: 16,
-                              display: 'flex',
-                              alignItems: 'center',
-                              px: 2,
-                              boxShadow: 2,
-                              cursor: 'pointer',
-                              zIndex: 2,
-                              ...(taskToRender._modified && {
-                                border: '1px dashed #ffeb3b',
-                                boxShadow: '0 0 5px rgba(255, 235, 59, 0.5)'
-                              }),
-                              ...(snapshot.isDragging && {
-                                boxShadow: '0 5px 10px rgba(0,0,0,0.3)'
-                              })
-                            }}
-                            onClick={e => onTaskClick && onTaskClick(taskToRender)}
-                            onContextMenu={e => onTaskContextMenu && onTaskContextMenu(e, taskToRender)}
-                          >
-                            {getAvatars(taskToRender).map((user, i) => (
-                              <Avatar key={i} src={user?.avatar} sx={{ width: 24, height: 24, mr: 1, border: '2px solid #fff' }} />
-                            ))}
-                            <Typography fontWeight={700} fontSize={14} noWrap>{taskToRender.title}</Typography>
-                          </Paper>
-                        </Tooltip>
-                      )}
-                    </Draggable>
-                  );
-                }
-                
-                // Handle case where start date is before our timeline
-                const visibleLeft = left === -1 ? 0 : left;
-                // Handle case where end date is after our timeline
-                const visibleRight = right === -1 ? days.length - 1 : right;
-                
-                return (
-                  <Draggable key={task._id} draggableId={task._id} index={ti} isDragDisabled={false} type="DEFAULT" disableInteractiveElementBlocking={false}>
-                    {(provided, snapshot) => (
-                      <Tooltip title={`${task.title} (${start.format('MMM D')} - ${end.format('MMM D')})`} arrow>
-                        <Paper
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          sx={{
-                            bgcolor: color,
-                            color: '#fff',
-                            position: 'absolute',
-                            left: `calc(${visibleLeft} * 100% / 14 + 2px)`,
-                            width: `calc(${visibleRight - visibleLeft + 1} * 100% / 14 - 4px)`,
-                            height: 32,
-                            borderRadius: 16,
-                            display: 'flex',
-                            alignItems: 'center',
-                            px: 2,
-                            boxShadow: 2,
-                            cursor: 'pointer',
-                            zIndex: 2,
-                            ...(taskToRender._modified && {
-                              border: '1px dashed #ffeb3b',
-                              boxShadow: '0 0 5px rgba(255, 235, 59, 0.5)'
-                            }),
-                            ...(snapshot.isDragging && {
-                              boxShadow: '0 5px 10px rgba(0,0,0,0.3)'
-                            })
-                          }}
-                          onClick={e => onTaskClick && onTaskClick(taskToRender)}
-                          onContextMenu={e => onTaskContextMenu && onTaskContextMenu(e, taskToRender)}
-                        >
-                          {getAvatars(taskToRender).map((user, i) => (
-                            <Avatar key={i} src={user?.avatar} sx={{ width: 24, height: 24, mr: 1, border: '2px solid #fff' }} />
-                          ))}
-                          <Typography fontWeight={700} fontSize={14} noWrap>{taskToRender.title}</Typography>
-                        </Paper>
-                      </Tooltip>
+              {/* Task row */}
+              <Box 
+                sx={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(14, 1fr)', 
+                  flex: 1, 
+                  position: 'relative',
+                  minHeight: 40,
+                }}
+                onMouseMove={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = e.clientX - rect.left;
+                  const col = Math.floor((x / rect.width) * 14);
+                  if (col >= 0 && col < 14) setHoverCol(col);
+                }}
+                onMouseLeave={() => setHoverCol(null)}
+              >
+                {days.map((day, dayIndex) => (
+                  <Droppable key={dayIndex} droppableId={String(dayIndex)}>
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        style={{
+                          position: 'relative',
+                          minHeight: 40,
+                          borderRight: '1px solid #f0f0f0',
+                        }}
+                      >
+                        {provided.placeholder}
+                      </div>
                     )}
-                  </Draggable>
-                );
-              })}
+                  </Droppable>
+                ))}
+                
+                {/* Render tasks for this project */}
+                {tasksByProject[project._id]?.map((task, taskIndex) => 
+                  renderTask(task, project, taskIndex)
+                )}
+              </Box>
             </Box>
-          </Box>
-        ))}
+          ))}
+        </Box>
       </Box>
     </DragDropContext>
   );

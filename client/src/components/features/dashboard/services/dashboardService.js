@@ -169,15 +169,16 @@ export const addProjectMember = async (projectId, userId, memberData = {}) => {
  * @param {string} query - Search query
  * @returns {Promise<Array>} - List of matching users
  */
+
 export const searchUsers = async (query) => {
   try {
-    const response = await api.get(API_ENDPOINTS.USERS.search, { params: { query } })
-    return response.data
+    const response = await api.get(`/api/v1/users/search`, { params: { query } });
+    return response.data;
   } catch (error) {
-    console.error("Error searching users:", error)
-    throw error
+    console.error("Error searching users:", error);
+    throw error;
   }
-}
+};
 
 /**
  * Remove a member from a project

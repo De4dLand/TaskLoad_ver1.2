@@ -5,7 +5,8 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 
-const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], users = [] }) => {
+const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], members = [], selectedProject }) => {
+  console.log(selectedProject)
   const [formState, setFormState] = useState({
     title: "",
     description: "",
@@ -151,20 +152,35 @@ const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], users = [] }
             />
           </LocalizationProvider>
           <FormControl fullWidth required error={!formState.project}>
-            <InputLabel>Project</InputLabel>
-            <Select name="project" value={formState.project} onChange={handleChange} label="Project" required>
-              {projects.map((p) => (
-                <MenuItem key={p._id} value={p._id}>{p.name}</MenuItem>
-              ))}
-            </Select>
+            {
+              selectedProject ? (
+                <>
+                <InputLabel>{selectedProject.name}</InputLabel>
+                <Select name="project" value={formState.project} onChange={handleChange} label={selectedProject?.name} required>
+                  {projects.map((p) => (
+                    <MenuItem key={p._id} value={p._id}>{p.name}</MenuItem>
+                  ))}
+                </Select>
+                </>
+              ) : (
+                <>
+                <InputLabel>{task ? "Project" : "Select Project"}</InputLabel>
+                <Select name="project" value={formState.project} onChange={handleChange} label={selectedProject?.name} required>
+                  {projects.map((p) => (
+                    <MenuItem key={p._id} value={p._id}>{p.name}</MenuItem>
+                  ))}
+                </Select>
+                </>
+              )
+            }
             {!formState.project && <FormHelperText>Project is required</FormHelperText>}
           </FormControl>
           <FormControl fullWidth>
             <InputLabel>Assigned To</InputLabel>
             <Select name="assignedTo" value={formState.assignedTo || ""} onChange={handleChange} label="Assigned To">
               <MenuItem value=""><em>Unassigned</em></MenuItem>
-              {users.map((u) => (
-                <MenuItem key={u._id} value={u._id}>{u.username || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u._id}</MenuItem>
+              {members.map((member) => (
+                <MenuItem key={member._id} value={member._id}>{member.username || `${member.firstName || ''} ${member.lastName || ''}`.trim() || member._id}</MenuItem>
               ))}
             </Select>
           </FormControl>

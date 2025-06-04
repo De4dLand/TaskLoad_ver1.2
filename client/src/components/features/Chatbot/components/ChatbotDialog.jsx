@@ -70,7 +70,7 @@ const ChatbotDialog = ({ onClose }) => {
             <SmartToyIcon sx={{ mr: 1 }} />
             {!minimized && (
               <Typography variant="h6" component="span">
-                AI Assistant
+                Trợ lý AI
               </Typography>
             )}
           </Box>

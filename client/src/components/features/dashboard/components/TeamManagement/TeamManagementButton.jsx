@@ -23,6 +23,7 @@ const TeamManagementButton = ({
   currentUser,
   badgeCount = 0
 }) => {
+
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleOpenDialog = () => {

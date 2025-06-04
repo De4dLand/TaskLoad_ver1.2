@@ -142,10 +142,10 @@ const ChatBot = () => {
           >
             <BotIcon sx={{ fontSize: 48, mb: 2, color: theme.palette.primary.main }} />
             <Typography variant="body1" align="center">
-              Hi! I'm your AI assistant. How can I help you today?
+               Xin  chào! Tôi là trợ lý AI của bạn. Tôi có thể giúp gì cho bạn hôm nay?
             </Typography>
             <Typography variant="body2" align="center" sx={{ mt: 1, color: theme.palette.text.secondary }}>
-              Ask me about tasks, project management, or anything else you need help with.
+               Hãy hỏi tôi về các nhiệm vụ, quản lý dự án, hoặc bất cứ điều gì bạn cần giúp đỡ.
             </Typography>
           </Box>
         ) : (
@@ -257,7 +257,7 @@ const ChatBot = () => {
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <CircularProgress size={16} thickness={6} />
-                <Typography variant="body2">AI is thinking...</Typography>
+                <Typography variant="body2">AI đang suy nghĩ...</Typography>
               </Box>
             </Paper>
           </Box>
@@ -299,7 +299,7 @@ const ChatBot = () => {
         <TextField
           fullWidth
           variant="outlined"
-          placeholder="Type a message to the AI..."
+          placeholder="Nhập tin nhắn..."
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           disabled={isLoading}

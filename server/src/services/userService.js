@@ -178,18 +178,48 @@ export class UserService {
         return user;
     }
 
-    // Search users by username or email
+    /**
+     * Search users by username, email, first name, or last name
+     * Supports partial matches anywhere in the field
+     * @param {string} query - Search query (can be partial)
+     * @returns {Promise<Array>} - Array of matching users
+     */
     async searchUsers(query) {
-      const regex = new RegExp(query, 'i');
-      const users = await User.find({
-        $or: [
-          { username: regex }, 
-          { email: regex },
-          { firstName: regex },
-          { lastName: regex }
-        ]
-      }).select('username email firstName lastName profileImage _id');
-      return users;
+      if (!query || typeof query !== 'string' || query.trim() === '') {
+        return [];
+      }
+
+      // Escape special regex characters and create a case-insensitive regex
+      const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(escapedQuery, 'i');
+      
+      try {
+        const users = await User.find({
+          $or: [
+            { username: { $regex: regex } },
+            { email: { $regex: regex } },
+            { firstName: { $regex: regex } },
+            { lastName: { $regex: regex } },
+            // Search by full name (first + last)
+            { 
+              $expr: {
+                $regexMatch: {
+                  input: { $concat: ["$firstName", " ", "$lastName"] },
+                  regex: escapedQuery,
+                  options: 'i'
+                }
+              }
+            }
+          ]
+        })
+        .select('username email firstName lastName _id')
+        .limit(50); // Limit results to prevent performance issues
+
+        return users;
+      } catch (error) {
+        console.error('Error in searchUsers:', error);
+        throw error;
+      }
     }
 
     // Update user preferences
