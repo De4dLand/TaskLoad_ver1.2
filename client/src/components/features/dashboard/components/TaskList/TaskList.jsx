@@ -1,6 +1,26 @@
-import { Box, Paper, Typography, Avatar } from "@mui/material"
+import { Box, Paper, Typography, Avatar, IconButton, Tooltip } from "@mui/material"
+import { AccessTime as AccessTimeIcon, PriorityHigh as PriorityIcon, CheckCircleOutline as StatusIcon, WorkOutline as ProjectIcon } from '@mui/icons-material';
 import { formatDate } from "../../../../../utils/formatters"
 import styles from "./TaskList.module.css"
+
+const calculateDaysRemaining = (dueDate) => {
+  if (!dueDate) return '';
+  const now = new Date();
+  const due = new Date(dueDate);
+  const diffTime = Math.abs(due - now);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays === 0) {
+    return <span className={styles.daysRemaining}>Due Today</span>;
+  }
+  if (diffDays === 1) {
+    return <span className={styles.daysRemaining}>1 day left</span>;
+  }
+  if (diffDays < 7) {
+    return <span className={styles.daysRemaining}>{diffDays} days left</span>;
+  }
+  return `${diffDays} days left`;
+};
 
 const TaskList = ({ tasks, onTaskClick, onTaskContextMenu }) => {
   if (!tasks || tasks.length === 0) {
@@ -52,7 +72,47 @@ const TaskList = ({ tasks, onTaskClick, onTaskContextMenu }) => {
           <Box className={styles.taskFooter}>
             <Box className={styles.taskDueDate}>
               <Typography variant="caption" color="textSecondary">
-                Due: {formatDate(task.dueDate)}
+                <AccessTimeIcon fontSize="small" sx={{ opacity: 0.7 }} />
+                {task.dueDate ? (
+                  <>
+                    {calculateDaysRemaining(task.dueDate)}
+                    <Typography variant="caption" color="textSecondary">
+                      {` (${formatDate(task.dueDate)})`}
+                    </Typography>
+                  </>
+                ) : (
+                  'No Due Date'
+                )}
+              </Typography>
+            </Box>
+
+            <Box className={styles.taskPriority}>
+              <PriorityIcon 
+                fontSize="small" 
+                sx={{ opacity: 0.7 }}
+              />
+              <Typography variant="caption">
+                {task.priority || 'Low'}
+              </Typography>
+            </Box>
+
+            <Box className={styles.taskStatus}>
+              <StatusIcon 
+                fontSize="small" 
+                sx={{ opacity: 0.7 }}
+              />
+              <Typography variant="caption">
+                {task.status || 'Open'}
+              </Typography>
+            </Box>
+
+            <Box className={styles.taskProject}>
+              <ProjectIcon 
+                fontSize="small" 
+                sx={{ opacity: 0.7 }}
+              />
+              <Typography variant="caption">
+                {task.project?.name || 'No Project'}
               </Typography>
             </Box>
 
@@ -67,7 +127,7 @@ const TaskList = ({ tasks, onTaskClick, onTaskContextMenu }) => {
                     {task.assignedTo.firstName?.charAt(0) || task.assignedTo.username?.charAt(0)}
                   </Avatar>
                   <Typography variant="caption" className={styles.assigneeName}>
-                    {task.assignedTo.firstName || task.assignedTo.username}
+                    {task.assignedTo.firstName} {task.assignedTo.lastName}
                   </Typography>
                 </>
               )}

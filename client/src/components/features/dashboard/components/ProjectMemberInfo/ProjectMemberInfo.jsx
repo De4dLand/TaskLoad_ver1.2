@@ -13,24 +13,24 @@ const ProjectMemberInfo = ({ user, projectMembers = [] }) => {
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
         <PersonIcon sx={{ mr: 1, fontSize: 20 }} />
         <Typography variant="body2" color="text.secondary">
-          Role: <Chip size="small" label={role} />
+          Vai trò: <Chip size="small" label={role} />
         </Typography>
       </Box>
 
       {/* Project Members */}
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
         <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
-          Team Members:
+          Thành viên đội nhóm:
         </Typography>
         <AvatarGroup max={4} sx={{ '& .MuiAvatar-root': { width: 24, height: 24, fontSize: '0.75rem' } }}>
           {projectMembers.map((member) => (
-            <Tooltip key={member._id} title={`${member.username} (${member.role || 'Member'})`}>
+            <Tooltip key={member._id} title={`${member.user.username} (${member.role || 'Member'})`}>
               <Avatar
-                alt={member.username}
-                src={member.profileImage}
+                alt={member.user.username}
+                src={member.user.profileImage}
                 sx={{ width: 24, height: 24 }}
               >
-                {member.username?.[0]?.toUpperCase()}
+                {member.user.username?.[0]?.toUpperCase()}
               </Avatar>
             </Tooltip>
           ))}

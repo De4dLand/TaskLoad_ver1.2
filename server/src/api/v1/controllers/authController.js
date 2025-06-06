@@ -286,17 +286,24 @@ export class AuthController {
 
   // Update user profile
   updateProfile = catchAsync(async (req, res) => {
-    const { username, email } = req.body
+    console.log(req.params)
+    const { username, email, firstName, lastName, phoneNumber, bio, jobTitle, department } = req.body
 
     // Find user
-    const user = await User.findById(req.user.userId)
+    const user = await User.findById(req.params.id)
     if (!user) {
       throw createError(404, "User not found")
     }
 
     // Update user data
     if (username) user.username = username
-    if (email) user.email = email
+    if (email) user.email = email 
+    if (firstName) user.firstName = firstName
+    if (lastName) user.lastName = lastName
+    if (phoneNumber) user.phoneNumber = phoneNumber
+    if (bio) user.bio = bio
+    if (jobTitle) user.jobTitle = jobTitle
+    if (department) user.department = department
 
     await user.save()
 
@@ -304,6 +311,12 @@ export class AuthController {
       _id: user._id,
       username: user.username,
       email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phoneNumber: user.phoneNumber,
+      bio: user.bio,
+      jobTitle: user.jobTitle,
+      department: user.department,
     })
   });
 }

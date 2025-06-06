@@ -45,14 +45,47 @@ export default function AddProjectForm({ open, onClose, onSubmit }) {
   };
 
   const handleDateChange = (name, value) => {
-    setForm((prev) => ({ ...prev, [name]: value ? value.toDate() : null }));
+    const newForm = { ...form, [name]: value ? value.toDate() : null };
+    setForm(newForm);
+    
+    // Clear any existing date errors when dates are changed
+    if (errors.startDate || errors.dueDate) {
+      setErrors(prev => ({
+        ...prev,
+        startDate: name === 'startDate' ? undefined : prev.startDate,
+        dueDate: name === 'dueDate' ? undefined : prev.dueDate
+      }));
+    }
   };
 
   const validate = () => {
     const newErrors = {};
-    if (!form.title) newErrors.title = 'Title is required';
-    if (!form.startDate) newErrors.startDate = 'Start date is required';
-    if (!form.dueDate) newErrors.dueDate = 'Due date is required';
+    if (!form.title) newErrors.title = 'Tên dự án là bắt buộc';
+    
+    // Validate start date
+    if (!form.startDate) {
+      newErrors.startDate = 'Ngày bắt đầu là bắt buộc';
+    } else if (!(form.startDate instanceof Date) || isNaN(form.startDate.getTime())) {
+      newErrors.startDate = 'Ngày bắt đầu không hợp lệ';
+    }
+    
+    // Validate due date
+    if (!form.dueDate) {
+      newErrors.dueDate = 'Ngày kết thúc là bắt buộc';
+    } else if (!(form.dueDate instanceof Date) || isNaN(form.dueDate.getTime())) {
+      newErrors.dueDate = 'Ngày kết thúc không hợp lệ';
+    }
+    
+    // Check if both dates are valid before comparing them
+    if (form.startDate && form.dueDate && 
+        form.startDate instanceof Date && !isNaN(form.startDate.getTime()) && 
+        form.dueDate instanceof Date && !isNaN(form.dueDate.getTime())) {
+      
+      if (form.dueDate < form.startDate) {
+        newErrors.dueDate = 'Ngày kết thúc không thể trước ngày bắt đầu';
+      }
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -104,11 +137,11 @@ export default function AddProjectForm({ open, onClose, onSubmit }) {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Add New Project</DialogTitle>
+      <DialogTitle>Thêm Dự Án Mới</DialogTitle>
       <DialogContent>
         <Stack spacing={2} mt={1}>
           <TextField
-            label="Project Title"
+            label="Tên Dự Án"
             name="title"
             value={form.title}
             onChange={handleChange}
@@ -118,7 +151,7 @@ export default function AddProjectForm({ open, onClose, onSubmit }) {
             fullWidth
           />
           <TextField
-            label="Description"
+            label="Mô tả"
             name="description"
             value={form.description}
             onChange={handleChange}
@@ -129,7 +162,7 @@ export default function AddProjectForm({ open, onClose, onSubmit }) {
           <Stack direction="row" spacing={2}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
-                label="Start Date"
+                label="Ngày Bắt Đầu"
                 value={form.startDate ? dayjs(form.startDate) : null}
                 onChange={(date) => handleDateChange('startDate', date)}
                 slotProps={{
@@ -144,7 +177,7 @@ export default function AddProjectForm({ open, onClose, onSubmit }) {
             </LocalizationProvider>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
-                label="Due Date"
+                label="Ngày Kết Thúc"
                 value={form.dueDate ? dayjs(form.dueDate) : null}
                 onChange={(date) => handleDateChange('dueDate', date)}
                 slotProps={{
@@ -159,11 +192,11 @@ export default function AddProjectForm({ open, onClose, onSubmit }) {
             </LocalizationProvider>
           </Stack>
           <FormControl fullWidth>
-            <InputLabel>Project Template</InputLabel>
+            <InputLabel>Template Dự Án</InputLabel>
             <Select
               name="template"
               value={form.template}
-              label="Project Template"
+              label="Template Dự Án"
               onChange={handleChange}
             >
               {PROJECT_TEMPLATES.map((tpl) => (
@@ -172,7 +205,7 @@ export default function AddProjectForm({ open, onClose, onSubmit }) {
             </Select>
           </FormControl>
           <Box>
-            <InputLabel sx={{ mb: 1 }}>Color</InputLabel>
+            <InputLabel sx={{ mb: 1 }}>Màu Dự Án</InputLabel>
             <Stack direction="row" spacing={1}>
               {COLOR_OPTIONS.map((color) => (
                 <Box
@@ -193,8 +226,8 @@ export default function AddProjectForm({ open, onClose, onSubmit }) {
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={handleSubmit}>Create Project</Button>
+        <Button onClick={onClose}>Hủy</Button>
+        <Button variant="contained" onClick={handleSubmit}>Tạo Dự Án</Button>
       </DialogActions>
     </Dialog>
   );

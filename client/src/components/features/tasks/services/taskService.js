@@ -55,16 +55,37 @@ export const createTask = async (taskData) => {
  * @param {Object} taskData - Updated task data
  * @returns {Promise<Object>} - Updated task
  */
+/**
+ * Update an existing task
+ * @param {string} id - Task ID
+ * @param {Object} taskData - Updated task data
+ * @returns {Promise<Object>} - Updated task
+ */
 export const updateTask = async (id, taskData) => {
   try {
-    // Ensure data matches the backend model requirements
-    const formattedData = formatTaskData(taskData)
+    console.log('Updating task with ID:', id);
+    console.log('Original task data:', taskData);
     
-    const response = await api.put(API_ENDPOINTS.TASKS.getById(id), formattedData)
-    return response.data
+    // Ensure data matches the backend model requirements
+    const formattedData = formatTaskData(taskData);
+    
+    console.log('Sending update request with data:', formattedData);
+    const response = await api.put(API_ENDPOINTS.TASKS.getById(id), formattedData);
+    
+    console.log('Task update successful:', response.data);
+    return response.data;
   } catch (error) {
-    console.error(`Error updating task ${id}:`, error)
-    throw error
+    console.error(`Error updating task ${id}:`, error);
+    if (error.response) {
+      console.error('Error response data:', error.response.data);
+      console.error('Error status:', error.response.status);
+      console.error('Error headers:', error.response.headers);
+    } else if (error.request) {
+      console.error('No response received:', error.request);
+    } else {
+      console.error('Error setting up request:', error.message);
+    }
+    throw error;
   }
 }
 
@@ -110,35 +131,29 @@ export const updateTaskStatus = async (id, status) => {
  * @param {Object} taskData - Raw task data from form
  * @returns {Object} - Formatted task data
  */
+/**
+ * Helper function to format task data to match backend model requirements
+ * @param {Object} taskData - Raw task data from form
+ * @returns {Object} - Formatted task data
+ */
 const formatTaskData = (taskData) => {
   const formattedData = {
     title: taskData.title,
     description: taskData.description || "",
     status: taskData.status || "todo",
+    project: taskData.project._id || null,
     priority: taskData.priority || "medium",
-    project: taskData.project,
-  }
+    startDate: taskData.startDate || null,
+    dueDate: taskData.dueDate || null,
+    assignedTo: taskData.assignedTo._id || null,
+    tags: Array.isArray(taskData.tags) ? taskData.tags : [],
+    estimatedHours: taskData.estimatedHours ? Number(taskData.estimatedHours) : null,
+    actualHours: taskData.actualHours ? Number(taskData.actualHours) : null,
+    subtasks: Array.isArray(taskData.subtasks) ? taskData.subtasks : []
+  };
   
-  // Only include optional fields if they have values
-  if (taskData.startDate) {
-    formattedData.startDate = taskData.startDate
-  }
+  // Log the formatted data for debugging
+  console.log('Formatted task data:', formattedData);
   
-  if (taskData.dueDate) {
-    formattedData.dueDate = taskData.dueDate
-  }
-  
-  if (taskData.assignedTo) {
-    formattedData.assignedTo = taskData.assignedTo
-  }
-  
-  if (taskData.tags && taskData.tags.length > 0) {
-    formattedData.tags = taskData.tags
-  }
-  
-  if (taskData.estimatedHours) {
-    formattedData.estimatedHours = Number(taskData.estimatedHours)
-  }
-  
-  return formattedData
+  return formattedData;
 }

@@ -23,7 +23,7 @@ router.use(auth.verifyToken);
 router.post('/logout', authController.logout);
 router.post('/refresh-token', authController.refreshToken);
 router.get('/profile', getProfile);
-router.put('/profile', authController.updateProfile);
+router.put('/:id',authController.updateProfile);
 router.put('/change-password', changePassword);
 router.put('/avatar', updateAvatar);
 router.delete('/account', deleteAccount);

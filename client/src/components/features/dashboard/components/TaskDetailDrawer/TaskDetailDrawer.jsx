@@ -23,9 +23,11 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import CloseIcon from "@mui/icons-material/Close";
-import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import KeyboardIcon from "@mui/icons-material/Keyboard";
+import AddIcon from "@mui/icons-material/Add";
+import KeyboardIcon from '@mui/icons-material/Keyboard';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { getSocket } from "../../../../../services/socket";
 import { createSubtask, getSubtasksByTask, updateSubtask, deleteSubtask } from "../../../../features/tasks/services/subtaskService";
 
@@ -49,7 +51,16 @@ const TaskDetailDrawer = ({
   isProjectOwner = false,
 }) => {
   const [editMode, setEditMode] = useState(false);
-  const [editedTask, setEditedTask] = useState(task || {});
+  const [editedTask, setEditedTask] = useState({});
+  
+  // Status progression order
+  const statusOrder = ['new', 'assigned', 'todo', 'in_progress', 'reviewing', 'completed'];
+  
+  // Check if current user is assigned to this task
+  const isAssignedToCurrentUser = task?.assignedTo?.user === currentUser?._id 
+  
+  // Check if user can edit (owner or assigned member)
+  const canEdit = isProjectOwner || isAssignedToCurrentUser;
   const [commentInput, setCommentInput] = useState("");
   const [subtaskInput, setSubtaskInput] = useState("");
   const [liveComments, setLiveComments] = useState(comments || []);
@@ -163,10 +174,15 @@ const TaskDetailDrawer = ({
     setLiveComments(comments || []);
   }, [comments, task?._id, open]);
   
-  // Initialize assigned users when task changes
+  // Reset edit mode and edited task when task changes
   useEffect(() => {
+    setEditMode(false);
     if (task) {
-      setAssignedUsers(task.assignedToList || task.assignedTo || []);
+      setEditedTask({ ...task });
+      // Ensure assignedTo is always an array
+      if (task.assignedTo && !Array.isArray(task.assignedTo)) {
+        setEditedTask(prev => ({ ...prev, assignedTo: [task.assignedTo] }));
+      }
     }
   }, [task]);
 
@@ -269,9 +285,29 @@ const TaskDetailDrawer = ({
   };
 
   const handleSave = () => {
-    // console.log(editedTask)
     if (onUpdate) onUpdate(task._id, editedTask);
     setEditMode(false);
+  };
+  
+  // Handle status change to next in sequence
+  const handleNextStatus = () => {
+    if (!task?.status) return;
+    
+    const currentIndex = statusOrder.indexOf(task.status);
+    if (currentIndex === -1 || currentIndex >= statusOrder.length - 1) return;
+    
+    const nextStatus = statusOrder[currentIndex + 1];
+    if (onUpdate) onUpdate(task._id, { status: nextStatus });
+  };
+  
+  // Handle status change
+  const handleStatusChange = (newStatus) => {
+    if (onUpdate) onUpdate(task._id, { status: newStatus });
+  };
+  
+  // Handle priority change
+  const handlePriorityChange = (newPriority) => {
+    if (onUpdate) onUpdate(task._id, { priority: newPriority });
   };
 
   // Handle typing indicator
@@ -368,7 +404,19 @@ const TaskDetailDrawer = ({
   if (!task) return null;
 
   return (
-    <Drawer anchor="right" open={open} onClose={onClose} PaperProps={{ sx: { width: 800, maxWidth: '100vw' } }}>
+    <Drawer 
+      anchor="right" 
+      open={open} 
+      onClose={onClose} 
+      PaperProps={{ 
+        sx: { 
+          width: 800, 
+          maxWidth: '100vw',
+          zIndex: 1400, // Higher than the default MUI AppBar z-index (1200)
+          position: 'relative'
+        } 
+      }}
+    >
       <Box sx={{ display: "flex", flexDirection: "row", height: "100%" }}>
         {/* Left: Task Details */}
         <Box sx={{ flex: 1, p: 3, overflowY: "auto", minWidth: 380 }}>
@@ -393,7 +441,7 @@ const TaskDetailDrawer = ({
 
           {/* Description */}
           <Box mt={2}>
-            <Typography variant="subtitle2">Description</Typography>
+            <Typography variant="subtitle2">Mô tả</Typography>
             {editMode ? (
               <TextField
                 value={editedTask.description || ""}
@@ -410,7 +458,7 @@ const TaskDetailDrawer = ({
           {/* Dates and Creator */}
           <Grid container spacing={2} mt={2}>
             <Grid item xs={6}>
-              <Typography variant="subtitle2">Start Date</Typography>
+              <Typography variant="subtitle2">Ngày bắt đầu</Typography>
               {editMode ? (
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                   <DatePicker
@@ -429,7 +477,7 @@ const TaskDetailDrawer = ({
               )}
             </Grid>
             <Grid item xs={6}>
-              <Typography variant="subtitle2">Due Date</Typography>
+              <Typography variant="subtitle2">Ngày kết thúc</Typography>
               {editMode ? (
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                   <DatePicker
@@ -448,18 +496,18 @@ const TaskDetailDrawer = ({
               )}
             </Grid>
             <Grid item xs={6}>
-              <Typography variant="subtitle2">Created On</Typography>
+              <Typography variant="subtitle2">Ngày tạo</Typography>
               <Typography>{formatDate(task.createdAt)}</Typography>
             </Grid>
             <Grid item xs={6}>
-              <Typography variant="subtitle2">Created By</Typography>
+              <Typography variant="subtitle2">Người tạo</Typography>
               <Typography>{task.createdBy?.username || "-"}</Typography>
             </Grid>
           </Grid>
 
           {/* Assigned To */}
           <Box mt={2}>
-            <Typography variant="subtitle2">Assigned To</Typography>
+            <Typography variant="subtitle2">Người được giao</Typography>
             {editMode && isProjectOwner ? (
               <Box mt={1}>
                 <Stack direction="row" spacing={1} flexWrap="wrap" mb={1}>
@@ -508,10 +556,10 @@ const TaskDetailDrawer = ({
                         }
                       }
                     }}
-                    renderValue={() => "Add team member"}
+                    renderValue={() => "Thêm thành viên"}
                   >
                     <MenuItem value="" disabled>
-                      <em>Select a team member</em>
+                      <em>Chọn thành viên</em>
                     </MenuItem>
                     {projectMembers.map((member) => {
                       const memberUser = member.user;
@@ -563,20 +611,97 @@ const TaskDetailDrawer = ({
                     onClick={() => setEditMode(true)}
                     sx={{ ml: 1 }}
                   >
-                    Manage Assignments
+                    Quản lý giao việc
                   </Button>
                 )}
               </Stack>
             )}
           </Box>
 
-          {/* Priority & Tags */}
+          {/* Priority & Status */}
           <Grid container spacing={2} mt={2}>
             <Grid item xs={6}>
-              <Typography variant="subtitle2">Priority</Typography>
-              <Chip label={task.priority} color={task.priority === "high" ? "error" : task.priority === "medium" ? "warning" : "default"} />
+              <Box display="flex" alignItems="center" gap={1}>
+                <Typography variant="subtitle2">Độ ưu tiên</Typography>
+                {editMode ? (
+                  <Select
+                    value={editedTask.priority || 'medium'}
+                    onChange={(e) => handleFieldChange("priority", e.target.value)}
+                    size="small"
+                    sx={{ minWidth: 120 }}
+                  >
+                    <MenuItem value="low">Low</MenuItem>
+                    <MenuItem value="medium">Medium</MenuItem>
+                    <MenuItem value="high">High</MenuItem>
+                    <MenuItem value="urgent">Urgent</MenuItem>
+                  </Select>
+                ) : (
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Chip 
+                      label={task.priority} 
+                      color={
+                        task.priority === "urgent" ? "error" : 
+                        task.priority === "high" ? "error" : 
+                        task.priority === "medium" ? "warning" : "default"
+                      } 
+                    />
+                    {canEdit && (
+                      <IconButton size="small" onClick={() => setEditMode(true)}>
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                  </Box>
+                )}
+              </Box>
             </Grid>
             <Grid item xs={6}>
+              <Box display="flex" alignItems="center" gap={1}>
+                <Typography variant="subtitle2">Trạng thái</Typography>
+                {editMode ? (
+                  <Select
+                    value={editedTask.status || 'new'}
+                    onChange={(e) => handleFieldChange("status", e.target.value)}
+                    size="small"
+                    sx={{ minWidth: 140 }}
+                  >
+                    <MenuItem value="new">New</MenuItem>
+                    <MenuItem value="assigned">Assigned</MenuItem>
+                    <MenuItem value="todo">To Do</MenuItem>
+                    <MenuItem value="in_progress">In Progress</MenuItem>
+                    <MenuItem value="reviewing">Reviewing</MenuItem>
+                    <MenuItem value="completed">Completed</MenuItem>
+                  </Select>
+                ) : (
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Chip 
+                      label={task.status?.replace('_', ' ')} 
+                      color={
+                        task.status === 'completed' ? 'success' : 
+                        task.status === 'in_progress' || task.status === 'reviewing' ? 'primary' : 
+                        'default'
+                      }
+                      variant="outlined"
+                    />
+                    {isAssignedToCurrentUser && statusOrder.indexOf(task.status) < statusOrder.length - 1 && (
+                      <Button 
+                        variant="outlined" 
+                        size="small" 
+                        onClick={handleNextStatus}
+                        startIcon={<ArrowForwardIcon />}
+                      >
+                        Tiếp theo
+                      </Button>
+                    )}
+                    {canEdit && !isAssignedToCurrentUser && (
+                      <IconButton size="small" onClick={() => setEditMode(true)}>
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                  </Box>
+                )}
+              </Box>
+            </Grid>
+            <Grid item xs={6}>  
               <Typography variant="subtitle2">Tags</Typography>
               <Stack direction="row" spacing={1}>
                 {(task.tags || []).map((tag) => (
@@ -633,7 +758,7 @@ const TaskDetailDrawer = ({
                       onClick={handleAddSubtask} 
                       startIcon={<AddIcon />}
                     >
-                      Add
+                      Thêm
                     </Button>
                   </Box>
                 )}
@@ -648,9 +773,16 @@ const TaskDetailDrawer = ({
                 <Button variant="contained" color="primary" onClick={handleSave} disabled={loading}>Save</Button>
                 <Button onClick={() => setEditMode(false)} disabled={loading}>Cancel</Button>
               </>
-            ) : (
-              <Button variant="outlined" onClick={() => setEditMode(true)} disabled={loading}>Edit</Button>
-            )}
+            ) : canEdit ? (
+              <Button 
+                variant="outlined" 
+                onClick={() => setEditMode(true)} 
+                disabled={loading}
+                startIcon={<EditIcon />}
+              >
+                Chỉnh sửa
+              </Button>
+            ) : null}
           </Box>
         </Box>
 
@@ -691,7 +823,7 @@ const TaskDetailDrawer = ({
                           variant="text" 
                           onClick={() => handleDeleteComment(c._id)}
                         >
-                          Delete
+                          Xóa
                         </Button>
                       </Box>
                     )}
@@ -737,11 +869,8 @@ const TaskDetailDrawer = ({
               disabled={loading || !commentInput.trim()}
               startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
             >
-              Post Comment
+              Bình luận   
             </Button>
-            <Typography variant="caption" color="text.secondary" mt={1}>
-              @mention team members to notify them
-            </Typography>
           </Box>
         </Box>
       </Box>

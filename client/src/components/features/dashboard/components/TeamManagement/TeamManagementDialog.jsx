@@ -66,6 +66,10 @@ const TeamManagementDialog = ({
   searchError = null,
   currentUser
 }) => {
+  // Check if current user is the project owner
+  const isProjectOwner = project?.owner?._id === currentUser?._id || 
+                        project?.owner === currentUser?._id;
+  
   // Tab state
   const [activeTab, setActiveTab] = useState(0);
   
@@ -181,19 +185,32 @@ const TeamManagementDialog = ({
         textColor="primary"
         aria-label="team management tabs"
       >
-        <Tab icon={<PersonAddIcon />} label="Members" />
-        <Tab icon={<AssignmentIndIcon />} label="Task Assignment" />
-        <Tab icon={<InfoIcon />} label="Team Info" />
+        <Tab icon={<PersonAddIcon />} label="Thành viên" />
+        <Tab icon={<AssignmentIndIcon />} label="Giao việc" />
+        <Tab icon={<InfoIcon />} label="Thống kê dự án" />
       </Tabs>
       
       <DialogContent className={styles.dialogContent}>
         {/* Members Tab */}
         {activeTab === 0 && (
           <Box className={styles.tabContent}>
-            <Typography variant="h6" gutterBottom>
-              Thành viên dự án
-            </Typography>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+              <Typography variant="h6">
+                Thành viên dự án
+              </Typography>
+              {!isProjectOwner && (
+                <Chip 
+                  label="Chế độ xem" 
+                  size="small" 
+                  color="info"
+                  variant="outlined"
+                />
+              )}
+            </Box>
             
+            {/* Add Member Section - Only for Project Owners */}
+          
+
             {/* Members List */}
             <Paper elevation={0} className={styles.membersListSection}>
               <Typography variant="subtitle1" gutterBottom>
@@ -213,25 +230,30 @@ const TeamManagementDialog = ({
                         member._id !== currentUser?._id && (
                           <Box display="flex" gap={1}>  
 
-                            <FormControl size="small" sx={{ minWidth: 120 }}>
-                              <Select
-                                value={member.role || 'member'}
-                                onChange={(e) => handleUpdateRole(member._id, e.target.value)}
-                                size="small"
-                                displayEmpty
-                              >
-                                <MenuItem value="member">Member</MenuItem>
-                                <MenuItem value="owner">Owner</MenuItem>
-                              </Select>
-                            </FormControl>
-                            <IconButton 
-                              edge="end" 
-                              aria-label="delete" 
-                              onClick={() => handleRemoveMember(member._id)}
-                              color="error"
-                            >
-                              <DeleteIcon />
-                            </IconButton>
+                            <Box display="flex" gap={1}>
+                              <FormControl size="small" sx={{ minWidth: 120 }}>
+                                <Select
+                                  value={member.role || 'member'}
+                                  onChange={(e) => handleUpdateRole(member._id, e.target.value)}
+                                  size="small"
+                                  displayEmpty
+                                  disabled={!isProjectOwner}
+                                >
+                                  <MenuItem value="member">Member</MenuItem>
+                                  <MenuItem value="owner">Owner</MenuItem>
+                                </Select>
+                              </FormControl>
+                              {isProjectOwner && (
+                                <IconButton 
+                                  edge="end" 
+                                  aria-label="delete" 
+                                  onClick={() => handleRemoveMember(member._id)}
+                                  color="error"
+                                >
+                                  <DeleteIcon />
+                                </IconButton>
+                              )}
+                            </Box>
                           </Box>
                         )
                       }
@@ -290,6 +312,7 @@ const TeamManagementDialog = ({
                             labelId={`assign-task-${task._id}-label`}
                             value={taskAssignments[task._id] || task.assignedTo?.user?._id || ''}
                             onChange={(e) => handleAssignTask(task._id, e.target.value)}
+                            disabled={!isProjectOwner}
                           >
                             <MenuItem value="">
                               <em>Không giao</em>

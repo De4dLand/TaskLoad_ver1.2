@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Box, Typography, Button, CircularProgress, Paper, ToggleButtonGroup, ToggleButton, Snackbar, Alert } from "@mui/material"
+import { Box, Typography, Button, CircularProgress, Paper, ToggleButtonGroup, ToggleButton, Snackbar, Alert, Chip } from "@mui/material"
 import { Add as AddIcon, ViewList, ViewModule, CalendarToday, Timeline, BarChart, GroupAdd as GroupAddIcon } from "@mui/icons-material"
 import TaskList from "../components/TaskList/TaskList"
 import TaskGrid from "../components/TaskGrid/TaskGrid"
@@ -66,7 +66,7 @@ const DashboardPage = () => {
   // Manages state and handlers for the project creation/editing dialog.
   const [addProjectOpen, setAddProjectOpen] = useState(false)
   const [projectDialogOpen, setProjectDialogOpen] = useState(false)
-  const [projectForm, setProjectForm] = useState({ name: "", description: "", color: "#1976d2", status: "", startDate: "", endDate: "" })
+  const [projectForm, setProjectForm] = useState({ name: "", description: "", color: "#1976d2", status: "new", startDate: "", endDate: "" })
   const [selectedProject, setSelectedProject] = useState(null)
   const [projectManageDrawerOpen, setProjectManageDrawerOpen] = useState(false)
   // --- End Potential Component: ProjectDialogStateAndHandlers ---
@@ -153,14 +153,14 @@ const DashboardPage = () => {
     sock.on('deadlineWarning', (data) => {
       setDeadlineAlert({
         open: true,
-        message: `Task "${data.title}" assigned to you is due soon! Deadline: ${new Date(data.dueDate).toLocaleString()}`
+        message: `Task "${data.title}" được giao cho bạn sắp hết hạn! Hạn cuối: ${new Date(data.dueDate).toLocaleString()}` 
       });
     });
     
     sock.on('taskUpdated', (data) => {
       setNotification({
         open: true,
-        message: `Task "${data.title}" has been updated by ${data.updatedBy}`,
+        message: `Task "${data.title}" đã được cập nhật bởi ${data.updatedBy}`,
         type: 'info'
       });
       // Refresh dashboard data to reflect changes
@@ -170,7 +170,7 @@ const DashboardPage = () => {
     sock.on('taskAssigned', (data) => {
       setNotification({
         open: true,
-        message: `You have been assigned to task "${data.title}"`,
+        message: `Bạn đã được giao nhiệm vụ "${data.title}"`,
         type: 'info'
       });
       // Refresh dashboard data to reflect changes
@@ -181,7 +181,7 @@ const DashboardPage = () => {
     sock.on('projectUpdated', (data) => {
       setNotification({
         open: true,
-        message: `Project "${data.name}" has been updated`,
+        message: `Dự án "${data.name}" đã được cập nhật`,
         type: 'info'
       });
       // Refresh dashboard data to reflect changes
@@ -191,7 +191,7 @@ const DashboardPage = () => {
     sock.on('memberAdded', (data) => {
       setNotification({
         open: true,
-        message: `${data.memberName} has been added to project "${data.projectName}"`,
+        message: `${data.memberName} đã được thêm vào dự án "${data.projectName}"`,
         type: 'info'
       });
       // Refresh dashboard data to reflect changes
@@ -202,7 +202,7 @@ const DashboardPage = () => {
     sock.on('newComment', (data) => {
       setNotification({
         open: true,
-        message: `New comment on task "${data.taskTitle}" by ${data.author}`,
+        message: `Bình luận mới trên "${data.taskTitle}" bởi ${data.author}`,
         type: 'info'
       });
       
@@ -301,7 +301,7 @@ const DashboardPage = () => {
       }
     } catch (err) {
       console.error("Error loading team members:", err);
-      setTeamError("Failed to load team members. Please try again.");
+      setTeamError("Lỗi khi load thành viên đội nhóm. Vui lòng thử lại.");
     } finally {
       setTeamLoading(false);
     }
@@ -318,7 +318,7 @@ const DashboardPage = () => {
       setMemberResults(results);
     } catch (err) {
       console.error("Error searching users:", err);
-      setSearchError("Failed to search users. Please try again.");
+      setSearchError("Lỗi khi tìm kiếm người dùng. Vui lòng thử lại.");
     } finally {
       setSearchLoading(false);
     }
@@ -342,12 +342,12 @@ const DashboardPage = () => {
       
       setNotification({
         open: true,
-        message: "Team member added successfully",
+        message: "Thành viên đội nhóm đã được thêm thành công",
         type: "success"
       });
     } catch (err) {
       console.error("Error adding team member:", err);
-      throw new Error(err.message || "Failed to add team member");
+      throw new Error(err.message || "Lỗi khi thêm thành viên đội nhóm");
     }
   };
   
@@ -373,12 +373,12 @@ const DashboardPage = () => {
       
       setNotification({
         open: true,
-        message: "Team member removed successfully",
+        message: "Thành viên đội nhóm đã được xóa thành công",
         type: "success"
       });
     } catch (err) {
       console.error("Error removing team member:", err);
-      throw new Error(err.message || "Failed to remove team member");
+      throw new Error(err.message || "Lỗi khi xóa thành viên đội nhóm");
     }
   };
   
@@ -408,12 +408,12 @@ const DashboardPage = () => {
       
       setNotification({
         open: true,
-        message: "Member role updated successfully",
+        message: "Vai trò thành viên đội nhóm đã được cập nhật thành công",
         type: "success"
       });
     } catch (err) {
       console.error("Error updating member role:", err);
-      throw new Error(err.message || "Failed to update member role");
+      throw new Error(err.message || "Lỗi khi cập nhật vai trò thành viên đội nhóm");
     }
   };
   
@@ -426,17 +426,27 @@ const DashboardPage = () => {
       
       setNotification({
         open: true,
-        message: userId ? "Task assigned successfully" : "Task unassigned successfully",
+        message: userId ? "Nhiệm vụ đã được giao thành công" : "Nhiệm vụ đã được gỡ giao thành công",
         type: "success"
       });
     } catch (err) {
       console.error("Error assigning task:", err);
-      throw new Error(err.message || "Failed to assign task");
+      throw new Error(err.message || "Lỗi khi giao nhiệm vụ");
     }
   };
-  // --- End Potential Component: TeamManagementHandlers ---
-
-  // --- Potential Component: ProjectContextMenuHandlers --- 
+  const handleSubmitProject = async (formData) => {
+    setAddProjectOpen(false);
+    await createProject({
+      name: formData.title,
+      description: formData.description,
+      color: formData.color,
+      template: formData.template,
+      startDate: formData.startDate || null,
+      endDate: formData.dueDate || null,
+      owner: user._id
+    });
+    loadData();
+  }
   // Handlers for project context menu.
   const handleProjectContextMenu = (event, project) => {
     event.preventDefault()
@@ -897,166 +907,447 @@ const DashboardPage = () => {
   // }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: 'background.default' }}>
+    <Box sx={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      height: '100vh', 
+      bgcolor: 'grey.50',
+      transition: 'all 0.3s ease'
+    }}>
       <AppHeader />
-      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        {/* Left Sidebar */}
+      
+      {/* Main Dashboard Container */}
+      <Box sx={{ 
+        display: 'flex', 
+        flex: 1, 
+        overflow: 'hidden',
+        gap: 2,
+        p: 2,
+        pt: 1
+      }}>
+        {/* Enhanced Left Sidebar */}
         <Box
           className={styles.sidebarContainer}
           sx={{
-            width: 280,
+            width: 320,
             flexShrink: 0,
-            borderRight: 1,
-            borderColor: 'divider',
             bgcolor: 'background.paper',
-            p: 2,
-            overflowY: 'auto'
+            borderRadius: 3,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+            p: 3,
+            overflowY: 'auto',
+            border: '1px solid',
+            borderColor: 'grey.200',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              boxShadow: '0 8px 30px rgba(0,0,0,0.12)'
+            }
           }}
         >
+          {/* Welcome Section */}
+          <Box sx={{ mb: 4 }}>
+            <Typography 
+              variant="h5" 
+              sx={{ 
+                fontWeight: 700,
+                color: 'text.primary',
+                mb: 1,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}
+            >
+              Chào mừng bạn, {user?.username?.split(' ')[0] || 'User'}!
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {new Date().toLocaleDateString('vi-VN', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </Typography>
+          </Box>
+
+          {/* Quick Stats Cards */}
+          <Box sx={{ mb: 4 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
+              <Paper sx={{ 
+                p: 2, 
+                textAlign: 'center', 
+                borderRadius: 2,
+                bgcolor: 'primary.50',
+                border: '1px solid',
+                borderColor: 'primary.100'
+              }}>
+                <Typography variant="h6" color="primary.main" fontWeight={700}>
+                  {dashboardData?.projects?.length || 0}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Dự án
+                </Typography>
+              </Paper>
+              <Paper sx={{ 
+                p: 2, 
+                textAlign: 'center', 
+                borderRadius: 2,
+                bgcolor: 'success.50',
+                border: '1px solid',
+                borderColor: 'success.100'
+              }}>
+                <Typography variant="h6" color="success.main" fontWeight={700}>
+                  {filteredTasks?.length || 0}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Công việc
+                </Typography>
+              </Paper>
+            </Box>
+          </Box>
+
+          {/* Create Project Button */}
           <Button
             fullWidth
             variant="contained"
             color="primary"
             startIcon={<AddIcon />}
             onClick={handleAddProject}
-            sx={{ mb: 3 }}
+            sx={{ 
+              mb: 4,
+              py: 1.5,
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.95rem',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                boxShadow: '0 6px 20px rgba(102, 126, 234, 0.6)',
+                transform: 'translateY(-2px)'
+              },
+              transition: 'all 0.3s ease'
+            }}
           >
-            Tạo dự án
+            Tạo Dự án mới
           </Button>
+          
+          {/* Projects List */}
           {dashboardData?.projects && (
-            <ProjectSidebar
-              sidebarData={dashboardData}
-              onProjectContextMenu={handleProjectContextMenu}
-              onProjectSelect={handleProjectSelect}
-              selectedProjectId={selectedProject?._id}
-            />
+            <Box>
+              <Typography 
+                variant="subtitle1" 
+                sx={{ 
+                  fontWeight: 600, 
+                  mb: 2, 
+                  color: 'text.primary',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}
+              >
+                <Box sx={{ 
+                  width: 4, 
+                  height: 20, 
+                  bgcolor: 'primary.main', 
+                  borderRadius: 1 
+                }} />
+                Dự án của bạn
+              </Typography>
+              <ProjectSidebar
+                sidebarData={dashboardData}
+                onProjectContextMenu={handleProjectContextMenu}
+                onProjectSelect={handleProjectSelect}
+                selectedProjectId={selectedProject?._id}
+              />
+            </Box>
           )}
         </Box>
 
-        {/* Main Content Area */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 3, overflowY: 'auto' }}>
-          {/* Info Bar */}
+        {/* Enhanced Main Content Area */}
+        <Box sx={{ 
+          flex: 1, 
+          display: 'flex', 
+          flexDirection: 'column',
+          overflow: 'hidden'
+        }}>
+          {/* Enhanced Header Section */}
           <Paper
             elevation={0}
             sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              p: 2,
-              mb: 3,
-              borderRadius: 2,
-              bgcolor: 'background.paper'
+              p: 3,
+              mb: 2,
+              borderRadius: 3,
+              bgcolor: 'background.paper',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+              border: '1px solid',
+              borderColor: 'grey.200'
             }}
           >
-            <ProjectMemberInfo 
-              user={user}
-              projectMembers={dashboardData?.projects?.find(p => p._id === selectedProject?._id)?.members || []}
-            />
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              {selectedProject && (
-                <TeamManagementButton
-                  project={selectedProject}
-                  team={currentTeam}
-                  members={selectedProject?.members || []}
-                  tasks={filteredTasks}
-                  onAddMember={handleAddTeamMember}
-                  onRemoveMember={handleRemoveTeamMember}
-                  onUpdateMemberRole={handleUpdateMemberRole}
-                  onAssignTask={handleAssignTask}
-                  onSearchUsers={handleSearchTeamMembers}
-                  searchResults={memberResults}
-                  searchLoading={searchLoading}
-                  searchError={searchError}
-                  currentUser={user}
-                  badgeCount={teamError ? 1 : 0}
-                />
+            {/* Project Header */}
+            <Box sx={{ mb: 3 }}>
+              {selectedProject ? (
+                <Box>
+                  <Typography 
+                    variant="h4" 
+                    sx={{ 
+                      fontWeight: 700,
+                      color: 'text.primary',
+                      mb: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2
+                    }}
+                  >
+                    <Box 
+                      sx={{ 
+                        width: 12, 
+                        height: 12, 
+                        borderRadius: '50%', 
+                        bgcolor: selectedProject.color || 'primary.main' 
+                      }} 
+                    />
+                    {selectedProject.name}
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                    {selectedProject.description || 'No description available'}
+                  </Typography>
+                  <ProjectMemberInfo 
+                    user={user}
+                    projectMembers={dashboardData?.projects?.find(p => p._id === selectedProject?._id)?.members || []}
+                  />
+                </Box>
+              ) : (
+                <Box>
+                  <Typography 
+                    variant="h4" 
+                    sx={{ 
+                      fontWeight: 700,
+                      color: 'text.primary',
+                      mb: 1
+                    }}
+                  >
+                    Tổng Quan
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary">
+                    Chọn một dự án để xem và quản lý các công việc của nó
+                  </Typography>
+                </Box>
               )}
             </Box>
-          </Paper>
-          {/* Toolbar */}
-          <Paper
-            elevation={0}
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
+
+            {/* Action Bar */}
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
               alignItems: 'center',
-              p: 2,
-              mb: 3,
-              borderRadius: 2,
-              bgcolor: 'background.paper'
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <ViewModeSwitcher viewMode={viewMode} setViewMode={setViewMode} />
-              <Button
-                variant="outlined"
-                startIcon={<AddIcon />}
-                onClick={handleAddTask}
-                size="small"
-              >
-                Thêm công việc
-              </Button>
+              flexWrap: 'wrap',
+              gap: 2
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                <ViewModeSwitcher viewMode={viewMode} setViewMode={setViewMode} />
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={handleAddTask}
+                  sx={{
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    px: 3,
+                    py: 1,
+                    background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)',
+                    boxShadow: '0 3px 10px rgba(76, 175, 80, 0.3)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #45a049 0%, #3d8b40 100%)',
+                      boxShadow: '0 5px 15px rgba(76, 175, 80, 0.4)',
+                      transform: 'translateY(-1px)'
+                    },
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  Thêm Công việc mới
+                </Button>
+              </Box>
+              
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                {selectedProject && (
+                  <TeamManagementButton
+                    project={selectedProject}
+                    team={currentTeam}
+                    members={selectedProject?.members || []}
+                    tasks={filteredTasks}
+                    onAddMember={handleAddTeamMember}
+                    onRemoveMember={handleRemoveTeamMember}
+                    onUpdateMemberRole={handleUpdateMemberRole}
+                    onAssignTask={handleAssignTask}
+                    onSearchUsers={handleSearchTeamMembers}
+                    searchResults={memberResults}
+                    searchLoading={searchLoading}
+                    searchError={searchError}
+                    currentUser={user}
+                    badgeCount={teamError ? 1 : 0}
+                  />
+                )}
+                <FilterView
+                  tasks={dashboardData?.tasks || []}
+                  user={user}
+                  onFilter={setFilteredTasks}
+                  selectedProject={selectedProject}
+                  projectMembers={selectedProject ? getProjectMembers(selectedProject._id) : []}
+                />
+              </Box>
             </Box>
-            <FilterView
-              tasks={dashboardData?.tasks || []}
-              user={user}
-              onFilter={setFilteredTasks}
-              selectedProject={selectedProject}
-              projectMembers={selectedProject ? getProjectMembers(selectedProject._id) : []}
-            />
           </Paper>
 
-          {/* Task View Area */}
+          {/* Enhanced Task View Area */}
           <Paper
             elevation={0}
             sx={{
               flex: 1,
-              borderRadius: 2,
+              borderRadius: 3,
               bgcolor: 'background.paper',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+              border: '1px solid',
+              borderColor: 'grey.200',
+              display: 'flex',
+              flexDirection: 'column'
             }}
           >
             {loading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                <CircularProgress />
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                height: '100%',
+                gap: 2
+              }}>
+                <CircularProgress size={48} thickness={4} />
+                <Typography variant="body1" color="text.secondary">
+                  Đang tải công việc của bạn...
+                </Typography>
+              </Box>
+            ) : filteredTasks?.length === 0 ? (
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                height: '100%',
+                gap: 3,
+                p: 4
+              }}>
+                <Box sx={{
+                  width: 120,
+                  height: 120,
+                  borderRadius: '50%',
+                  bgcolor: 'grey.100',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mb: 2
+                }}>
+                  <AddIcon sx={{ fontSize: 48, color: 'grey.400' }} />
+                </Box>
+                <Typography variant="h5" color="text.primary" fontWeight={600}>
+                  {selectedProject ? 'Không có công việc nào' : 'Chọn một dự án'}
+                </Typography>
+                <Typography variant="body1" color="text.secondary" textAlign="center" maxWidth={400}>
+                  {selectedProject 
+                    ? 'Bắt đầu bằng việc tạo công việc đầu tiên để tổ chức công việc và theo dõi tiến trình.'
+                    : 'Chọn một dự án từ thanh bên để xem và quản lý các công việc của nó.'}
+                </Typography>
+                {selectedProject && (
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={handleAddTask}
+                    sx={{
+                      mt: 2,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      px: 4,
+                      py: 1.5
+                    }}
+                  >
+                    Tạo Công việc đầu tiên
+                  </Button>
+                )}
               </Box>
             ) : (
-              <Box sx={{ height: '100%', p: 2 }}>
-                {viewMode === "list" && (
-                  <ListView
-                    tasks={filteredTasks}
-                    onTaskClick={handleTaskClick}
-                    onTaskContextMenu={handleTaskContextMenu}
-                  />
-                )}
-                {viewMode === "grid" && (
-                  <GridView
-                    tasks={filteredTasks}
-                    onTaskClick={handleTaskClick}
-                    onTaskContextMenu={handleTaskContextMenu}
-                  />
-                )}
-                {viewMode === "calendar" && (
-                  <CalendarView
-                    tasks={filteredTasks}
-                    onTaskClick={handleTaskClick}
-                    onTaskContextMenu={handleTaskContextMenu}
-                  />
-                )}
-                {viewMode === "timeline" && (
-                  <TimelineView
-                    tasks={filteredTasks}
-                    onTaskClick={handleTaskClick}
-                    onTaskContextMenu={handleTaskContextMenu}
-                  />
-                )}
-                {viewMode === "stats" && (
-                  <StatsView
-                    tasks={filteredTasks}
-                    onTaskClick={handleTaskClick}
-                    onTaskContextMenu={handleTaskContextMenu}
-                  />
-                )}
+              <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                {/* View Mode Content */}
+                <Box sx={{ flex: 1, overflow: 'hidden' }}>
+                  {viewMode === "list" && (
+                    <ListView
+                      tasks={filteredTasks}
+                      onTaskClick={handleTaskClick}
+                      onTaskContextMenu={handleTaskContextMenu}
+                    />
+                  )}
+                  {viewMode === "grid" && (
+                    <GridView
+                      tasks={filteredTasks}
+                      onTaskClick={handleTaskClick}
+                      onTaskContextMenu={handleTaskContextMenu}
+                    />
+                  )}
+                  {viewMode === "calendar" && (
+                    <CalendarView
+                      tasks={filteredTasks}
+                      onTaskClick={handleTaskClick}
+                      onTaskContextMenu={handleTaskContextMenu}
+                    />
+                  )}
+                  {viewMode === "timeline" && (
+                    <TimelineView
+                      tasks={filteredTasks}
+                      onTaskClick={handleTaskClick}
+                      onTaskContextMenu={handleTaskContextMenu}
+                    />
+                  )}
+                  {viewMode === "stats" && (
+                    <StatsView
+                      tasks={filteredTasks}
+                      onTaskClick={handleTaskClick}
+                      onTaskContextMenu={handleTaskContextMenu}
+                    />
+                  )}
+                </Box>
+                
+                {/* Task Summary Footer */}
+                <Box sx={{
+                  p: 2,
+                  borderTop: 1,
+                  borderColor: 'grey.200',
+                  bgcolor: 'grey.50',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Showing {filteredTasks?.length || 0} tasks
+                    {selectedProject && ` in ${selectedProject.name}`}
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Chip 
+                      label={`${filteredTasks?.filter(t => t.status === 'completed')?.length || 0} Completed`}
+                      size="small"
+                      color="success"
+                      variant="outlined"
+                    />
+                    <Chip 
+                      label={`${filteredTasks?.filter(t => t.status === 'in-progress')?.length || 0} In Progress`}
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                    />
+                  </Box>
+                </Box>
               </Box>
             )}
           </Paper>
@@ -1067,19 +1358,7 @@ const DashboardPage = () => {
       <AddProjectForm
         open={addProjectOpen}
         onClose={() => setAddProjectOpen(false)}
-        onSubmit={async (formData) => {
-          setAddProjectOpen(false);
-          await createProject({
-            name: formData.title,
-            description: formData.description,
-            color: formData.color,
-            template: formData.template,
-            startDate: formData.startDate || null,
-            endDate: formData.dueDate || null,
-            owner: user._id
-          });
-          loadData();
-        }}
+        onSubmit={handleSubmitProject}
       />
 
       <TaskDetailDrawer
@@ -1143,25 +1422,19 @@ const DashboardPage = () => {
             ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
             : undefined
         }
-        PaperProps={{
-          elevation: 3,
-          sx: { minWidth: 180 }
-        }}
       >
         <MenuItem 
           onClick={() => { handleEditTask(contextTask); setContextMenu(null); }}
-          sx={{ py: 1 }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            Edit Task
+            Sửa
           </Box>
         </MenuItem>
         <MenuItem 
           onClick={() => { deleteTask(contextTask._id).then(() => loadData()); setContextMenu(null); }}
-          sx={{ py: 1, color: 'error.main' }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            Delete Task
+            Xóa
           </Box>
         </MenuItem>
         </Menu>
@@ -1178,8 +1451,16 @@ const DashboardPage = () => {
               : undefined
           }
         >
-          <MenuItem onClick={() => { setProjectManageDrawerOpen(true); handleProjectMenuClose(); }}>Manage Project</MenuItem>
-          <MenuItem onClick={() => { deleteProject(contextProject._id).then(() => { loadData(); handleProjectMenuClose(); }); }}>Delete</MenuItem>
+          <MenuItem onClick={() => { setProjectManageDrawerOpen(true); handleProjectMenuClose(); }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              Quản lý dự án
+            </Box>
+          </MenuItem>
+          <MenuItem onClick={() => { deleteProject(contextProject._id).then(() => { loadData(); handleProjectMenuClose(); }); }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              Xóa
+            </Box>
+          </MenuItem>
         </Menu>
 
         {/* Project Management Drawer */}
@@ -1210,7 +1491,7 @@ const DashboardPage = () => {
               // Show success notification
               setNotification({
                 open: true,
-                message: `Project "${formData.name}" has been updated successfully`,
+                message: `Dự án "${formData.name}" đã được cập nhật thành công`,
                 type: 'success'
               });
               
@@ -1220,7 +1501,7 @@ const DashboardPage = () => {
               console.error('Failed to update project:', err);
               setNotification({
                 open: true,
-                message: `Failed to update project: ${err.message}`,
+                message: `Lỗi khi cập nhật dự án: ${err.message}`,
                 type: 'error'
               });
             }
@@ -1232,7 +1513,7 @@ const DashboardPage = () => {
               }
               
               if (!contextProject || !contextProject._id) {
-                throw new Error('Project information is missing');
+                throw new Error('Không tìm thấy Dữ liệu Dự án');
               }
               
               await addProjectMember(contextProject._id, user._id, memberData);
@@ -1251,14 +1532,14 @@ const DashboardPage = () => {
               loadData();
               setNotification({
                 open: true,
-                message: `${user.name || 'User'} has been added to the project as ${memberData.role}`,
+                message: `${user.name || 'User'} đã được thêm vào dự án với vai trò ${memberData.role}`,
                 type: 'success'
               });
             } catch (err) {
               console.error('Failed to add member:', err);
               setNotification({
                 open: true,
-                message: `Failed to add member: ${err.message}`,
+                message: `Lỗi khi thêm thành viên: ${err.message}`,
                 type: 'error'
               });
             }
@@ -1266,24 +1547,24 @@ const DashboardPage = () => {
           onRemoveMember={async (memberId) => {
             try {
               if (!contextProject || !contextProject._id) {
-                throw new Error('Project not found or project ID is missing');
+                throw new Error('Không tìm thấy Dữ liệu Dự án');
               }
               if (!memberId) {
-                throw new Error('Member ID is required');
+                throw new Error('ID thành viên không hợp lệ');
               }
               await removeMember(contextProject._id, memberId);
               loadData();
               
               setNotification({
                 open: true,
-                message: `Member has been removed from the project`,
+                message: `Thành viên đã được xóa khỏi dự án`,
                 type: 'success'
               });
             } catch (err) {
               console.error('Failed to remove member:', err);
               setNotification({
                 open: true,
-                message: `Failed to remove member: ${err.message}`,
+                message: `Lỗi khi xóa thành viên: ${err.message}`,
                 type: 'error'
               });
             }

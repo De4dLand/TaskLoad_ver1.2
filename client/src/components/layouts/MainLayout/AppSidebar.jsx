@@ -7,10 +7,7 @@ const AppSidebar = ({user}) => {
   const menuItems = [
     { text: "Dashboard", icon: <Dashboard />, path: "/dashboard" },
     { text: "Workspace", icon: <WorkOutline />, path: "/workspace" },
-    { text: "Tasks", icon: <Assignment />, path: "/tasks" },
-    { text: "Teams", icon: <People />, path: "/teams" },
-    { text: "Calendar", icon: <DateRange />, path: "/calendar" },
-    { text: "Settings", icon: <Settings />, path: "/settings" },
+
   ]
 
   return (

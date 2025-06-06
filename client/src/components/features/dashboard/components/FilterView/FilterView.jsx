@@ -30,46 +30,28 @@ const FilterView = ({ tasks, user, onFilter, selectedProject, projectMembers = [
   useEffect(() => {
     let result = tasks;
     const now = new Date();
+    const currentUserId = user?._id || user?.id;
+    
     // If 'all' or no filters, show all
     if (filters.includes("all") || filters.length === 0) {
       onFilter(tasks);
       return;
     }
     
-    // Created filter - show tasks created by project members
-    if (filters.includes("created")) {
-      // If we have project members, filter by them
-      if (projectMembers.length > 0) {
-        const memberIds = projectMembers.map(member => member.user._id || member.user.id);
-        result = result.filter((t) => {
-          const creatorId = typeof t.createdBy === "string" ? t.createdBy : t.createdBy?._id;
-          return memberIds.includes(creatorId);
-        });
-      } else {
-        // Fallback to current user if no project is selected
-        result = result.filter((t) => {
-          const creatorId = typeof t.createdBy === "string" ? t.createdBy : t.createdBy?._id;
-          return creatorId === (user._id || user.id);
-        });
-      }
+    // Created by me filter
+    if (filters.includes("createdByMe")) {
+      result = result.filter((task) => {
+        const creatorId = typeof task.createdBy === "string" ? task.createdBy : task.createdBy?._id;
+        return creatorId === currentUserId;
+      });
     }
     
-    // Assigned filter - show tasks assigned to project members
-    if (filters.includes("assigned")) {
-      // If we have project members, filter by them
-      if (projectMembers.length > 0) {
-        const memberIds = projectMembers.map(member => member.user._id || member.user.id);
-        result = result.filter((t) => {
-          const assigneeId = typeof t.assignedTo === "string" ? t.assignedTo : t.assignedTo?._id;
-          return memberIds.includes(assigneeId);
-        });
-      } else {
-        // Fallback to current user if no project is selected
-        result = result.filter((t) => {
-          const assigneeId = typeof t.assignedTo === "string" ? t.assignedTo : t.assignedTo?._id;
-          return assigneeId === (user._id || user.id);
-        });
-      }
+    // Assigned to me filter
+    if (filters.includes("assignedToMe")) {
+      result = result.filter((task) => {
+        const assigneeId = typeof task.assignedTo === "string" ? task.assignedTo : task.assignedTo?._id;
+        return assigneeId === currentUserId;
+      });
     }
     // Due soon filter
     if (filters.includes("dueSoon")) {
@@ -100,12 +82,13 @@ const FilterView = ({ tasks, user, onFilter, selectedProject, projectMembers = [
         onChange={handleFilterChange}
         aria-label="task filter"
         size="small"
+        sx={{ flexWrap: 'wrap', gap: 1 }}
       >
-        <ToggleButton value="all">All</ToggleButton>
-        <ToggleButton value="created">Created by Team</ToggleButton>
-        <ToggleButton value="assigned">Assigned to Team</ToggleButton>
-        <ToggleButton value="priority">Priority</ToggleButton>
-        <ToggleButton value="dueSoon">Due Soon</ToggleButton>
+        <ToggleButton value="all" sx={{ borderRadius: '16px !important' }}>All</ToggleButton>
+        <ToggleButton value="createdByMe" sx={{ borderRadius: '16px !important' }}>Created by Me</ToggleButton>
+        <ToggleButton value="assignedToMe" sx={{ borderRadius: '16px !important' }}>Assigned to Me</ToggleButton>
+        <ToggleButton value="priority" sx={{ borderRadius: '16px !important' }}>Priority</ToggleButton>
+        <ToggleButton value="dueSoon" sx={{ borderRadius: '16px !important' }}>Due Soon</ToggleButton>
       </ToggleButtonGroup>
     </Box>
   );

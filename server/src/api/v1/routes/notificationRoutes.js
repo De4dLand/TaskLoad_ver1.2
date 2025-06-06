@@ -183,7 +183,7 @@ router.post('/custom', async (req, res, next) => {
  * @desc Manually trigger due date notification check (admin only)
  * @access Private/Admin
  */
-router.post('/check-due-dates', auth.restrictTo('admin'), async (req, res, next) => {
+router.post('/check-due-dates', auth.isAdmin, async (req, res, next) => {
   try {
     const notifications = await NotificationService.checkDueDateNotifications();
     

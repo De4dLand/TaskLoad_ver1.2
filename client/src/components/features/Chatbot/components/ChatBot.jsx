@@ -25,14 +25,39 @@ import styles from './ChatInterface.module.css';
  * Includes message history, input area, and loading states
  * @param {Object} props - Component props
  */
+// Key for localStorage
+const CHAT_STORAGE_KEY = 'taskload_chat_history';
+
+const clearChat = () => {
+  const messages = [];
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(CHAT_STORAGE_KEY);
+  }
+  return messages;
+};
+
 const ChatBot = () => {
   const theme = useTheme();
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(() => {
+    // Load messages from localStorage on initial render
+    if (typeof window !== 'undefined') {
+      const savedMessages = localStorage.getItem(CHAT_STORAGE_KEY);
+      return savedMessages ? JSON.parse(savedMessages) : clearChat();
+    }
+    return [];
+  });
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const chatContainerRef = useRef(null);
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCpWGM4YgvBosMZnHP7onfyeln-2sfh45E';
+  
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    if (typeof window !== 'undefined' && messages.length > 0) {
+      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
+    }
+  }, [messages]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -40,6 +65,19 @@ const ChatBot = () => {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // System prompt for the AI assistant
+  const systemPrompt = `Bạn là một trợ lý ảo thân thiện và chuyên nghiệp tên là TaskLoad AI. Hãy tuân thủ các quy tắc sau:
+  1. Trả lời bằng tiếng Việt với giọng văn thân thiện, gần gũi
+  2. Sử dụng đại từ "mình" khi nói về bản thân và "bạn" khi nói với người dùng
+  3. Giọng văn lịch sự, tôn trọng nhưng vẫn tự nhiên như đang trò chuyện
+  4. Luôn giữ thái độ tích cực và hỗ trợ nhiệt tình
+  5. Nếu không hiểu câu hỏi, hãy lịch sự yêu cầu làm rõ
+  6. Đưa ra câu trả lời ngắn gọn, rõ ràng và dễ hiểu
+  7. Sử dụng các biểu tượng cảm xúc phù hợp để tăng tính thân thiện
+  8. Khi cần, đặt câu hỏi ngược lại để hiểu rõ hơn về nhu cầu của người dùng
+  9. Không đưa ra thông tin nhạy cảm hoặc không phù hợp
+  10. Kết thúc câu trả lời bằng một câu hỏi hoặc gợi ý để tiếp tục cuộc trò chuyện`;
 
   const sendMessage = async () => {
     if (!inputText.trim()) return;
@@ -54,7 +92,7 @@ const ChatBot = () => {
       console.error("API key Gemini not provided!");
       setMessages(prevMessages => [
         ...prevMessages, 
-        { text: "Error: API key not configured.", isUser: false, timestamp: new Date().toISOString() }
+        { text: "Xin lỗi, có lỗi xảy ra khi kết nối với hệ thống. Vui lòng thử lại sau.", isUser: false, timestamp: new Date().toISOString() }
       ]);
       return;
     }
@@ -66,21 +104,35 @@ const ChatBot = () => {
     try {
       // Initialize Gemini API
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-preview-04-17" });
+      const model = genAI.getGenerativeModel({ 
+        model: "gemini-2.5-flash-preview-04-17",
+        
+      });
+
+      // Combine system prompt with chat history
+      const chatHistory = [
+        {
+          role: "user",
+          parts: [{ text: systemPrompt }],
+        },
+        {
+          role: "model",
+          parts: [{ text: "Xin chào! Mình là TaskLoad AI, trợ lý ảo của bạn. Mình có thể giúp gì cho bạn hôm nay? 😊" }],
+        },
+        ...messages.slice(-6).map(msg => ({
+          role: msg.isUser ? "user" : "model",
+          parts: [{ text: msg.text }]
+        }))
+      ];
 
       // Format message history for Gemini
       const chat = model.startChat({
-        history: messages.map(msg => ({ 
-          role: msg.isUser ? "user" : "model", 
-          parts: 
-          [
-            {text:msg.text }
-          ]
-        })),
+        history: chatHistory,
       });
 
-      // Send message to Gemini
-      const result = await chat.sendMessage(inputText);
+      // Send message to Gemini with Vietnamese language preference
+      const prompt = `${inputText}\n\nHãy trả lời bằng tiếng Việt với giọng văn thân thiện và chuyên nghiệp.`;
+      const result = await chat.sendMessage(prompt);
       const responseText = result.response.text();
       
       // Add AI response to chat

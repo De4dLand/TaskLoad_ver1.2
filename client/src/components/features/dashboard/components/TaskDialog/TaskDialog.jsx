@@ -6,7 +6,6 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 
 const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], members = [], selectedProject }) => {
-  console.log(selectedProject)
   const [formState, setFormState] = useState({
     title: "",
     description: "",
@@ -103,14 +102,14 @@ const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], members = []
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{task ? "Edit Task" : "Add New Task"}</DialogTitle>
+      <DialogTitle>{task ? "Sửa Task" : "Thêm Task Mới"}</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
-          <TextField label="Title" name="title" value={formState.title} onChange={handleChange} fullWidth required />
-          <TextField label="Description" name="description" value={formState.description} onChange={handleChange} multiline rows={3} fullWidth />
+          <TextField label="Tiêu đề" name="title" value={formState.title} onChange={handleChange} fullWidth required />
+          <TextField label="Mô tả" name="description" value={formState.description} onChange={handleChange} multiline rows={3} fullWidth />
           <FormControl fullWidth>
-            <InputLabel>Status</InputLabel>
-            <Select name="status" value={formState.status} onChange={handleChange} label="Status">
+            <InputLabel>Trạng thái</InputLabel>
+            <Select name="status" value={formState.status} onChange={handleChange} label="Trạng thái">
               <MenuItem value="todo">To Do</MenuItem>
               <MenuItem value="in_progress">In Progress</MenuItem>
               <MenuItem value="review">Review</MenuItem>
@@ -118,8 +117,8 @@ const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], members = []
             </Select>
           </FormControl>
           <FormControl fullWidth>
-            <InputLabel>Priority</InputLabel>
-            <Select name="priority" value={formState.priority} onChange={handleChange} label="Priority">
+            <InputLabel>Độ ưu tiên</InputLabel>
+            <Select name="priority" value={formState.priority} onChange={handleChange} label="Độ ưu tiên">
               <MenuItem value="low">Low</MenuItem>
               <MenuItem value="medium">Medium</MenuItem>
               <MenuItem value="high">High</MenuItem>
@@ -127,7 +126,7 @@ const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], members = []
           </FormControl>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
-              label="Start Date"
+              label="Ngày bắt đầu"
               value={formState.startDate ? dayjs(formState.startDate) : null}
               onChange={handleDateChange}
               slotProps={{ 
@@ -140,7 +139,7 @@ const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], members = []
           </LocalizationProvider>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
-              label="Due Date"
+              label="Ngày hết hạn"
               value={formState.dueDate ? dayjs(formState.dueDate) : null}
               onChange={handleDateChange}
               slotProps={{ 
@@ -164,7 +163,7 @@ const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], members = []
                 </>
               ) : (
                 <>
-                <InputLabel>{task ? "Project" : "Select Project"}</InputLabel>
+                <InputLabel>{task ? "Dự án" : "Chọn Dự án"}</InputLabel>
                 <Select name="project" value={formState.project} onChange={handleChange} label={selectedProject?.name} required>
                   {projects.map((p) => (
                     <MenuItem key={p._id} value={p._id}>{p.name}</MenuItem>
@@ -173,24 +172,24 @@ const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], members = []
                 </>
               )
             }
-            {!formState.project && <FormHelperText>Project is required</FormHelperText>}
+            {!formState.project && <FormHelperText>Đự án là bắt buộc</FormHelperText>}
           </FormControl>
           <FormControl fullWidth>
-            <InputLabel>Assigned To</InputLabel>
-            <Select name="assignedTo" value={formState.assignedTo || ""} onChange={handleChange} label="Assigned To">
-              <MenuItem value=""><em>Unassigned</em></MenuItem>
+            <InputLabel>Người được giao</InputLabel>
+            <Select name="assignedTo" value={formState.assignedTo || ""} onChange={handleChange} label="Người được giao">
+              <MenuItem value=""><em>Không giao</em></MenuItem>
               {members.map((member) => (
                 <MenuItem key={member._id} value={member._id}>{member.username || `${member.firstName || ''} ${member.lastName || ''}`.trim() || member._id}</MenuItem>
               ))}
             </Select>
           </FormControl>
           <TextField
-            label="Tags (comma-separated)"
+            label="Tags (phân cách bằng dấu phẩy)"
             name="tags"
             value={formState.tags.join(", ")}
             onChange={handleTagChange}
             fullWidth
-            helperText="Enter tags separated by commas"
+            helperText="Nhập tags phân cách bằng dấu phẩy"
           />
           {formState.tags.length > 0 && (
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
@@ -199,13 +198,13 @@ const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], members = []
               ))}
             </Box>
           )}
-          <TextField label="Estimated Hours" name="estimatedHours" type="number" value={formState.estimatedHours} onChange={handleChange} fullWidth inputProps={{ min: 0 }} />
+          <TextField label="Số giờ ước tính" name="estimatedHours" type="number" value={formState.estimatedHours} onChange={handleChange} fullWidth inputProps={{ min: 0 }} />
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>Hủy</Button>
         <Button onClick={handleSubmit} variant="contained" color="primary">
-          {task ? "Save Changes" : "Create Task"}
+          {task ? "Lưu thay đổi" : "Thêm Task"}
         </Button>
       </DialogActions>
     </Dialog>

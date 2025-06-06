@@ -55,6 +55,37 @@ export const fetchRecentActivity = async () => {
 // Import project service for project operations
 import projectService from './projectService'
 
+// Notification functions
+export const fetchNotifications = async () => {
+  try {
+    const response = await api.get(API_ENDPOINTS.NOTIFICATIONS.BASE)
+    return response.data
+  } catch (error) {
+    console.error("Error fetching notifications:", error)
+    throw error
+  }
+}
+
+export const markNotificationAsRead = async (notificationId) => {
+  try {
+    const response = await api.patch(`${API_ENDPOINTS.NOTIFICATIONS.BASE}/${notificationId}/read`)
+    return response.data
+  } catch (error) {
+    console.error("Error marking notification as read:", error)
+    throw error
+  }
+}
+
+export const markAllNotificationsAsRead = async () => {
+  try {
+    const response = await api.patch(API_ENDPOINTS.NOTIFICATIONS.MARK_ALL_READ)
+    return response.data
+  } catch (error) {
+    console.error("Error marking all notifications as read:", error)
+    throw error
+  }
+}
+
 // Re-export project service methods
 export const { 
   createProject, 

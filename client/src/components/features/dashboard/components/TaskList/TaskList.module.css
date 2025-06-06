@@ -52,16 +52,103 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .taskDueDate {
-  color: #aaaaaa;
-}
-
-.taskAssignee {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+  color: #aaaaaa;
+  font-size: 0.875rem;
+}
+
+.taskPriority {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+}
+
+.taskStatus {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+}
+
+.taskProject {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  background: rgba(255, 255, 255, 0.05);
+  color: #e0e0e0;
+}
+
+.daysRemaining {
+  font-weight: 500;
+  color: #f44336;
+}
+
+.priorityHigh {
+  background: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+}
+
+.priorityMedium {
+  background: rgba(255, 152, 0, 0.1);
+  color: #ff9800;
+}
+
+.priorityLow {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+}
+
+.statusOpen {
+  background: rgba(255, 152, 0, 0.1);
+  color: #ff9800;
+}
+
+.statusInProgress {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+}
+
+.statusCompleted {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+}
+
+.statusBlocked {
+  background: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+}
+
+.statusCancelled {
+  background: rgba(158, 158, 158, 0.1);
+  color: #9e9e9e;
+}
+
+.assigneeAvatar {
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+  border: 2px solid #1e1e1e;
+}
+
+.assigneeName {
+  color: #e0e0e0;
+  font-size: 0.875rem;
 }
 
 .assigneeAvatar {
