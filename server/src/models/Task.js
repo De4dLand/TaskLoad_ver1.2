@@ -200,6 +200,66 @@ taskSchema.post('save', async function() {
   }
 })
 
+// Static method to update a task with all fields including subtasks
+taskSchema.statics.findOneAndUpdateWithSubtasks = async function(conditions, update, options = {}) {
+  try {
+    // Handle subtasks if they exist in the update
+    if (update.subtasks && Array.isArray(update.subtasks)) {
+      // Process each subtask to ensure it has the required fields
+      const processedSubtasks = update.subtasks.map(subtask => ({
+        _id: new mongoose.Types.ObjectId(),
+        title: subtask.title,
+        completed: Boolean(subtask.completed)
+      }));
+      
+      // Use $set to update the subtasks array
+      update.$set = update.$set || {};
+      update.$set.subtasks = processedSubtasks;
+      delete update.subtasks; // Remove the original subtasks to avoid conflicts
+    }
+    
+    // Handle other fields
+    const allowedUpdates = [
+      'title', 'description', 'status', 'priority', 'startDate', 'dueDate',
+      'project', 'assignedTo', 'tags', 'estimatedHours', 'actualHours',
+      'dependencies', 'customFields', 'chatRoomId'
+    ];
+    
+    // Process regular updates
+    const updateObj = { $set: update.$set || {} };
+    
+    // Add other update operators if present
+    if (update.$push) updateObj.$push = update.$push;
+    if (update.$pull) updateObj.$pull = update.$pull;
+    if (update.$addToSet) updateObj.$addToSet = update.$addToSet;
+    
+    // Process regular fields
+    allowedUpdates.forEach(field => {
+      if (update[field] !== undefined) {
+        updateObj.$set[field] = update[field];
+      }
+    });
+    
+    // Set updatedAt timestamp
+    updateObj.$set.updatedAt = new Date();
+    
+    // Execute the update
+    options.new = options.new !== false; // Default to returning the updated document
+    options.runValidators = true; // Always run validators on update
+    
+    const task = await this.findOneAndUpdate(conditions, updateObj, options);
+    
+    if (!task) {
+      throw new Error('Task not found');
+    }
+    
+    return task;
+  } catch (error) {
+    console.error('Error in findOneAndUpdateWithSubtasks:', error);
+    throw error;
+  }
+};
+
 // Methods
 taskSchema.methods.updateProgress = async function () {
   try {

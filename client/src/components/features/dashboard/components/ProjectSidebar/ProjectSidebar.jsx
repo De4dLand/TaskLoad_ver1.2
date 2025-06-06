@@ -139,10 +139,10 @@ const ProjectSidebar = ({ sidebarData, onProjectContextMenu, onProjectSelect, se
                   <Box className={styles.dueDate}>
                     <Box 
                       className={styles.dueDateDot}
-                      style={{ backgroundColor: getDueDateColor(project.dueDate) }}
+                      style={{ backgroundColor: getDueDateColor(project.endDate) }}
                     />
                     <Typography variant="caption" className={styles.projectDueDate}>
-                      {project.dueDate ? `Due: ${formatDate(project.dueDate)}` : 'No due date'}
+                      {project.endDate ? `Due: ${formatDate(project.endDate)}` : 'No due date'}
                     </Typography>
                   </Box>
                   

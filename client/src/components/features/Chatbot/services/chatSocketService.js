@@ -49,13 +49,28 @@ export const initializeChatSocket = (token, userId) => {
     },
 
     // Send a message to a chat room
-    sendMessage: (roomId, message, sender) => {
-      socket.emit('chat:message', {
-        roomId,
-        message,
-        sender,
-        timestamp: new Date(),
+    sendMessage: (roomId, message, callback) => {
+      socket.emit('chat:message', { roomId, message }, (response) => {
+        if (response && response.success) {
+          // Load existing messages, add the new one, and save
+          const existingMessages = loadChatMessages(roomId) || [];
+          saveChatMessages(roomId, [...existingMessages, response.message]);
+        }
+        
+        if (typeof callback === 'function') {
+          callback(response);
+        }
       });
+    },
+    
+    // Load messages for a room
+    loadMessages: (roomId) => {
+      return loadChatMessages(roomId) || [];
+    },
+    
+    // Save messages for a room
+    saveMessages: (roomId, messages) => {
+      saveChatMessages(roomId, messages);
     },
 
     // Listen for new messages

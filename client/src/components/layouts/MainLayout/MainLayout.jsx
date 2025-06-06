@@ -12,8 +12,10 @@ const MainLayout = () => {
       <Box className={styles.container}>
         <AppSidebar />
         <Box component="main" className={styles.main}>
-          <Container maxWidth="lg" className={styles.content}>
-            <Outlet />
+          <Container maxWidth={false} className={styles.content}>
+            <Box className={styles.contentWrapper}>
+              <Outlet />
+            </Box>
           </Container>
         </Box>
       </Box>

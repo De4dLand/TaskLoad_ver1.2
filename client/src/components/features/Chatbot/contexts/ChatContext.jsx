@@ -1,5 +1,14 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { chatApiService } from '../services';
+import { 
+  clearChatData as storageClearChatData,
+  saveChatMessages,
+  loadChatMessages,
+  saveCurrentRoom,
+  getCurrentRoom,
+  saveChatRooms,
+  loadChatRooms
+} from '../services/chatStorageService';
 
 // Create context
 const ChatContext = createContext();
@@ -14,32 +23,56 @@ export const ChatProvider = ({ children, userId }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch user's chat rooms on mount
-  useEffect(() => {
+  // Function to fetch chat rooms
+  const fetchRooms = useCallback(async () => {
     if (!userId) return;
     
-    const fetchRooms = async () => {
-      try {
-        setIsLoading(true);
-        const rooms = await chatApiService.fetchUserChatRooms();
-        setChatRooms(rooms);
+    try {
+      setIsLoading(true);
+      
+      // Try to load from localStorage first
+      const cachedRooms = loadChatRooms();
+      if (cachedRooms.length > 0) {
+        setChatRooms(cachedRooms);
+      }
+      
+      // Then fetch from API
+      const apiRooms = await chatApiService.fetchUserChatRooms();
+      setChatRooms(apiRooms);
+      
+      // Save to localStorage
+      saveChatRooms(apiRooms);
+      
+      // Set current room if not set
+      if (apiRooms.length > 0) {
+        const savedRoomId = getCurrentRoom();
+        const validRoom = savedRoomId && apiRooms.some(room => room._id === savedRoomId);
+        const roomIdToSet = validRoom ? savedRoomId : apiRooms[0]._id;
         
-        // Set first room as current if available and no current room is selected
-        if (rooms.length > 0 && !currentRoomId) {
-          setCurrentRoomId(rooms[0]._id);
+        if (roomIdToSet !== currentRoomId) {
+          setCurrentRoomId(roomIdToSet);
         }
         
-        setError(null);
-      } catch (err) {
-        setError('Failed to load chat rooms');
-        console.error(err);
-      } finally {
-        setIsLoading(false);
+        if (!validRoom) {
+          saveCurrentRoom(roomIdToSet);
+        }
+      } else {
+        setCurrentRoomId(null);
       }
-    };
-
-    fetchRooms();
+      
+      setError(null);
+    } catch (err) {
+      console.error('Failed to load chat rooms:', err);
+      setError('Failed to load chat rooms');
+    } finally {
+      setIsLoading(false);
+    }
   }, [userId, currentRoomId]);
+
+  // Initial fetch on mount
+  useEffect(() => {
+    fetchRooms();
+  }, [fetchRooms]);
 
   // Create a new chat room
   const createRoom = async (roomData) => {
@@ -63,6 +96,30 @@ export const ChatProvider = ({ children, userId }) => {
     setCurrentRoomId(roomId);
   };
 
+  // Clear all chat data from storage and reset state
+  const clearChatData = useCallback(async () => {
+    try {
+      // Clear chat data from storage
+      await storageClearChatData();
+      
+      // Reset state
+      setChatRooms([]);
+      setCurrentRoomId(null);
+      setError(null);
+      
+      // Refetch rooms to get fresh data
+      if (userId) {
+        fetchRooms();
+      }
+      
+      return true;
+    } catch (err) {
+      console.error('Error clearing chat data:', err);
+      setError('Failed to clear chat data');
+      return false;
+    }
+  }, [userId, fetchRooms]);
+
   // Context value
   const value = {
     chatRooms,
@@ -71,6 +128,7 @@ export const ChatProvider = ({ children, userId }) => {
     error,
     createRoom,
     switchRoom,
+    clearChatData,
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

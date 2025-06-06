@@ -15,6 +15,27 @@
   padding: 12px 16px;
   background-color: #f0f2f5;
   border-bottom: 1px solid #e0e0e0;
+  position: relative;
+}
+
+.clearButton {
+  position: absolute;
+  right: 120px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  min-width: auto;
+  border-radius: 4px;
+}
+
+.clearButton .MuiButton-startIcon {
+  margin-right: 4px;
+  margin-left: 0;
+}
+
+.clearButton:hover {
+  background-color: #ffebee;
 }
 
 .onlineIndicators {

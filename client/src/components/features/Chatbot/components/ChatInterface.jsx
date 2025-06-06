@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Button } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 import styles from './ChatInterface.module.css';
 import { useChatSocket } from '../hooks';
+import { useChatContext } from '../contexts/ChatContext';
 
 /**
  * ChatInterface component provides the main UI for the chat functionality
@@ -26,6 +29,28 @@ const ChatInterface = ({ currentUser, roomId }) => {
     sendTypingStatus,
     markAsRead
   } = useChatSocket(token, currentUser?.id, roomId);
+
+  // State for confirmation dialog
+  const [clearDialogOpen, setClearDialogOpen] = useState(false);
+
+  // Use the clearChatData function from ChatContext
+  const { clearChatData } = useChatContext();
+
+  // Handle opening the clear chat confirmation dialog
+  const handleOpenClearDialog = () => {
+    setClearDialogOpen(true);
+  };
+
+  // Handle closing the clear chat confirmation dialog
+  const handleCloseClearDialog = () => {
+    setClearDialogOpen(false);
+  };
+
+  // Handle confirming chat data clearing
+  const handleConfirmClearChat = () => {
+    clearChatData();
+    setClearDialogOpen(false);
+  };
 
   // Scroll to bottom of messages when new messages arrive
   useEffect(() => {
@@ -87,10 +112,26 @@ const ChatInterface = ({ currentUser, roomId }) => {
     }
   };
 
+  const handleClearChat = () => {
+    clearChatData();
+  };
+
   return (
     <div className={styles.chatContainer}>
       <div className={styles.chatHeader}>
-        <h3>AI Chatbot</h3>
+        <h3>Chat</h3>
+        <div className={styles.headerActions}>
+          <Button 
+            variant="outlined" 
+            color="error" 
+            size="small" 
+            startIcon={<DeleteIcon />}
+            onClick={handleOpenClearDialog}
+            className={styles.clearButton}
+          >
+            Clear Chat
+          </Button>
+        </div>
         <div className={styles.connectionStatus}>
           {isConnected ? (
             <span className={styles.connected}>Connected</span>
@@ -161,6 +202,36 @@ const ChatInterface = ({ currentUser, roomId }) => {
           Send
         </button>
       </form>
+
+      {/* Clear Chat Confirmation Dialog */}
+      <Dialog
+        open={clearDialogOpen}
+        onClose={handleCloseClearDialog}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          Clear Chat History
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Are you sure you want to clear all chat history? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseClearDialog} color="primary">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleConfirmClearChat} 
+            color="error" 
+            variant="contained"
+            autoFocus
+          >
+            Clear
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

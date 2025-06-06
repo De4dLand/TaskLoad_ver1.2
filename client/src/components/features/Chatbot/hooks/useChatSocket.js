@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { initializeChatSocket, disconnectChatSocket } from '../services/chatSocketService';
 import { chatApiService } from '../services';
 
@@ -60,12 +60,20 @@ const useChatSocket = (token, userId, roomId) => {
 
     loadChatHistory();
 
-    // Listen for new messages
-    chatSocket.onNewMessage((message) => {
+    // Handle new message
+    const handleNewMessage = (message) => {
       if (message.roomId === roomId) {
-        setMessages((prevMessages) => [...prevMessages, message]);
+        setMessages(prevMessages => {
+          const updatedMessages = [...prevMessages, message];
+          // Save updated messages to storage
+          saveChatMessages(roomId, updatedMessages);
+          return updatedMessages;
+        });
       }
-    });
+    };
+
+    // Listen for new messages
+    chatSocket.onNewMessage(handleNewMessage);
 
     // Listen for user presence changes
     chatSocket.onUserPresenceChange((data) => {

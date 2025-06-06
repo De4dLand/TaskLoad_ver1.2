@@ -460,7 +460,7 @@ const DashboardPage = () => {
 
   const handleProjectMenuClose = () => {
     setContextMenu(null)
-    // setContextProject(null)
+    setContextProject(null)
   }
   
   // Get project members for the selected project
@@ -501,10 +501,25 @@ const DashboardPage = () => {
 
   // Handle task updates from the TaskDetailDrawer
   const handleTaskUpdate = async (taskId, updatedTask) => {
-    console.log("Updated task:", updatedTask);
+    console.log("Updating task:", { taskId, updatedTask });
     try {
-      // Call the updateTask service with the task ID and updated task data
-      const result = await updateTask(taskId, updatedTask);
+      // Get the current task data to preserve any fields not included in the update
+      const currentTask = dashboardData.tasks.find(t => t._id === taskId) || {};
+      
+      // Create a complete task object with the updated fields
+      const taskToUpdate = {
+        ...currentTask,
+        ...updatedTask,
+        // Ensure assignedTo is properly formatted as an object with _id
+        assignedTo: updatedTask.assignedTo ? 
+          (typeof updatedTask.assignedTo === 'object' ? updatedTask.assignedTo : { _id: updatedTask.assignedTo }) : 
+          null
+      };
+
+      console.log("Sending task update:", taskToUpdate);
+      
+      // Call the updateTask service with the complete task data
+      const result = await updateTask(taskId, taskToUpdate);
       
       // Update the local state to reflect the changes
       setDashboardData(prevData => ({
@@ -516,7 +531,13 @@ const DashboardPage = () => {
       
       // Update the drawer task if it's the same task
       if (drawerTask && drawerTask._id === taskId) {
-        setDrawerTask(prev => ({ ...prev, ...result }));
+        setDrawerTask(prev => ({
+          ...prev,
+          ...result,
+          assignedTo: result.assignedTo ? 
+            (typeof result.assignedTo === 'object' ? result.assignedTo : { _id: result.assignedTo }) : 
+            null
+        }));
       }
       
       // Show success notification
@@ -681,29 +702,15 @@ const DashboardPage = () => {
       
       // The formData should already be properly formatted from TaskDialog
       // but we'll ensure it's in the correct format here as well
-      const formToSend = {
-        ...formData,
-        // Ensure project is a valid ID
-        project: formData.project,
-        // Ensure assignedTo is either a valid ID or null
-        assignedTo: formData.assignedTo || null,
-        // Ensure tags is an array
-        tags: Array.isArray(formData.tags) ? formData.tags : []
-      };
       
-      let result;
-      if (isEdit && selectedTask) { 
-        console.log('Updating task with ID:', selectedTask._id, 'Data:', formToSend);
-        result = await updateTask(selectedTask._id, formToSend);
-      } else {
         // For new tasks, include the current user's ID as createdBy
         const newTaskData = {
-          ...formToSend,
+          ...formData,
           createdBy: user?.id || user?._id, // Handle both id and _id for user object
           status: 'todo' // Ensure status is set for new tasks
         };
         console.log('Creating new task with data:', newTaskData);
-        result = await createTask(newTaskData);
+        let result = await createTask(newTaskData);
         
         // If task was created successfully and has a project, add it to the project's tasks array
         if (result && result._id && newTaskData.project) {
@@ -718,7 +725,6 @@ const DashboardPage = () => {
             // The task was created successfully, just the project update failed
           }
         }
-      }
       
       // Update the UI
       if (isEdit && selectedTask && dashboardData?.tasks) {

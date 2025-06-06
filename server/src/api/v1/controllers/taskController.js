@@ -50,6 +50,197 @@ export class TaskController {
   constructor() {
     // Constructor can be used for dependency injection if needed
   }
+
+  // Get all subtasks for a task
+  getSubtasks = catchAsync(async (req, res) => {
+    const { taskId } = req.params;
+    
+    // Find the task and select only the subtasks
+    const task = await Task.findById(taskId).select('subtasks');
+    
+    if (!task) {
+      throw createError(404, 'Task not found');
+    }
+    
+    // Check if user has access to this task
+    if (!await hasTaskAccess(req.user, taskId)) {
+      throw createError(403, 'You do not have permission to view these subtasks');
+    }
+    
+    res.json({
+      status: 'success',
+      data: {
+        subtasks: task.subtasks || []
+      }
+    });
+  });
+
+  // Add a new subtask to a task
+  addSubtask = catchAsync(async (req, res) => {
+    const { taskId } = req.params;
+    const { title, completed = false } = req.body;
+    
+    // Validate input
+    if (!title || typeof title !== 'string') {
+      throw createError(400, 'Subtask title is required');
+    }
+    
+    // Check if user has permission to modify this task
+    if (!await canModifyTask(req.user, taskId)) {
+      throw createError(403, 'You do not have permission to add subtasks to this task');
+    }
+    
+    // Create new subtask
+    const newSubtask = {
+      _id: new mongoose.Types.ObjectId(),
+      title,
+      completed: Boolean(completed)
+    };
+    
+    // Add subtask to the task
+    const updatedTask = await Task.findByIdAndUpdate(
+      taskId,
+      { $push: { subtasks: newSubtask } },
+      { new: true, runValidators: true }
+    ).select('subtasks');
+    
+    if (!updatedTask) {
+      throw createError(404, 'Task not found');
+    }
+    
+    // Get the newly added subtask (last one in the array)
+    const addedSubtask = updatedTask.subtasks[updatedTask.subtasks.length - 1];
+    
+    // Invalidate cache for this task
+    await invalidateCache(`task:${taskId}`);
+    
+    res.status(201).json({
+      status: 'success',
+      data: {
+        subtask: addedSubtask
+      }
+    });
+  });
+
+  // Update an existing subtask
+  updateSubtask = catchAsync(async (req, res) => {
+    const { taskId, subtaskId } = req.params;
+    const { title, completed } = req.body;
+    
+    // Validate input
+    if (title !== undefined && (typeof title !== 'string' || title.trim() === '')) {
+      throw createError(400, 'Subtask title cannot be empty');
+    }
+    
+    if (completed !== undefined && typeof completed !== 'boolean') {
+      throw createError(400, 'Completed must be a boolean');
+    }
+    
+    // Check if user has permission to modify this task
+    if (!await canModifyTask(req.user, taskId)) {
+      throw createError(403, 'You do not have permission to modify this task');
+    }
+    
+    // Build update object
+    const update = {};
+    if (title !== undefined) update['subtasks.$.title'] = title.trim();
+    if (completed !== undefined) update['subtasks.$.completed'] = completed;
+    
+    // Update the subtask
+    const updatedTask = await Task.findOneAndUpdate(
+      { _id: taskId, 'subtasks._id': subtaskId },
+      { $set: update },
+      { new: true, runValidators: true }
+    );
+    
+    if (!updatedTask) {
+      throw createError(404, 'Task or subtask not found');
+    }
+    
+    // Find the updated subtask
+    const updatedSubtask = updatedTask.subtasks.id(subtaskId);
+    
+    // Invalidate cache for this task
+    await invalidateCache(`task:${taskId}`);
+    
+    res.json({
+      status: 'success',
+      data: {
+        subtask: updatedSubtask
+      }
+    });
+  });
+
+  // Delete a subtask
+  deleteSubtask = catchAsync(async (req, res) => {
+    const { taskId, subtaskId } = req.params;
+    
+    // Check if user has permission to modify this task
+    if (!await canModifyTask(req.user, taskId)) {
+      throw createError(403, 'You do not have permission to modify this task');
+    }
+    
+    // Remove the subtask
+    const updatedTask = await Task.findByIdAndUpdate(
+      taskId,
+      { $pull: { subtasks: { _id: subtaskId } } },
+      { new: true }
+    );
+    
+    if (!updatedTask) {
+      throw createError(404, 'Task not found');
+    }
+    
+    // Check if the subtask was actually removed
+    const subtaskExists = updatedTask.subtasks.some(st => st._id.toString() === subtaskId);
+    if (subtaskExists) {
+      throw createError(404, 'Subtask not found');
+    }
+    
+    // Invalidate cache for this task
+    await invalidateCache(`task:${taskId}`);
+    
+    res.json({
+      status: 'success',
+      data: null,
+      message: 'Subtask deleted successfully'
+    });
+  });
+
+  // Toggle subtask completion status
+  toggleSubtask = catchAsync(async (req, res) => {
+    const { taskId, subtaskId } = req.params;
+    
+    // Check if user has permission to modify this task
+    if (!await canModifyTask(req.user, taskId)) {
+      throw createError(403, 'You do not have permission to modify this task');
+    }
+    
+    // First get the current task to find the subtask's current status
+    const task = await Task.findById(taskId);
+    if (!task) {
+      throw createError(404, 'Task not found');
+    }
+    
+    const subtask = task.subtasks.id(subtaskId);
+    if (!subtask) {
+      throw createError(404, 'Subtask not found');
+    }
+    
+    // Toggle the completed status
+    subtask.completed = !subtask.completed;
+    await task.save();
+    
+    // Invalidate cache for this task
+    await invalidateCache(`task:${taskId}`);
+    
+    res.json({
+      status: 'success',
+      data: {
+        subtask: subtask
+      }
+    });
+  });
   
   // Get all tasks with filtering and pagination
   getTasks = catchAsync(async (req, res) => {

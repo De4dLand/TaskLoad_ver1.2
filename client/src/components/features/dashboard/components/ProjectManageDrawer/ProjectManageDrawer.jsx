@@ -123,7 +123,6 @@ const ProjectManageDrawer = ({
   // Load project data when project prop changes or drawer opens
   useEffect(() => {
     if (project) {
-      console.log('ProjectManageDrawer: Project data received', project);
       setProjectForm({
         name: project.name || '',
         description: project.description || '',
@@ -264,17 +263,17 @@ const ProjectManageDrawer = ({
 
   const handleAddMember = () => {
     if (!selectedUser || !selectedUser._id) {
-      setMemberFormError('Please select a valid user');
+      setMemberFormError('Vui lòng chọn một người dùng hợp lệ');
       return;
     }
     
     if (!selectedPosition.trim()) {
-      setMemberFormError('Position is required');
+      setMemberFormError('Vị trí là bắt buộc');
       return;
     }
     
     if (!project || !project._id) {
-      setMemberFormError('Project information is missing');
+      setMemberFormError('Thông tin dự án không hợp lệ');
       return;
     }
     
@@ -289,7 +288,7 @@ const ProjectManageDrawer = ({
       handleCloseMemberDialog();
     } catch (error) {
       console.error('Error adding member:', error);
-      setMemberFormError('Failed to add member: ' + error.message);
+      setMemberFormError('Thêm thành viên thất bại: ' + error.message);
     }
   };
 
@@ -336,7 +335,7 @@ const ProjectManageDrawer = ({
           backgroundColor: projectForm.color || '#1976d2',
           color: 'white'
         }}>
-          <Typography variant="h6">{project?.name || 'Manage Project'}</Typography>
+          <Typography variant="h6">{project?.name || 'Quản lý dự án'}</Typography>
           <IconButton onClick={onClose} sx={{ color: 'white' }}>
             <CloseIcon />
           </IconButton>
@@ -360,7 +359,7 @@ const ProjectManageDrawer = ({
           {/* Details Tab */}
           {activeTab === 0 && (
             <Box sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ mb: 3 }}>Project Details</Typography>
+              <Typography variant="h6" sx={{ mb: 3 }}>Thông tin dự án</Typography>
               
               <Grid container spacing={2}>
                 <Grid item xs={12}>
@@ -394,11 +393,11 @@ const ProjectManageDrawer = ({
                       onChange={handleProjectFormChange}
                       label="Status"
                     >
-                      <MenuItem value="planning">Planning</MenuItem>
-                      <MenuItem value="active">Active</MenuItem>
-                      <MenuItem value="on_hold">On Hold</MenuItem>
-                      <MenuItem value="completed">Completed</MenuItem>
-                      <MenuItem value="cancelled">Cancelled</MenuItem>
+                      <MenuItem value="planning">Đang lên kế hoạch</MenuItem>
+                      <MenuItem value="active">Đang hoạt động</MenuItem>
+                      <MenuItem value="on_hold">Đang tạm hoãn</MenuItem>
+                      <MenuItem value="completed">Đã hoàn thành</MenuItem>
+                      <MenuItem value="cancelled">Đã hủy</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -423,7 +422,7 @@ const ProjectManageDrawer = ({
                   <TextField
                     fullWidth
                     type="date"
-                    label="Start Date"
+                    label="Ngày bắt đầu"
                     name="startDate"
                     value={projectForm.startDate}
                     onChange={handleProjectFormChange}
@@ -435,7 +434,7 @@ const ProjectManageDrawer = ({
                   <TextField
                     fullWidth
                     type="date"
-                    label="End Date"
+                    label="Ngày kết thúc"
                     name="endDate"
                     value={projectForm.endDate}
                     onChange={handleProjectFormChange}
@@ -447,7 +446,7 @@ const ProjectManageDrawer = ({
                   <TextField
                     fullWidth
                     type="color"
-                    label="Project Color"
+                    label="Màu dự án"
                     name="color"
                     value={projectForm.color}
                     onChange={handleProjectFormChange}
@@ -459,7 +458,7 @@ const ProjectManageDrawer = ({
                   <TextField
                     fullWidth
                     type="number"
-                    label="Progress (%)"
+                    label="Tình trạng tiến độ"
                     name="progress"
                     value={projectForm.progress}
                     onChange={handleProjectFormChange}
@@ -518,7 +517,7 @@ const ProjectManageDrawer = ({
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <TextField
                       fullWidth
-                      label="Add Tag"
+                      label="Thêm tag"
                       value={tagInput}
                       onChange={(e) => setTagInput(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
@@ -528,7 +527,7 @@ const ProjectManageDrawer = ({
                       onClick={handleAddTag}
                       startIcon={<AddIcon />}
                     >
-                      Add
+                      Thêm
                     </Button>
                   </Box>
                 </Grid>
@@ -552,14 +551,14 @@ const ProjectManageDrawer = ({
                   </List>
                   <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
                     <TextField
-                      label="Field Name"
+                      label="Tên"
                       name="name"
                       value={newCustomField.name}
                       onChange={handleCustomFieldChange}
                       size="small"
                     />
                     <TextField
-                      label="Field Value"
+                      label="Giá trị"
                       name="value"
                       value={newCustomField.value}
                       onChange={handleCustomFieldChange}
@@ -571,7 +570,7 @@ const ProjectManageDrawer = ({
                       onClick={handleAddCustomField}
                       startIcon={<AddIcon />}
                     >
-                      Add
+                      Thêm
                     </Button>
                   </Box>
                 </Grid>
@@ -583,7 +582,7 @@ const ProjectManageDrawer = ({
                 startIcon={<SaveIcon />}
                 sx={{ mt: 3 }}
               >
-                Save Changes
+                Lưu thay đổi
               </Button>
             </Box>
           )}
@@ -592,13 +591,13 @@ const ProjectManageDrawer = ({
           {activeTab === 1 && (
             <Box sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h6">Project Members</Typography>
+                <Typography variant="h6">Thành viên dự án</Typography>
                 <Button 
                   variant="contained" 
                   startIcon={<PersonAddIcon />}
                   onClick={() => setMemberDialogOpen(true)}
                 >
-                  Add Member
+                  Thêm thành viên
                 </Button>
               </Box>
               
@@ -627,7 +626,7 @@ const ProjectManageDrawer = ({
                         <ListItemText
                           primary={
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Typography variant="body1">{member.  username || member.user?.username}</Typography>
+                              <Typography variant="body1">{member.username || member.user?.username}</Typography>
                               <Chip 
                                 label={member.role || 'Member'} 
                                 size="small" 
@@ -642,7 +641,7 @@ const ProjectManageDrawer = ({
                               </Typography>
                               {member.position && (
                                 <Typography variant="body2" color="text.secondary">
-                                  Position: {member.position}
+                                  Vị trí: {member.position}
                                 </Typography>
                               )}
                             </Box>
@@ -652,7 +651,7 @@ const ProjectManageDrawer = ({
                     ))
                   ) : (
                     <ListItem>
-                      <ListItemText primary="No members found" />
+                      <ListItemText primary="Không tìm thấy thành viên" />
                     </ListItem>
                   )}
                 </List>
@@ -663,7 +662,7 @@ const ProjectManageDrawer = ({
               <Box sx={{ display: 'flex', mb: 2 }}>
                 <TextField
                   fullWidth
-                  label="Search Users"
+                  label="Tìm kiếm thành viên"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -713,11 +712,11 @@ const ProjectManageDrawer = ({
           {/* Attachments Tab */}
           {activeTab === 2 && (
             <Box sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ mb: 3 }}>Project Attachments</Typography>
+              <Typography variant="h6" sx={{ mb: 3 }}>Tệp đính kèm</Typography>
               
               {/* Attachment list will go here */}
               <Typography variant="body2" color="text.secondary">
-                Attachment functionality will be implemented in a future update.
+                Tính năng tệp đính kèm sẽ được triển khai trong một lần cập nhật sau.
               </Typography>
             </Box>
           )}
@@ -725,7 +724,7 @@ const ProjectManageDrawer = ({
           {/* Settings Tab */}
           {activeTab === 3 && (
             <Box sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ mb: 3 }}>Project Settings</Typography>
+              <Typography variant="h6" sx={{ mb: 3 }}>Cài đặt dự án</Typography>
               
               <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
                 <FormControlLabel
@@ -736,10 +735,10 @@ const ProjectManageDrawer = ({
                       name="allowComments"
                     />
                   }
-                  label="Allow Comments"
+                  label="Cho phép bình luận"
                 />
                 <Typography variant="body2" color="text.secondary">
-                  Enable or disable comments on tasks in this project
+                  Cho phép hoặc không cho phép bình luận trên các nhiệm vụ trong dự án này
                 </Typography>
               </Paper>
               
@@ -752,10 +751,10 @@ const ProjectManageDrawer = ({
                       name="allowAttachments"
                     />
                   }
-                  label="Allow Attachments"
+                  label="Cho phép tệp đính kèm"
                 />
                 <Typography variant="body2" color="text.secondary">
-                  Enable or disable file attachments on tasks in this project
+                  Cho phép hoặc không cho phép tệp đính kèm trên các nhiệm vụ trong dự án này
                 </Typography>
               </Paper>
               
@@ -768,10 +767,10 @@ const ProjectManageDrawer = ({
                       name="notifications"
                     />
                   }
-                  label="Project Notifications"
+                  label="Thông báo dự án"
                 />
                 <Typography variant="body2" color="text.secondary">
-                  Enable or disable notifications for this project
+                  Cho phép hoặc không cho phép thông báo cho dự án này
                 </Typography>
               </Paper>
               
@@ -781,7 +780,7 @@ const ProjectManageDrawer = ({
                 startIcon={<SaveIcon />}
                 sx={{ mt: 2 }}
               >
-                Save Settings
+                Lưu cài đặt
               </Button>
             </Box>
           )}
@@ -790,7 +789,7 @@ const ProjectManageDrawer = ({
       
       {/* Member Dialog */}
       <Dialog open={memberDialogOpen} onClose={handleCloseMemberDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>Add Member to Project</DialogTitle>
+        <DialogTitle>Thêm thành viên vào dự án</DialogTitle>
         <DialogContent>
           {selectedUser && (
             <Box sx={{ mb: 3, mt: 1 }}>
@@ -829,7 +828,7 @@ const ProjectManageDrawer = ({
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label="Position"
+                    label="Vị trí"
                     value={selectedPosition}
                     onChange={(e) => setSelectedPosition(e.target.value)}
                     required
@@ -858,7 +857,7 @@ const ProjectManageDrawer = ({
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseMemberDialog} startIcon={<CancelIcon />}>
-            Cancel
+            Hủy
           </Button>
           <Button 
             onClick={handleAddMember} 
@@ -866,7 +865,7 @@ const ProjectManageDrawer = ({
             color="primary"
             startIcon={<PersonAddIcon />}
           >
-            Add Member
+            Thêm thành viên
           </Button>
         </DialogActions>
       </Dialog>

@@ -382,12 +382,12 @@ const TeamManagementDialog = ({
               <Grid container spacing={3}>
                 <Grid item xs={12} md={6}>
                   <Typography variant="subtitle1" gutterBottom>
-                    Project Details
+                    Thông tin dự án
                   </Typography>
                   
                   <Box className={styles.infoItem}>
                     <Typography variant="body2" color="text.secondary">
-                      Project Name
+                      Tên dự án
                     </Typography>
                     <Typography variant="body1">
                       {project?.name || 'N/A'}
@@ -396,16 +396,16 @@ const TeamManagementDialog = ({
                   
                   <Box className={styles.infoItem}>
                     <Typography variant="body2" color="text.secondary">
-                      Description
+                      Mô tả
                     </Typography>
                     <Typography variant="body1">
-                      {project?.description || 'No description available'}
+                      {project?.description || 'Không có mô tả'}
                     </Typography>
                   </Box>
                   
                   <Box className={styles.infoItem}>
                     <Typography variant="body2" color="text.secondary">
-                      Status
+                      Trạng thái
                     </Typography>
                     <Chip 
                       label={project?.status || 'Active'} 
@@ -415,12 +415,12 @@ const TeamManagementDialog = ({
                   
                   <Box className={styles.infoItem}>
                     <Typography variant="body2" color="text.secondary">
-                      Timeline
+                      Thời gian
                     </Typography>
                     <Typography variant="body1">
                       {project?.startDate ? new Date(project.startDate).toLocaleDateString() : 'N/A'} 
                       {' - '}
-                      {project?.endDate ? new Date(project.endDate).toLocaleDateString() : 'Ongoing'}
+                      {project?.endDate ? new Date(project.endDate).toLocaleDateString() : 'Đang tiến hành'}
                     </Typography>
                   </Box>
                 </Grid>
@@ -453,10 +453,10 @@ const TeamManagementDialog = ({
                       Hoàn thành
                     </Typography>
                     <Typography variant="body1">
-                      {tasks.filter(task => task.status === 'done').length} 
+                      {tasks.filter(task => task.status === 'completed').length} 
                       {' '}
                       ({tasks.length > 0 
-                        ? Math.round((tasks.filter(task => task.status === 'done').length / tasks.length) * 100) 
+                        ? Math.round((tasks.filter(task => task.status === 'completed').length / tasks.length) * 100) 
                         : 0}%)
                     </Typography>
                   </Box>
@@ -469,7 +469,7 @@ const TeamManagementDialog = ({
                       {tasks.filter(task => 
                         task.dueDate && 
                         new Date(task.dueDate) < new Date() && 
-                        task.status !== 'done'
+                        task.status !== 'completed'
                       ).length}
                     </Typography>
                   </Box>

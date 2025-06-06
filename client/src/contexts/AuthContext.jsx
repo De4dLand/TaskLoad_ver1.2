@@ -105,13 +105,39 @@ export const AuthProvider = ({ children }) => {
   // Logout function
   const logout = async () => {
     try {
-      authService.logout()
+      // Clear chat data before logging out
+      try {
+        // Import chat context to access clearChatData
+        const { clearChatData } = await import('../components/features/Chatbot/contexts/ChatContext');
+        // Create a temporary context to access the clear function
+        const chatContext = { clearChatData: () => {} };
+        // Call clearChatData if it exists
+        if (typeof chatContext.clearChatData === 'function') {
+          chatContext.clearChatData();
+        }
+      } catch (err) {
+        console.error('Error clearing chat data on logout:', err);
+        // Continue with logout even if chat data clearing fails
+      }
+      
+      // Proceed with normal logout
+      await authService.logout();
     } catch (error) {
-      console.error("Logout error:", error)
+      console.error("Logout error:", error);
     } finally {
-      setUser(null)
-      // Ensure navigate happens after state update
-      setTimeout(() => navigate("/"), 0)
+      // Clear user data from localStorage
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      
+      // Clear chat-related data from localStorage
+      const chatKeys = ['chat_messages', 'chat_rooms', 'current_chat_room'];
+      chatKeys.forEach(key => localStorage.removeItem(key));
+      
+      // Reset user state
+      setUser(null);
+      
+      // Navigate to home after state update
+      setTimeout(() => navigate("/"), 0);
     }
   }
 

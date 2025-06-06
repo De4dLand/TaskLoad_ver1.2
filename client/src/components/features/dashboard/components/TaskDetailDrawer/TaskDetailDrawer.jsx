@@ -18,6 +18,7 @@ import {
   MenuItem,
   FormControl,
 } from "@mui/material";
+import CheckIcon from "@mui/icons-material/Check"
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -30,6 +31,7 @@ import KeyboardIcon from '@mui/icons-material/Keyboard';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { getSocket } from "../../../../../services/socket";
 import { createSubtask, getSubtasksByTask, updateSubtask, deleteSubtask } from "../../../../features/tasks/services/subtaskService";
+import { updateTask } from "../../../../features/tasks/services/taskService";
 
 // Utility to format date as dd/MM/yyyy
 function formatDate(date) {
@@ -51,7 +53,7 @@ const TaskDetailDrawer = ({
   isProjectOwner = false,
 }) => {
   const [editMode, setEditMode] = useState(false);
-  const [editedTask, setEditedTask] = useState({});
+  const [editedTask, setEditedTask] = useState(task);
   
   // Status progression order
   const statusOrder = ['new', 'assigned', 'todo', 'in_progress', 'reviewing', 'completed'];
@@ -237,17 +239,17 @@ const TaskDetailDrawer = ({
   };
 
   const handleAddSubtask = async () => {
+    console.log(task)
     if (subtaskInput.trim()) {
       try {
         // Create new subtask data
         const newSubtaskData = {
           title: subtaskInput.trim(),
           completed: false,
-          taskId: task._id
         };
         
         // Add to the server
-        const createdSubtask = await createSubtask(newSubtaskData);
+        const createdSubtask = await updateTask(task._id, { ...task, subtasks: [...task.subtasks, newSubtaskData] });
         
         // Update local state
         setSubtasks(prev => [...prev, createdSubtask]);
@@ -404,39 +406,100 @@ const TaskDetailDrawer = ({
   if (!task) return null;
 
   return (
-    <Drawer 
-      anchor="right" 
-      open={open} 
-      onClose={onClose} 
-      PaperProps={{ 
-        sx: { 
-          width: 800, 
-          maxWidth: '100vw',
-          zIndex: 1400, // Higher than the default MUI AppBar z-index (1200)
-          position: 'relative'
-        } 
+    <Drawer
+      anchor="right"
+      open={open}
+      onClose={onClose}
+      PaperProps={{
+        sx: {
+          width: { xs: '100%', sm: '600px' },
+          height: 'calc(100vh - 64px)',
+          top: '64px',
+          position: 'fixed',
+          zIndex: 1200, // Below AppBar (which is 1201)
+          '& .MuiDrawer-paper': {
+            borderLeft: '1px solid rgba(0, 0, 0, 0.12)',
+            boxShadow: '-2px 0 10px rgba(0, 0, 0, 0.1)',
+          },
+        },
+      }}
+      ModalProps={{
+        BackdropProps: {
+          style: {
+            top: '64px',
+            backgroundColor: 'rgba(0, 0, 0, 0.1)',
+          },
+        },
+      }}
+      sx={{
+        '& .MuiBackdrop-root': {
+          top: '64px',
+          height: 'calc(100% - 64px)',
+        },
       }}
     >
       <Box sx={{ display: "flex", flexDirection: "row", height: "100%" }}>
         {/* Left: Task Details */}
         <Box sx={{ flex: 1, p: 3, overflowY: "auto", minWidth: 380 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <Typography variant="h5" fontWeight="bold">
-              {editMode ? (
-                <TextField
-                  value={editedTask.title || ""}
-                  onChange={(e) => handleFieldChange("title", e.target.value)}
-                  size="small"
-                  fullWidth
-                  variant="standard"
-                />
-              ) : (
-                task.title
-              )}
-            </Typography>
-            <IconButton onClick={onClose}>
-              <CloseIcon />
-            </IconButton>
+          <Box
+            sx={{
+              position: 'sticky',
+              top: 0,
+              zIndex: 1,
+              backgroundColor: 'background.paper',
+              pt: 2,
+              pb: 1,
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              mb: 3,
+            }}
+          >
+            <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Typography variant="h5" component="h2" noWrap>
+                {editMode ? (
+                  <TextField
+                    value={editedTask?.title || ""}
+                    onChange={(e) => handleFieldChange("title", e.target.value)}
+                    fullWidth
+                    variant="standard"
+                    sx={{
+                      fontSize: '1.5rem',
+                      fontWeight: 500,
+                      '& .MuiInputBase-input': {
+                        py: 0.5,
+                      },
+                    }}
+                  />
+                ) : (
+                  <Box component="span" sx={{ display: 'block', maxWidth: 'calc(100% - 100px)', textOverflow: 'ellipsis' }}>
+                    {editedTask?.title}
+                  </Box>
+                )}
+              </Typography>
+              <Box>
+                {canEdit && (
+                  <>
+                    {!editMode ? (
+                      <IconButton onClick={() => setEditMode(true)} color="primary" size="small">
+                        <EditIcon />
+                      </IconButton>
+                    ) : (
+                      <>
+                        <IconButton onClick={handleSave} color="primary" size="small">
+                          <CheckIcon />
+                        </IconButton>
+                        <IconButton size="small">
+                          <CloseIcon />
+                        </IconButton>
+                      </>
+                    )}
+                  </>
+                )}
+                <IconButton onClick={onClose} size="small">
+                  <CloseIcon />
+                </IconButton>
+              </Box>
+            </Box>
           </Box>
 
           {/* Description */}
@@ -444,14 +507,15 @@ const TaskDetailDrawer = ({
             <Typography variant="subtitle2">Mô tả</Typography>
             {editMode ? (
               <TextField
-                value={editedTask.description || ""}
+                value={editedTask?.description || ""}
+                helperText={editedTask?.description?.length > 500 ? "Mô tả không được vượt quá 500 ký tự" : ""}
                 onChange={(e) => handleFieldChange("description", e.target.value)}
                 multiline
                 minRows={2}
                 fullWidth
               />
             ) : (
-              <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>{task.description}</Typography>
+              <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>{editedTask?.description}</Typography>
             )}
           </Box>
 
@@ -462,7 +526,7 @@ const TaskDetailDrawer = ({
               {editMode ? (
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                   <DatePicker
-                    value={editedTask.startDate ? dayjs(editedTask.startDate) : null}
+                    value={editedTask?.startDate ? dayjs(editedTask.startDate) : null}
                     onChange={(date) => handleFieldChange("startDate", date ? date.toDate() : null)}
                     slotProps={{
                       textField: {
@@ -473,7 +537,7 @@ const TaskDetailDrawer = ({
                   />
                 </LocalizationProvider>
               ) : (
-                <Typography>{formatDate(task.startDate)}</Typography>
+                <Typography>{formatDate(editedTask?.startDate)}</Typography>
               )}
             </Grid>
             <Grid item xs={6}>
@@ -481,7 +545,7 @@ const TaskDetailDrawer = ({
               {editMode ? (
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                   <DatePicker
-                    value={editedTask.dueDate ? dayjs(editedTask.dueDate) : null}
+                    value={editedTask?.dueDate ? dayjs(editedTask.dueDate) : null}
                     onChange={(date) => handleFieldChange("dueDate", date ? date.toDate() : null)}
                     slotProps={{
                       textField: {
@@ -492,16 +556,16 @@ const TaskDetailDrawer = ({
                   />
                 </LocalizationProvider>
               ) : (
-                <Typography>{formatDate(task.dueDate)}</Typography>
+                <Typography>{formatDate(editedTask?.dueDate)}</Typography>
               )}
             </Grid>
             <Grid item xs={6}>
               <Typography variant="subtitle2">Ngày tạo</Typography>
-              <Typography>{formatDate(task.createdAt)}</Typography>
+              <Typography>{formatDate(editedTask?.createdAt)}</Typography>
             </Grid>
             <Grid item xs={6}>
               <Typography variant="subtitle2">Người tạo</Typography>
-              <Typography>{task.createdBy?.username || "-"}</Typography>
+              <Typography>{editedTask?.createdBy?.username || "-"}</Typography>
             </Grid>
           </Grid>
 
@@ -518,7 +582,7 @@ const TaskDetailDrawer = ({
                         avatar={<Avatar src={user.profileImage}>{user.firstName?.[0] || user.username?.[0]}</Avatar>}
                         label={user.firstName || user.username}
                         onDelete={() => {
-                          const newAssignedUsers = assignedUsers.filter((u) => 
+                          const newAssignedUsers = assignedUsers.filter((u) =>
                             (u._id || u.id) !== (user._id || user.id)
                           );
                           setAssignedUsers(newAssignedUsers);
@@ -537,18 +601,18 @@ const TaskDetailDrawer = ({
                     onChange={(e) => {
                       const selectedMemberId = e.target.value;
                       if (!selectedMemberId) return;
-                      
+
                       // Find the selected member from projectMembers
-                      const selectedMember = projectMembers.find(m => 
+                      const selectedMember = projectMembers.find(m =>
                         (m.user._id || m.user.id) === selectedMemberId
                       )?.user;
-                      
+
                       if (selectedMember) {
                         // Check if user is already assigned
-                        const isAlreadyAssigned = assignedUsers.some(u => 
+                        const isAlreadyAssigned = assignedUsers.some(u =>
                           (u._id || u.id) === (selectedMember._id || selectedMember.id)
                         );
-                        
+
                         if (!isAlreadyAssigned) {
                           const newAssignedUsers = [...assignedUsers, selectedMember];
                           setAssignedUsers(newAssignedUsers);
@@ -563,20 +627,20 @@ const TaskDetailDrawer = ({
                     </MenuItem>
                     {projectMembers.map((member) => {
                       const memberUser = member.user;
-                      const isAlreadyAssigned = assignedUsers.some(u => 
+                      const isAlreadyAssigned = assignedUsers.some(u =>
                         (u._id || u.id) === (memberUser._id || memberUser.id)
                       );
-                      
+
                       if (isAlreadyAssigned) return null;
-                      
+
                       return (
-                        <MenuItem 
-                          key={memberUser._id || memberUser.id} 
+                        <MenuItem
+                          key={memberUser._id || memberUser.id}
                           value={memberUser._id || memberUser.id}
                         >
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Avatar 
-                              src={memberUser.profileImage} 
+                            <Avatar
+                              src={memberUser.profileImage}
                               sx={{ width: 24, height: 24 }}
                             >
                               {memberUser.firstName?.[0] || memberUser.username?.[0]}
@@ -605,9 +669,9 @@ const TaskDetailDrawer = ({
                   <Typography color="text.secondary">Unassigned</Typography>
                 )}
                 {!editMode && isProjectOwner && (
-                  <Button 
-                    size="small" 
-                    variant="outlined" 
+                  <Button
+                    size="small"
+                    variant="outlined"
                     onClick={() => setEditMode(true)}
                     sx={{ ml: 1 }}
                   >
@@ -637,13 +701,13 @@ const TaskDetailDrawer = ({
                   </Select>
                 ) : (
                   <Box display="flex" alignItems="center" gap={1}>
-                    <Chip 
-                      label={task.priority} 
+                    <Chip
+                      label={task?.priority}
                       color={
-                        task.priority === "urgent" ? "error" : 
-                        task.priority === "high" ? "error" : 
-                        task.priority === "medium" ? "warning" : "default"
-                      } 
+                        task?.priority === "urgent" ? "error" :
+                          task?.priority === "high" ? "error" :
+                            task?.priority === "medium" ? "warning" : "default"
+                      }
                     />
                     {canEdit && (
                       <IconButton size="small" onClick={() => setEditMode(true)}>
@@ -674,10 +738,10 @@ const TaskDetailDrawer = ({
                 ) : (
                   <Box display="flex" alignItems="center" gap={1}>
                     <Chip 
-                      label={task.status?.replace('_', ' ')} 
+                      label={task?.status?.replace('_', ' ')} 
                       color={
-                        task.status === 'completed' ? 'success' : 
-                        task.status === 'in_progress' || task.status === 'reviewing' ? 'primary' : 
+                        task?.status === 'completed' ? 'success' : 
+                        task?.status === 'in_progress' || task?.status === 'reviewing' ? 'primary' : 
                         'default'
                       }
                       variant="outlined"
@@ -704,7 +768,7 @@ const TaskDetailDrawer = ({
             <Grid item xs={6}>  
               <Typography variant="subtitle2">Tags</Typography>
               <Stack direction="row" spacing={1}>
-                {(task.tags || []).map((tag) => (
+                {(task?.tags || []).map((tag) => (
                   <Chip key={tag} label={tag} variant="outlined" />
                 ))}
               </Stack>
@@ -720,7 +784,7 @@ const TaskDetailDrawer = ({
               </Box>
             ) : (
               <Stack spacing={1} mt={1}>
-                {(editedTask.subtasks || []).map((subtask) => (
+                {(editedTask?.subtasks || []).map((subtask) => (
                   <Paper 
                     key={subtask._id || subtask.id} 
                     sx={{ p: 1, display: 'flex', alignItems: 'center' }} 
