@@ -23,8 +23,20 @@ export const validateTask = [
     .isMongoId().withMessage('Project ID must be a valid ID'),
   body('assignedTo')
     .optional({ nullable: true })
-    .custom(value => value === null || typeof value === 'undefined' || /^[a-fA-F0-9]{24}$/.test(value))
-    .withMessage('Assigned user ID must be a valid ID or null'),
+    .custom((value) => {
+      // Allow null, undefined, or array of valid MongoDB IDs
+      if (value === null || typeof value === 'undefined') return true;
+      
+      if (!Array.isArray(value)) {
+        // If single value, convert to array
+        value = [value];
+      }
+      
+      return value.every(id => 
+        typeof id === 'string' && /^[a-fA-F0-9]{24}$/.test(id)
+      );
+    })
+    .withMessage('Assigned user IDs must be valid MongoDB IDs or null'),
   body('startDate')
     .optional()
     .isISO8601().withMessage('Invalid date format')
@@ -65,8 +77,20 @@ export const validateTaskUpdate = [
     .isMongoId().withMessage('Project ID must be a valid ID'),
   body('assignedTo')
     .optional({ nullable: true })
-    .custom(value => value === null || typeof value === 'undefined' || /^[a-fA-F0-9]{24}$/.test(value))
-    .withMessage('Assigned user ID must be a valid ID or null'),
+    .custom((value) => {
+      // Allow null, undefined, or array of valid MongoDB IDs
+      if (value === null || typeof value === 'undefined') return true;
+      
+      if (!Array.isArray(value)) {
+        // If single value, convert to array
+        value = [value];
+      }
+      
+      return value.every(id => 
+        typeof id === 'string' && /^[a-fA-F0-9]{24}$/.test(id)
+      );
+    })
+    .withMessage('Assigned user IDs must be valid MongoDB IDs or null'),
   body('tags')
     .optional()
     .isArray().withMessage('Tags must be an array'),

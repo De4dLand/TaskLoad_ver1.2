@@ -47,7 +47,14 @@ const TaskList = ({ tasks, onTaskClick, onTaskContextMenu }) => {
   }
 
   return (
-    <Box className={styles.taskListContainer}>
+    <Box 
+      className={styles.taskListContainer}
+      style={{
+        maxHeight: 'calc(100vh - 200px)',
+        padding: '16px',
+        bgcolor: 'background.paper'
+      }}
+    >
       {tasks.map((task) => (
         <Paper
           key={task._id}

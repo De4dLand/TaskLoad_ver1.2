@@ -139,11 +139,23 @@ export const formatTaskData = (taskData) => {
   if (taskData.estimatedHours) {
     formatttedData.estimatedHours = Number(taskData.estimatedHours);
   } 
+  // Handle assignedTo - can be single ID, array of IDs, or array of user objects
   if (taskData.assignedTo) {
-    formatttedData.assignedTo = taskData.assignedTo
-  }
-  if (taskData.assignedTo?.username ) {
-    formatttedData.assignedTo = taskData.assignedTo._id
+    if (Array.isArray(taskData.assignedTo)) {
+      // If it's an array, map to ensure we only have IDs
+      formatttedData.assignedTo = taskData.assignedTo.map(user => 
+        typeof user === 'object' ? (user._id || user.id) : user
+      ).filter(Boolean); // Remove any falsy values
+    } else if (typeof taskData.assignedTo === 'object') {
+      // If it's a single object, extract the ID
+      formatttedData.assignedTo = [taskData.assignedTo._id || taskData.assignedTo.id];
+    } else {
+      // If it's a single ID, wrap in array
+      formatttedData.assignedTo = [taskData.assignedTo];
+    }
+  } else {
+    // Default to empty array if no assignee
+    formatttedData.assignedTo = [];
   }
 
   // Log the formatted data for debugging

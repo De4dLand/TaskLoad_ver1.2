@@ -55,31 +55,7 @@ router.post("/:taskId/chat", checkTaskAccess(), taskChatController.sendTaskChatM
 router.patch("/:taskId/chat/read", checkTaskAccess(), taskChatController.markMessagesAsRead);
 
 // Subtask routes
-/**
- * @swagger
- * /api/v1/tasks/{taskId}/subtasks:
- *   get:
- *     summary: Get all subtasks for a task
- *     tags: [Tasks]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: taskId
- *         required: true
- *         schema:
- *           type: string
- *         description: ID of the task
- *     responses:
- *       200:
- *         description: List of subtasks
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Subtask'
- */
+
 router.get("/:taskId/subtasks", checkTaskAccess(), taskController.getSubtasks);
 
 /**

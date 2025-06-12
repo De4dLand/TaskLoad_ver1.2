@@ -54,7 +54,6 @@ const TaskDetailDrawer = ({
 }) => {
   const [editMode, setEditMode] = useState(false);
   const [editedTask, setEditedTask] = useState(task);
-  
   // Status progression order
   const statusOrder = ['new', 'assigned', 'todo', 'in_progress', 'reviewing', 'completed'];
   
@@ -180,11 +179,24 @@ const TaskDetailDrawer = ({
   useEffect(() => {
     setEditMode(false);
     if (task) {
-      setEditedTask({ ...task });
-      // Ensure assignedTo is always an array
-      if (task.assignedTo && !Array.isArray(task.assignedTo)) {
-        setEditedTask(prev => ({ ...prev, assignedTo: [task.assignedTo] }));
-      }
+      // Format task data to match TaskDialog structure
+      const formattedTask = {
+        ...task,
+        // Handle assignedTo - keep as array of user objects/IDs
+        assignedTo: Array.isArray(task.assignedTo) ? task.assignedTo : 
+                  (task.assignedTo ? [task.assignedTo] : []),
+        // Ensure project is just the ID
+        project: task.project?._id || task.project || "",
+        // Format dates properly
+        startDate: task.startDate ? new Date(task.startDate) : null,
+        dueDate: task.dueDate ? new Date(task.dueDate) : null,
+      };
+      setEditedTask(formattedTask);
+      
+      // Initialize assignedUsers state
+      const initialAssigned = Array.isArray(task.assignedTo) ? task.assignedTo : 
+                            (task.assignedTo ? [task.assignedTo] : []);
+      setAssignedUsers(initialAssigned);
     }
   }, [task]);
 
@@ -287,7 +299,32 @@ const TaskDetailDrawer = ({
   };
 
   const handleSave = () => {
-    if (onUpdate) onUpdate(task._id, editedTask);
+    if (!onUpdate) return;
+    
+    // Prepare the update data in the same format as TaskDialog
+    const updateData = {
+      ...editedTask,
+      // Format assignedTo as array of user IDs
+      assignedTo: assignedUsers.map(user => (user?._id || user)),
+      // Format dates as ISO strings
+      startDate: editedTask.startDate ? new Date(editedTask.startDate).toISOString() : null,
+      dueDate: editedTask.dueDate ? new Date(editedTask.dueDate).toISOString() : null,
+      // Ensure tags are properly formatted as array of strings
+      tags: Array.isArray(editedTask.tags) ? 
+        editedTask.tags.filter(tag => tag && tag.trim() !== '') : 
+        (editedTask.tags || '').split(',').map(tag => tag.trim()).filter(Boolean),
+      // Convert estimatedHours to number if it exists
+      estimatedHours: editedTask.estimatedHours ? Number(editedTask.estimatedHours) : undefined
+    };
+    
+    // Clean up undefined fields
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key] === undefined) {
+        delete updateData[key];
+      }
+    });
+    
+    onUpdate(task._id, updateData);
     setEditMode(false);
   };
   
@@ -299,17 +336,41 @@ const TaskDetailDrawer = ({
     if (currentIndex === -1 || currentIndex >= statusOrder.length - 1) return;
     
     const nextStatus = statusOrder[currentIndex + 1];
-    if (onUpdate) onUpdate(task._id, { status: nextStatus });
+    if (onUpdate) onUpdate(task._id, { 
+      status: nextStatus,
+      // Include existing task data to prevent data loss
+      ...task,
+      // Ensure assignedTo is properly formatted as array of IDs
+      assignedTo: Array.isArray(task.assignedTo) ? 
+        task.assignedTo.map(u => u?._id || u) : 
+        (task.assignedTo ? [task.assignedTo._id || task.assignedTo] : [])
+    });
   };
   
   // Handle status change
   const handleStatusChange = (newStatus) => {
-    if (onUpdate) onUpdate(task._id, { status: newStatus });
+    if (onUpdate) onUpdate(task._id, { 
+      status: newStatus,
+      // Include existing task data to prevent data loss
+      ...task,
+      // Ensure assignedTo is properly formatted as array of IDs
+      assignedTo: Array.isArray(task.assignedTo) ? 
+        task.assignedTo.map(u => u?._id || u) : 
+        (task.assignedTo ? [task.assignedTo._id || task.assignedTo] : [])
+    });
   };
   
   // Handle priority change
   const handlePriorityChange = (newPriority) => {
-    if (onUpdate) onUpdate(task._id, { priority: newPriority });
+    if (onUpdate) onUpdate(task._id, { 
+      priority: newPriority,
+      // Include existing task data to prevent data loss
+      ...task,
+      // Ensure assignedTo is properly formatted as array of IDs
+      assignedTo: Array.isArray(task.assignedTo) ? 
+        task.assignedTo.map(u => u?._id || u) : 
+        (task.assignedTo ? [task.assignedTo._id || task.assignedTo] : [])
+    });
   };
 
   // Handle typing indicator
@@ -507,15 +568,15 @@ const TaskDetailDrawer = ({
             <Typography variant="subtitle2">Mô tả</Typography>
             {editMode ? (
               <TextField
-                value={editedTask?.description || ""}
-                helperText={editedTask?.description?.length > 500 ? "Mô tả không được vượt quá 500 ký tự" : ""}
+                value={task?.description || ""}
+                helperText={task?.description?.length > 500 ? "Mô tả không được vượt quá 500 ký tự" : ""}
                 onChange={(e) => handleFieldChange("description", e.target.value)}
                 multiline
                 minRows={2}
                 fullWidth
               />
             ) : (
-              <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>{editedTask?.description}</Typography>
+              <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>{task?.description}</Typography>
             )}
           </Box>
 

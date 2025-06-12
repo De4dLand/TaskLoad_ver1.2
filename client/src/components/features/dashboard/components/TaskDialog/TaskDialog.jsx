@@ -202,9 +202,9 @@ const TaskDialog = ({ open, onClose, onSubmit, task, projects = [], members = []
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Hủy</Button>
+        <Button onClick={onClose} >Hủy</Button>
         <Button onClick={handleSubmit} variant="contained" color="primary">
-          {task ? "Lưu thay đổi" : "Thêm Task"}
+          {task ? 'Lưu thay đổi' : 'Thêm Task'}
         </Button>
       </DialogActions>
     </Dialog>

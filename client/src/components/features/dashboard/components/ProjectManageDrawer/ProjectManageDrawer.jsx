@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Drawer,
   Box,
@@ -77,7 +77,28 @@ const ProjectManageDrawer = ({
   searchResults = [],
   searchLoading = false,
   members = [],
+  tasks = [],
+  onTaskClick,
 }) => {
+  // Calculate task statistics using useMemo
+  const taskStats = useMemo(() => {
+    if (!tasks) return {
+      total: 0,
+      completed: 0,
+      inProgress: 0,
+      due: 0,
+      overdue: 0
+    };
+
+    return {
+      total: tasks.length,
+      completed: tasks.filter(t => t.status === 'completed').length,
+      inProgress: tasks.filter(t => t.status === 'in_progress').length,
+      due: tasks.filter(t => t.dueDate && new Date(t.dueDate) >= new Date()).length,
+      overdue: tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date()).length
+    };
+  }, [tasks]);
+
   // Main project form state
   const [projectForm, setProjectForm] = useState({
     name: '',
@@ -320,11 +341,29 @@ const ProjectManageDrawer = ({
       anchor="right"
       open={open}
       onClose={onClose}
-      PaperProps={{
-        sx: { width: { xs: '100%', sm: '600px' } },
+      sx={{
+        width: 800,
+        flexShrink: 0,
+        '& .MuiDrawer-paper': {
+          width: 800,
+          boxSizing: 'border-box',
+          bgcolor: 'background.paper',
+          borderLeft: '1px solid',
+          borderColor: 'divider',
+          display: 'flex'
+        }
       }}
     >
-      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* Progress Sidebar */}
+      
+
+      {/* Main Content */}
+      <Box sx={{
+        flexGrow: 1,
+        p: 2,
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
         {/* Header */}
         <Box sx={{ 
           display: 'flex', 
@@ -575,17 +614,132 @@ const ProjectManageDrawer = ({
                   </Box>
                 </Grid>
               </Grid>
-              
-              <Button
-                variant="contained"
-                onClick={handleSaveProject}
-                startIcon={<SaveIcon />}
-                sx={{ mt: 3 }}
-              >
-                Lưu thay đổi
-              </Button>
             </Box>
           )}
+
+          {/* Progress Sidebar */}
+          <Box sx={{
+            width: 240,
+            borderRight: '1px solid',
+            borderColor: 'divider',
+            p: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 3,
+            bgcolor: 'background.paper'
+          }}>
+            <Typography variant="h6" gutterBottom>
+              Project Progress
+            </Typography>
+            
+            {/* Overall Progress */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Overall Progress
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ flex: 1 }}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={(taskStats.total > 0 ? (taskStats.completed / taskStats.total) * 100 : 0)}
+                    sx={{
+                      height: 12,
+                      borderRadius: 2,
+                      bgcolor: 'action.hover',
+                      '& .MuiLinearProgress-bar': {
+                        borderRadius: 2,
+                        bgcolor: 'primary.main'
+                      }
+                    }}
+                  />
+                </Box>
+                <Typography variant="caption" sx={{ minWidth: 60 }}>
+                  {taskStats.completed}/{taskStats.total}
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Status Breakdown */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Status Breakdown
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {[
+                  { label: 'In Progress', count: taskStats.inProgress, color: 'warning.main' },
+                  { label: 'Due', count: taskStats.due, color: 'info.main' },
+                  { label: 'Overdue', count: taskStats.overdue, color: 'error.main' }
+                ].map((item) => (
+                  <Box key={item.label} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      bgcolor: item.color
+                    }} />
+                    <Typography variant="caption" sx={{ flex: 1 }}>{item.label}</Typography>
+                    <Typography variant="caption" sx={{ minWidth: 40 }}>{item.count}</Typography>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+
+            {/* Task List */}
+            <Box sx={{
+              p: 1,
+              bgcolor: 'background.neutral',
+              borderRadius: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1,
+              height: 'fit-content'
+            }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Recent Tasks ({tasks.length} total)
+              </Typography>
+              {tasks.slice(0, 5).map((task) => (
+                <Box
+                  key={task._id}
+                  sx={{
+                    p: 1,
+                    borderRadius: 1,
+                    bgcolor: 'action.hover',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      bgcolor: 'action.hover',
+                      opacity: 0.9
+                    }
+                  }}
+                  onClick={() => onTaskClick && onTaskClick(task)}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="body2">{task.title}</Typography>
+                    <Chip
+                      label={task.status}
+                      size="small"
+                      sx={{
+                        bgcolor: (theme) => {
+                          switch (task.status) {
+                            case 'completed': return theme.palette.success.light;
+                            case 'in_progress': return theme.palette.warning.light;
+                            case 'overdue': return theme.palette.error.light;
+                            default: return theme.palette.grey[200];
+                          }
+                        }
+                      }}
+                    />
+                  </Box>
+                </Box>
+              ))}
+              {tasks.length > 5 && (
+                <Box sx={{ textAlign: 'center', bgcolor: 'action.hover', p: 1, borderRadius: 1 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    +{tasks.length - 5} more tasks
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Box>
 
           {/* Members Tab */}
           {activeTab === 1 && (

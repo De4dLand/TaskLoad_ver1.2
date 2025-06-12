@@ -422,8 +422,8 @@ export class TaskController {
       throw createError(400, "Task title is required")
     }
 
-    // Create task, omit assignedTo if empty to avoid cast errors
-    const task = await Task.create({
+    // Create task with assignedTo as an array
+    const taskData = {
       title,
       description: description || "",
       status: status || "todo",
@@ -434,8 +434,17 @@ export class TaskController {
       tags: tags || [],
       estimatedHours,
       createdBy, // Use the createdBy from the authenticated user
-      assignedTo: assignedTo || null
-    })
+      assignedTo: [] // Initialize as empty array
+    }
+
+    // Handle assignedTo - can be single ID or array of IDs
+    if (assignedTo) {
+      taskData.assignedTo = Array.isArray(assignedTo) 
+        ? assignedTo.filter(Boolean) 
+        : [assignedTo];
+    }
+
+    const task = await Task.create(taskData)
 
     await task.save()
 
@@ -505,7 +514,14 @@ export class TaskController {
     // Update only allowed fields
     allowedUpdates.forEach((field) => {
       if (updateData[field] !== undefined) {
-        task[field] = updateData[field]
+        // Convert assignedTo to an array if it's not already
+        if (field === 'assignedTo') {
+          task[field] = Array.isArray(updateData[field])
+            ? updateData[field].filter(Boolean) // Remove any falsy values
+            : updateData[field] ? [updateData[field]] : []; // Convert single value to array
+        } else {
+          task[field] = updateData[field];
+        }
       }
     })
 
@@ -521,14 +537,17 @@ export class TaskController {
     await invalidateCache(`task:${id}`)
     await invalidateCache(`tasks:${req.user.userId}:*`)
 
-    // If task is assigned to or was assigned to another user, invalidate their cache too
-    if (task.assignedTo && task.assignedTo.toString() !== req.user.userId) {
-      await invalidateCache(`tasks:${task.assignedTo}:*`)
-    }
+    // Invalidate cache for all affected users
+    const allAssignedUsers = new Set([
+      ...(task.assignedTo || []).map(id => id.toString()),
+      ...(updateData.assignedTo || []).map(id => id.toString())
+    ]);
 
-    if (updateData.assignedTo && updateData.assignedTo !== req.user.userId) {
-      await invalidateCache(`tasks:${updateData.assignedTo}:*`)
-    }
+    await Promise.all([...allAssignedUsers].map(async (userId) => {
+      if (userId !== req.user.userId) {
+        await invalidateCache(`tasks:${userId}:*`);
+      }
+    }));
 
     res.json(updatedTask)
   });
@@ -566,12 +585,19 @@ export class TaskController {
     // Store assignee ID before deleting for cache invalidation
     const assigneeId = task.assignedTo
     
+    // Remove task from project's tasks array
+    await Project.findByIdAndUpdate(
+      task.project,
+      { $pull: { tasks: task._id } }
+    )
+
     // Delete task
     await Task.findByIdAndDelete(id)
 
     // Invalidate related caches
     await invalidateCache(`task:${id}`)
     await invalidateCache(`tasks:${req.user.userId}:*`)
+    await invalidateCache(`project:${task.project}:*`)
 
     // If task was assigned to another user, invalidate their cache too
     if (assigneeId && assigneeId.toString() !== req.user.userId) {

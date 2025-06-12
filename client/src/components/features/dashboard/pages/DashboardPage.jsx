@@ -248,7 +248,7 @@ const DashboardPage = () => {
   // --- End Potential Hook: useSocketIO ---
 
   if (authLoading) return (<Box className={styles.loadingContainer}><CircularProgress /></Box>)
-  if (!user) return (<Box className={styles.loadingContainer}>Please login to view dashboard.</Box>)
+  if (!user) return (<Box className={styles.loadingContainer}>Please login to view dashboard. </Box>)
 
   // --- Potential Hook: useDashboardLoader --- 
   // This function handles loading dashboard data.
@@ -920,7 +920,7 @@ const DashboardPage = () => {
       bgcolor: 'grey.50',
       transition: 'all 0.3s ease'
     }}>
-      <AppHeader />
+      {/* <AppHeader /> */}
       
       {/* Main Dashboard Container */}
       <Box sx={{ 

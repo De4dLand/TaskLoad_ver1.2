@@ -34,11 +34,11 @@ const taskSchema = new mongoose.Schema(
       ref: 'Project',
       required: [true, 'Task must belong to a project']
     },
-    assignedTo: {
+    assignedTo: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      set: v => (v === '' ? undefined : v)
-    },
+      default: []
+    }],
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -141,19 +141,54 @@ taskSchema.pre('save', function (next) {
 })
 
 // Update user's assignedTasks and createdTasks arrays
+// Middleware to ensure assignedTo is always an array
+taskSchema.pre('save', function(next) {
+  if (this.assignedTo && !Array.isArray(this.assignedTo)) {
+    this.assignedTo = [this.assignedTo].filter(Boolean);
+  } else if (!this.assignedTo) {
+    this.assignedTo = [];
+  }
+  next();
+});
+
 taskSchema.pre('save', async function(next) {
   try {
     const User = mongoose.model('User')
     
     // If this is a new task or the assignedTo field has been modified
     if (this.isNew || this.isModified('assignedTo')) {
-      if (this.assignedTo) {
-        // Add this task to the user's assignedTasks array if not already there
-        await User.findByIdAndUpdate(
-          this.assignedTo,
-          { $addToSet: { assignedTasks: this._id, tasks: this._id } },
-          { new: true }
-        )
+      // Get previous assigned users if this is an update
+      let previousAssigned = [];
+      if (this.isModified('assignedTo') && !this.isNew) {
+        const oldTask = await this.constructor.findById(this._id).select('assignedTo');
+        if (oldTask) {
+          previousAssigned = oldTask.assignedTo || [];
+        }
+      }
+
+      // Handle new assignments
+      if (this.assignedTo && this.assignedTo.length > 0) {
+        // Add task to newly assigned users
+        const newAssignments = this.assignedTo.filter(id => !previousAssigned.includes(id));
+        await Promise.all(newAssignments.map(async (userId) => {
+          await User.findByIdAndUpdate(
+            userId,
+            { $addToSet: { assignedTasks: this._id, tasks: this._id } },
+            { new: true }
+          );
+        }));
+      }
+
+      // Handle unassignments
+      if (previousAssigned && previousAssigned.length > 0) {
+        const removedAssignments = previousAssigned.filter(id => !this.assignedTo.includes(id));
+        await Promise.all(removedAssignments.map(async (userId) => {
+          await User.findByIdAndUpdate(
+            userId,
+            { $pull: { assignedTasks: this._id } },
+            { new: true }
+          );
+        }));
       }
     }
     
