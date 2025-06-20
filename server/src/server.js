@@ -1,15 +1,16 @@
 import express from "express"
-import { join, resolve } from "path"
+import { fileURLToPath } from 'url';
+import { dirname, join, resolve } from 'path';
 import mongoSanitize from "express-mongo-sanitize"
 import hpp from "hpp"
 import dotenv from "dotenv"
-import { fileURLToPath } from 'url'
-import path from 'path'
+
+// Get the current file's directory name in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Load env file
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-dotenv.config({ path: join(__dirname, '../shared/.env') });
+dotenv.config({ path: join(__dirname, '../../shared/.env') });
 
 // Import loaders
 import loaders from "./loaders/index.js"
@@ -32,8 +33,29 @@ app.use(mongoSanitize())
 // Prevent parameter pollution
 app.use(hpp())
 
-// Serve static assets in production
+// Serve static files from the public directory
+const publicPath = join(__dirname, '../../public');
+app.use('/uploads', express.static(publicPath, {
+  setHeaders: (res, path) => {
+    // Set proper cache headers for uploaded files
+    res.setHeader('Cache-Control', 'public, max-age=31536000');
+  }
+}));
 
+// Ensure the uploads directory exists
+import fs from 'fs';
+
+const ensureDirectoryExists = (path) => {
+  if (!fs.existsSync(path)) {
+    fs.mkdirSync(path, { recursive: true });
+  }
+};
+
+// Create necessary directories
+const uploadsDir = join(publicPath, 'uploads/avatars');
+ensureDirectoryExists(uploadsDir);
+
+// Serve static assets in production
 app.use(express.static(join(__dirname, "../../client/dist")))
 
 app.get("*", (req, res) => {

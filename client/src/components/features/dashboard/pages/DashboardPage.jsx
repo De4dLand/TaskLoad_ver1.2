@@ -84,7 +84,7 @@ const DashboardPage = () => {
   const [searchLoading, setSearchLoading] = useState(false)
   const [searchError, setSearchError] = useState(null)
   const [selectedMembers, setSelectedMembers] = useState([]); // [{ user, role, position, startDate }]
-  
+
   // Team management state
   const [teamManagementOpen, setTeamManagementOpen] = useState(false)
   const [teamMembers, setTeamMembers] = useState([])
@@ -127,36 +127,36 @@ const DashboardPage = () => {
   // --- Socket.IO Connection and Event Handlers --- 
   useEffect(() => {
     if (!user) return; // Only connect if user is authenticated
-    
+
     // Connect to Socket.IO server using the socket service
     const sock = getSocket(user);
     setSocket(sock);
-    
+
     // Connection events
     sock.on('connect', () => {
       console.log('Connected to Socket.IO server');
       // Join user's personal room for targeted notifications
       joinRoom(user._id);
     });
-    
+
     sock.on('disconnect', () => {
       console.log('Disconnected from Socket.IO server');
     });
-    
+
     sock.on('reconnect', (attemptNumber) => {
       console.log(`Reconnected to Socket.IO server after ${attemptNumber} attempts`);
       // Rejoin rooms after reconnection
       joinRoom(user._id);
     });
-    
+
     // Task and deadline notifications
     sock.on('deadlineWarning', (data) => {
       setDeadlineAlert({
         open: true,
-        message: `Task "${data.title}" được giao cho bạn sắp hết hạn! Hạn cuối: ${new Date(data.dueDate).toLocaleString()}` 
+        message: `Task "${data.title}" được giao cho bạn sắp hết hạn! Hạn cuối: ${new Date(data.dueDate).toLocaleString()}`
       });
     });
-    
+
     sock.on('taskUpdated', (data) => {
       setNotification({
         open: true,
@@ -166,7 +166,7 @@ const DashboardPage = () => {
       // Refresh dashboard data to reflect changes
       loadData();
     });
-    
+
     sock.on('taskAssigned', (data) => {
       setNotification({
         open: true,
@@ -176,7 +176,7 @@ const DashboardPage = () => {
       // Refresh dashboard data to reflect changes
       loadData();
     });
-    
+
     // Project activity notifications
     sock.on('projectUpdated', (data) => {
       setNotification({
@@ -187,7 +187,7 @@ const DashboardPage = () => {
       // Refresh dashboard data to reflect changes
       loadData();
     });
-    
+
     sock.on('memberAdded', (data) => {
       setNotification({
         open: true,
@@ -197,7 +197,7 @@ const DashboardPage = () => {
       // Refresh dashboard data to reflect changes
       loadData();
     });
-    
+
     // Comment system events
     sock.on('newComment', (data) => {
       setNotification({
@@ -205,25 +205,25 @@ const DashboardPage = () => {
         message: `Bình luận mới trên "${data.taskTitle}" bởi ${data.author}`,
         type: 'info'
       });
-      
+
       // If the comment is for the currently open task, update comments
       if (drawerTask && drawerTask._id === data.taskId) {
         setDrawerComments(prev => [...prev, data.comment]);
       }
     });
-    
+
     // User presence tracking
     sock.on('onlineUsers', (users) => {
       setOnlineUsers(users);
     });
-    
+
     // Typing indicators
     sock.on('userTyping', (data) => {
       setTypingUsers(prev => ({
         ...prev,
         [data.taskId]: [...(prev[data.taskId] || []), data.userName]
       }));
-      
+
       // Clear typing indicator after 3 seconds
       setTimeout(() => {
         setTypingUsers(prev => {
@@ -239,7 +239,7 @@ const DashboardPage = () => {
         });
       }, 3000);
     });
-    
+
     // Clean up on unmount
     return () => {
       sock.disconnect();
@@ -285,10 +285,10 @@ const DashboardPage = () => {
 
   const loadTeamMembers = async () => {
     if (!selectedProject) return;
-    
+
     setTeamLoading(true);
     setTeamError(null);
-    
+
     try {
       // First check if the project has a team associated with it
       if (selectedProject.team) {
@@ -306,13 +306,13 @@ const DashboardPage = () => {
       setTeamLoading(false);
     }
   };
-  
+
   const handleSearchTeamMembers = async (query) => {
     if (!query.trim()) return;
-    
+
     setSearchLoading(true);
     setSearchError(null);
-    
+
     try {
       const results = await searchUsers(query);
       setMemberResults(results);
@@ -323,10 +323,10 @@ const DashboardPage = () => {
       setSearchLoading(false);
     }
   };
-  
+
   const handleAddTeamMember = async (userId, role) => {
     if (!selectedProject) return;
-    
+
     try {
       if (currentTeam) {
         // If a team exists, add the member to the team
@@ -335,11 +335,11 @@ const DashboardPage = () => {
         // Otherwise add the member to the project
         await addProjectMember(selectedProject._id, userId, role);
       }
-      
+
       // Reload data to reflect changes
       await loadData();
       await loadTeamMembers();
-      
+
       setNotification({
         open: true,
         message: "Thành viên đội nhóm đã được thêm thành công",
@@ -350,10 +350,10 @@ const DashboardPage = () => {
       throw new Error(err.message || "Lỗi khi thêm thành viên đội nhóm");
     }
   };
-  
+
   const handleRemoveTeamMember = async (userId) => {
     if (!selectedProject) return;
-    
+
     try {
       if (currentTeam) {
         // If a team exists, remove the member from the team
@@ -366,11 +366,11 @@ const DashboardPage = () => {
           credentials: 'include'
         });
       }
-      
+
       // Reload data to reflect changes
       await loadData();
       await loadTeamMembers();
-      
+
       setNotification({
         open: true,
         message: "Thành viên đội nhóm đã được xóa thành công",
@@ -381,10 +381,10 @@ const DashboardPage = () => {
       throw new Error(err.message || "Lỗi khi xóa thành viên đội nhóm");
     }
   };
-  
+
   const handleUpdateMemberRole = async (userId, role) => {
     if (!selectedProject) return;
-    
+
     try {
       if (currentTeam) {
         // If a team exists, update the member's role in the team
@@ -401,11 +401,11 @@ const DashboardPage = () => {
           body: JSON.stringify({ role })
         });
       }
-      
+
       // Reload data to reflect changes
       await loadData();
       await loadTeamMembers();
-      
+
       setNotification({
         open: true,
         message: "Vai trò thành viên đội nhóm đã được cập nhật thành công",
@@ -416,14 +416,14 @@ const DashboardPage = () => {
       throw new Error(err.message || "Lỗi khi cập nhật vai trò thành viên đội nhóm");
     }
   };
-  
+
   const handleAssignTask = async (taskId, userId) => {
     try {
       await updateTask(taskId, { assignedTo: userId || null });
-      
+
       // Reload data to reflect changes
       await loadData();
-      
+
       setNotification({
         open: true,
         message: userId ? "Nhiệm vụ đã được giao thành công" : "Nhiệm vụ đã được gỡ giao thành công",
@@ -462,14 +462,14 @@ const DashboardPage = () => {
     setContextMenu(null)
     setContextProject(null)
   }
-  
+
   // Get project members for the selected project
   const getProjectMembers = (projectId) => {
     if (!dashboardData || !dashboardData.projects) return [];
     const project = dashboardData.projects.find(p => p._id === projectId);
     return project?.members || [];
   }
-  
+
   // Handle project selection from sidebar
   const handleProjectSelect = (project) => {
     // If clicking the already selected project, deselect it
@@ -505,59 +505,59 @@ const DashboardPage = () => {
     try {
       // Get the current task data to preserve any fields not included in the update
       const currentTask = dashboardData.tasks.find(t => t._id === taskId) || {};
-      
+
       // Create a complete task object with the updated fields
       const taskToUpdate = {
         ...currentTask,
         ...updatedTask,
         // Ensure assignedTo is properly formatted as an object with _id
-        assignedTo: updatedTask.assignedTo ? 
-          (typeof updatedTask.assignedTo === 'object' ? updatedTask.assignedTo : { _id: updatedTask.assignedTo }) : 
+        assignedTo: updatedTask.assignedTo ?
+          (typeof updatedTask.assignedTo === 'object' ? updatedTask.assignedTo : { _id: updatedTask.assignedTo }) :
           null
       };
 
       console.log("Sending task update:", taskToUpdate);
-      
+
       // Call the updateTask service with the complete task data
       const result = await updateTask(taskId, taskToUpdate);
-      
+
       // Update the local state to reflect the changes
       setDashboardData(prevData => ({
         ...prevData,
-        tasks: prevData.tasks.map(task => 
+        tasks: prevData.tasks.map(task =>
           task._id === taskId ? { ...task, ...result } : task
         )
       }));
-      
+
       // Update the drawer task if it's the same task
       if (drawerTask && drawerTask._id === taskId) {
         setDrawerTask(prev => ({
           ...prev,
           ...result,
-          assignedTo: result.assignedTo ? 
-            (typeof result.assignedTo === 'object' ? result.assignedTo : { _id: result.assignedTo }) : 
+          assignedTo: result.assignedTo ?
+            (typeof result.assignedTo === 'object' ? result.assignedTo : { _id: result.assignedTo }) :
             null
         }));
       }
-      
+
       // Show success notification
       setNotification({
         open: true,
         message: 'Task updated successfully',
         type: 'success'
       });
-      
+
       return result;
     } catch (error) {
       console.error('Error updating task:', error);
-      
+
       // Show error notification
       setNotification({
         open: true,
         message: error.response?.data?.message || 'Failed to update task',
         type: 'error'
       });
-      
+
       throw error; // Re-throw to allow the drawer to handle the error if needed
     }
   };
@@ -569,7 +569,7 @@ const DashboardPage = () => {
   };
   const handleAddComment = async (commentText) => {
     if (!drawerTask || !commentText.trim()) return;
-    
+
     try {
       // Notify others that user is typing
       if (socket) {
@@ -578,7 +578,7 @@ const DashboardPage = () => {
           userName: user.name
         });
       }
-      
+
       // API call to add comment (replace with your actual API endpoint)
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tasks/${drawerTask._id}/comments`, {
         method: 'POST',
@@ -591,16 +591,16 @@ const DashboardPage = () => {
         }),
         credentials: 'include'
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to add comment');
       }
-      
+
       const newComment = await response.json();
-      
+
       // Update local state
       setDrawerComments(prev => [...prev, newComment]);
-      
+
       // Emit socket event for new comment
       if (socket) {
         socket.emit('comment', {
@@ -619,7 +619,7 @@ const DashboardPage = () => {
       });
     }
   };
-  
+
   // Handle typing indicator for comments
   const handleCommentTyping = () => {
     if (socket && drawerTask) {
@@ -699,33 +699,33 @@ const DashboardPage = () => {
   const handleTaskFormSubmit = async (formData, isEdit = false) => {
     try {
       console.log('Received task data in DashboardPage:', formData, 'isEdit:', isEdit);
-      
+
       // The formData should already be properly formatted from TaskDialog
       // but we'll ensure it's in the correct format here as well
-      
-        // For new tasks, include the current user's ID as createdBy
-        const newTaskData = {
-          ...formData,
-          createdBy: user?.id || user?._id, // Handle both id and _id for user object
-          status: 'todo' // Ensure status is set for new tasks
-        };
-        console.log('Creating new task with data:', newTaskData);
-        let result = await createTask(newTaskData);
-        
-        // If task was created successfully and has a project, add it to the project's tasks array
-        if (result && result._id && newTaskData.project) {
-          try {
-            await updateProject(newTaskData.project, {
-              $addToSet: { tasks: result._id }
-            });
-            console.log('Task added to project successfully');
-          } catch (error) {
-            console.error('Error adding task to project:', error);
-            // Don't throw the error to prevent the task creation from failing
-            // The task was created successfully, just the project update failed
-          }
+
+      // For new tasks, include the current user's ID as createdBy
+      const newTaskData = {
+        ...formData,
+        createdBy: user?.id || user?._id, // Handle both id and _id for user object
+        status: 'todo' // Ensure status is set for new tasks
+      };
+      console.log('Creating new task with data:', newTaskData);
+      let result = await createTask(newTaskData);
+
+      // If task was created successfully and has a project, add it to the project's tasks array
+      if (result && result._id && newTaskData.project) {
+        try {
+          await updateProject(newTaskData.project, {
+            $addToSet: { tasks: result._id }
+          });
+          console.log('Task added to project successfully');
+        } catch (error) {
+          console.error('Error adding task to project:', error);
+          // Don't throw the error to prevent the task creation from failing
+          // The task was created successfully, just the project update failed
         }
-      
+      }
+
       // Update the UI
       if (isEdit && selectedTask && dashboardData?.tasks) {
         // Optimistic update for task edit
@@ -737,7 +737,7 @@ const DashboardPage = () => {
         // Reload all data for new task creation or if optimistic update isn't possible
         loadData();
       }
-      
+
       // Close the dialog and show success notification
       handleCloseTaskDialog();
       setNotification({
@@ -745,12 +745,12 @@ const DashboardPage = () => {
         message: isEdit ? 'Task updated successfully' : 'Task created successfully',
         type: 'success'
       });
-      
+
       return result;
     } catch (err) {
       let errorMsg = err?.response?.data?.message || err.message || 'Unknown error';
       console.error(isEdit ? "Error updating task:" : "Error creating task:", err);
-      
+
       // Show error notification with more details
       setNotification({
         open: true,
@@ -758,13 +758,13 @@ const DashboardPage = () => {
         type: 'error',
         autoHideDuration: 10000 // Show error for longer
       });
-      
+
       // Log the full error for debugging
       console.error('Full error object:', err);
       if (err.response) {
         console.error('Error response data:', err.response.data);
       }
-      
+
       throw err; // Re-throw to allow the form to handle the error
     }
   }
@@ -837,13 +837,13 @@ const DashboardPage = () => {
     // Allow passing query directly (from ProjectManageDrawer) or use memberSearchQuery state
     const searchTerm = query || memberSearchQuery.trim()
     if (!searchTerm) return
-    
+
     setSearchLoading(true)
     setSearchError(null)
     try {
       const users = await searchUsers(searchTerm)
       setMemberResults(users)
-      
+
       // If no users found, show notification
       if (users.length === 0) {
         setNotification({
@@ -852,7 +852,7 @@ const DashboardPage = () => {
           type: 'info'
         })
       }
-      
+
       return users // Return users for components that need direct access to results
     } catch (err) {
       console.error("Search users failed", err)
@@ -913,19 +913,19 @@ const DashboardPage = () => {
   // }
 
   return (
-    <Box sx={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      height: '100vh', 
-      bgcolor: 'grey.50',
+    <Box className={styles.dashboardContainer} sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      // bgcolor: 'grey.50',
       transition: 'all 0.3s ease'
     }}>
       {/* <AppHeader /> */}
-      
+
       {/* Main Dashboard Container */}
-      <Box sx={{ 
-        display: 'flex', 
-        flex: 1, 
+      <Box sx={{
+        display: 'flex',
+        flex: 1,
         overflow: 'hidden',
         gap: 2,
         p: 2,
@@ -935,7 +935,7 @@ const DashboardPage = () => {
         <Box
           className={styles.sidebarContainer}
           sx={{
-            width: 320,
+            width: '25%',
             flexShrink: 0,
             bgcolor: 'background.paper',
             borderRadius: 3,
@@ -952,9 +952,9 @@ const DashboardPage = () => {
         >
           {/* Welcome Section */}
           <Box sx={{ mb: 4 }}>
-            <Typography 
-              variant="h5" 
-              sx={{ 
+            <Typography
+              variant="h5"
+              sx={{
                 fontWeight: 700,
                 color: 'text.primary',
                 mb: 1,
@@ -967,11 +967,11 @@ const DashboardPage = () => {
               Chào mừng bạn, {user?.username?.split(' ')[0] || 'User'}!
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {new Date().toLocaleDateString('vi-VN', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
+              {new Date().toLocaleDateString('vi-VN', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
               })}
             </Typography>
           </Box>
@@ -979,9 +979,9 @@ const DashboardPage = () => {
           {/* Quick Stats Cards */}
           <Box sx={{ mb: 4 }}>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
-              <Paper sx={{ 
-                p: 2, 
-                textAlign: 'center', 
+              <Paper sx={{
+                p: 2,
+                textAlign: 'center',
                 borderRadius: 2,
                 bgcolor: 'primary.50',
                 border: '1px solid',
@@ -994,9 +994,9 @@ const DashboardPage = () => {
                   Dự án
                 </Typography>
               </Paper>
-              <Paper sx={{ 
-                p: 2, 
-                textAlign: 'center', 
+              <Paper sx={{
+                p: 2,
+                textAlign: 'center',
                 borderRadius: 2,
                 bgcolor: 'success.50',
                 border: '1px solid',
@@ -1019,7 +1019,7 @@ const DashboardPage = () => {
             color="primary"
             startIcon={<AddIcon />}
             onClick={handleAddProject}
-            sx={{ 
+            sx={{
               mb: 4,
               py: 1.5,
               borderRadius: 2,
@@ -1038,26 +1038,26 @@ const DashboardPage = () => {
           >
             Tạo Dự án mới
           </Button>
-          
+
           {/* Projects List */}
           {dashboardData?.projects && (
             <Box>
-              <Typography 
-                variant="subtitle1" 
-                sx={{ 
-                  fontWeight: 600, 
-                  mb: 2, 
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: 600,
+                  mb: 2,
                   color: 'text.primary',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1
                 }}
               >
-                <Box sx={{ 
-                  width: 4, 
-                  height: 20, 
-                  bgcolor: 'primary.main', 
-                  borderRadius: 1 
+                <Box sx={{
+                  width: 4,
+                  height: 20,
+                  bgcolor: 'primary.main',
+                  borderRadius: 1
                 }} />
                 Dự án của bạn
               </Typography>
@@ -1072,9 +1072,9 @@ const DashboardPage = () => {
         </Box>
 
         {/* Enhanced Main Content Area */}
-        <Box sx={{ 
-          flex: 1, 
-          display: 'flex', 
+        <Box sx={{
+          flex: 1,
+          display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden'
         }}>
@@ -1085,7 +1085,6 @@ const DashboardPage = () => {
               p: 3,
               mb: 2,
               borderRadius: 3,
-              bgcolor: 'background.paper',
               boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
               border: '1px solid',
               borderColor: 'grey.200'
@@ -1095,9 +1094,9 @@ const DashboardPage = () => {
             <Box sx={{ mb: 3 }}>
               {selectedProject ? (
                 <Box>
-                  <Typography 
-                    variant="h4" 
-                    sx={{ 
+                  <Typography
+                    variant="h4"
+                    sx={{
                       fontWeight: 700,
                       color: 'text.primary',
                       mb: 1,
@@ -1106,29 +1105,29 @@ const DashboardPage = () => {
                       gap: 2
                     }}
                   >
-                    <Box 
-                      sx={{ 
-                        width: 12, 
-                        height: 12, 
-                        borderRadius: '50%', 
-                        bgcolor: selectedProject.color || 'primary.main' 
-                      }} 
+                    <Box
+                      sx={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: '50%',
+                        bgcolor: selectedProject.color || 'primary.main'
+                      }}
                     />
                     {selectedProject.name}
                   </Typography>
                   <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-                    {selectedProject.description || 'No description available'}
+                    {selectedProject.description || 'Không có mô tả cho dự án này.'}
                   </Typography>
-                  <ProjectMemberInfo 
+                  <ProjectMemberInfo
                     user={user}
                     projectMembers={dashboardData?.projects?.find(p => p._id === selectedProject?._id)?.members || []}
                   />
                 </Box>
               ) : (
                 <Box>
-                  <Typography 
-                    variant="h4" 
-                    sx={{ 
+                  <Typography
+                    variant="h4"
+                    sx={{
                       fontWeight: 700,
                       color: 'text.primary',
                       mb: 1
@@ -1144,15 +1143,16 @@ const DashboardPage = () => {
             </Box>
 
             {/* Action Bar */}
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
+            <Box sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
               alignItems: 'center',
               flexWrap: 'wrap',
               gap: 2
             }}>
+              <ViewModeSwitcher viewMode={viewMode} setViewMode={setViewMode} />
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-                <ViewModeSwitcher viewMode={viewMode} setViewMode={setViewMode} />
+
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
@@ -1176,7 +1176,7 @@ const DashboardPage = () => {
                   Thêm Công việc mới
                 </Button>
               </Box>
-              
+
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 {selectedProject && (
                   <TeamManagementButton
@@ -1223,11 +1223,11 @@ const DashboardPage = () => {
             }}
           >
             {loading ? (
-              <Box sx={{ 
-                display: 'flex', 
+              <Box sx={{
+                display: 'flex',
                 flexDirection: 'column',
-                justifyContent: 'center', 
-                alignItems: 'center', 
+                justifyContent: 'center',
+                alignItems: 'center',
                 height: '100%',
                 gap: 2
               }}>
@@ -1237,11 +1237,11 @@ const DashboardPage = () => {
                 </Typography>
               </Box>
             ) : filteredTasks?.length === 0 ? (
-              <Box sx={{ 
-                display: 'flex', 
+              <Box sx={{
+                display: 'flex',
                 flexDirection: 'column',
-                justifyContent: 'center', 
-                alignItems: 'center', 
+                justifyContent: 'center',
+                alignItems: 'center',
                 height: '100%',
                 gap: 3,
                 p: 4
@@ -1262,7 +1262,7 @@ const DashboardPage = () => {
                   {selectedProject ? 'Không có công việc nào' : 'Chọn một dự án'}
                 </Typography>
                 <Typography variant="body1" color="text.secondary" textAlign="center" maxWidth={400}>
-                  {selectedProject 
+                  {selectedProject
                     ? 'Bắt đầu bằng việc tạo công việc đầu tiên để tổ chức công việc và theo dõi tiến trình.'
                     : 'Chọn một dự án từ thanh bên để xem và quản lý các công việc của nó.'}
                 </Typography>
@@ -1324,13 +1324,12 @@ const DashboardPage = () => {
                     />
                   )}
                 </Box>
-                
+
                 {/* Task Summary Footer */}
                 <Box sx={{
                   p: 2,
                   borderTop: 1,
                   borderColor: 'grey.200',
-                  bgcolor: 'grey.50',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center'
@@ -1340,13 +1339,13 @@ const DashboardPage = () => {
                     {selectedProject && ` in ${selectedProject.name}`}
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Chip 
+                    <Chip
                       label={`${filteredTasks?.filter(t => t.status === 'completed')?.length || 0} Completed`}
                       size="small"
                       color="success"
                       variant="outlined"
                     />
-                    <Chip 
+                    <Chip
                       label={`${filteredTasks?.filter(t => t.status === 'in-progress')?.length || 0} In Progress`}
                       size="small"
                       color="primary"
@@ -1379,9 +1378,9 @@ const DashboardPage = () => {
         loading={loading}
         currentUser={user}
         projectMembers={drawerTask?.project ? getProjectMembers(typeof drawerTask.project === 'string' ? drawerTask.project : drawerTask.project?._id) : []}
-        isProjectOwner={drawerTask?.project && selectedProject ? 
-          (selectedProject.owner === user?._id || 
-          (typeof selectedProject.owner === 'object' && selectedProject.owner?._id === user?._id)) : false}
+        isProjectOwner={drawerTask?.project && selectedProject ?
+          (selectedProject.owner === user?._id ||
+            (typeof selectedProject.owner === 'object' && selectedProject.owner?._id === user?._id)) : false}
       />
 
       {/* Deadline Alert */}
@@ -1398,9 +1397,9 @@ const DashboardPage = () => {
         onClose={() => setNotification({ ...notification, open: false })}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
       >
-        <Alert 
-          onClose={() => setNotification({ ...notification, open: false })} 
-          severity={notification.type} 
+        <Alert
+          onClose={() => setNotification({ ...notification, open: false })}
+          severity={notification.type}
           sx={{ width: '100%' }}
         >
           {notification.message}
@@ -1429,185 +1428,185 @@ const DashboardPage = () => {
             : undefined
         }
       >
-        <MenuItem 
+        <MenuItem
           onClick={() => { handleEditTask(contextTask); setContextMenu(null); }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             Sửa
           </Box>
         </MenuItem>
-        <MenuItem 
+        <MenuItem
           onClick={() => { deleteTask(contextTask._id).then(() => loadData()); setContextMenu(null); }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             Xóa
           </Box>
         </MenuItem>
-        </Menu>
-        {/* --- End Potential Component: TaskContextMenu --- */}
+      </Menu>
+      {/* --- End Potential Component: TaskContextMenu --- */}
 
-        {/* Project Context Menu */}
-        <Menu
-          open={contextMenu !== null && contextProject !== null}
-          onClose={handleProjectMenuClose}
-          anchorReference="anchorPosition"
-          anchorPosition={
-            contextMenu !== null
-              ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
-              : undefined
+      {/* Project Context Menu */}
+      <Menu
+        open={contextMenu !== null && contextProject !== null}
+        onClose={handleProjectMenuClose}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          contextMenu !== null
+            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+            : undefined
+        }
+      >
+        <MenuItem onClick={() => { setProjectManageDrawerOpen(true); handleProjectMenuClose(); }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            Quản lý dự án
+          </Box>
+        </MenuItem>
+        <MenuItem onClick={() => { deleteProject(contextProject._id).then(() => { loadData(); handleProjectMenuClose(); }); }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            Xóa
+          </Box>
+        </MenuItem>
+      </Menu>
+
+      {/* Project Management Drawer */}
+      <ProjectManageDrawer
+        open={projectManageDrawerOpen}
+        onClose={() => setProjectManageDrawerOpen(false)}
+        project={contextProject}
+        onUpdateProject={async (formData) => {
+          try {
+            if (!contextProject || !contextProject._id) {
+              throw new Error('Project not found or project ID is missing');
+            }
+            console.log('Updating project with data:', formData);
+            await updateProject(contextProject._id, formData);
+
+            // Emit socket event for project update if socket is available
+            if (socket) {
+              socket.emit('projectUpdate', {
+                projectId: contextProject._id,
+                name: formData.name,
+                updatedBy: user.name
+              });
+            }
+
+            // Close the drawer after successful update
+            setProjectManageDrawerOpen(false);
+
+            // Show success notification
+            setNotification({
+              open: true,
+              message: `Dự án "${formData.name}" đã được cập nhật thành công`,
+              type: 'success'
+            });
+
+            // Reload dashboard data
+            loadData();
+          } catch (err) {
+            console.error('Failed to update project:', err);
+            setNotification({
+              open: true,
+              message: `Lỗi khi cập nhật dự án: ${err.message}`,
+              type: 'error'
+            });
           }
-        >
-          <MenuItem onClick={() => { setProjectManageDrawerOpen(true); handleProjectMenuClose(); }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              Quản lý dự án
-            </Box>
-          </MenuItem>
-          <MenuItem onClick={() => { deleteProject(contextProject._id).then(() => { loadData(); handleProjectMenuClose(); }); }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              Xóa
-            </Box>
-          </MenuItem>
-        </Menu>
+        }}
+        onAddMember={async (user, memberData) => {
+          try {
+            if (!user || !user._id) {
+              throw new Error('Valid user is required');
+            }
 
-        {/* Project Management Drawer */}
-        <ProjectManageDrawer
-          open={projectManageDrawerOpen}
-          onClose={() => setProjectManageDrawerOpen(false)}
-          project={contextProject}
-          onUpdateProject={async (formData) => {
-            try {
-              if (!contextProject || !contextProject._id) {
-                throw new Error('Project not found or project ID is missing');
-              }
-              console.log('Updating project with data:', formData);
-              await updateProject(contextProject._id, formData);
-              
-              // Emit socket event for project update if socket is available
-              if (socket) {
-                socket.emit('projectUpdate', {
-                  projectId: contextProject._id,
-                  name: formData.name,
-                  updatedBy: user.name
-                });
-              }
-              
-              // Close the drawer after successful update
-              setProjectManageDrawerOpen(false);
-              
-              // Show success notification
-              setNotification({
-                open: true,
-                message: `Dự án "${formData.name}" đã được cập nhật thành công`,
-                type: 'success'
-              });
-              
-              // Reload dashboard data
-              loadData();
-            } catch (err) {
-              console.error('Failed to update project:', err);
-              setNotification({
-                open: true,
-                message: `Lỗi khi cập nhật dự án: ${err.message}`,
-                type: 'error'
+            if (!contextProject || !contextProject._id) {
+              throw new Error('Không tìm thấy Dữ liệu Dự án');
+            }
+
+            await addProjectMember(contextProject._id, user._id, memberData);
+
+            // Emit socket event for member added if socket is available
+            if (socket) {
+              socket.emit('memberAdd', {
+                projectId: contextProject._id,
+                projectName: contextProject.name,
+                memberId: user._id,
+                memberName: user.name,
+                addedBy: user.name
               });
             }
-          }}
-          onAddMember={async (user, memberData) => {
-            try {
-              if (!user || !user._id) {
-                throw new Error('Valid user is required');
-              }
-              
-              if (!contextProject || !contextProject._id) {
-                throw new Error('Không tìm thấy Dữ liệu Dự án');
-              }
-              
-              await addProjectMember(contextProject._id, user._id, memberData);
-              
-              // Emit socket event for member added if socket is available
-              if (socket) {
-                socket.emit('memberAdd', {
-                  projectId: contextProject._id,
-                  projectName: contextProject.name,
-                  memberId: user._id,
-                  memberName: user.name,
-                  addedBy: user.name
-                });
-              }
-              
-              loadData();
-              setNotification({
-                open: true,
-                message: `${user.name || 'User'} đã được thêm vào dự án với vai trò ${memberData.role}`,
-                type: 'success'
-              });
-            } catch (err) {
-              console.error('Failed to add member:', err);
-              setNotification({
-                open: true,
-                message: `Lỗi khi thêm thành viên: ${err.message}`,
-                type: 'error'
-              });
-            }
-          }}
-          onRemoveMember={async (memberId) => {
-            try {
-              if (!contextProject || !contextProject._id) {
-                throw new Error('Không tìm thấy Dữ liệu Dự án');
-              }
-              if (!memberId) {
-                throw new Error('ID thành viên không hợp lệ');
-              }
-              await removeMember(contextProject._id, memberId);
-              loadData();
-              
-              setNotification({
-                open: true,
-                message: `Thành viên đã được xóa khỏi dự án`,
-                type: 'success'
-              });
-            } catch (err) {
-              console.error('Failed to remove member:', err);
-              setNotification({
-                open: true,
-                message: `Lỗi khi xóa thành viên: ${err.message}`,
-                type: 'error'
-              });
-            }
-          }}
-          onSearchMembers={handleSearchUsers}
-          searchResults={memberResults}
-          searchLoading={searchLoading}
-          members={contextProject ? getProjectMembers(contextProject._id) : []}
-        />
 
-        {/* ProjectDialog component */}
-        <ProjectDialog
-          open={projectDialogOpen}
-          onClose={handleCloseProjectDialog}
-          onSubmit={handleProjectFormSubmit}
-          project={selectedProject}
-          form={projectForm}
-          onChange={handleProjectFormChange}
-        />
+            loadData();
+            setNotification({
+              open: true,
+              message: `${user.name || 'User'} đã được thêm vào dự án với vai trò ${memberData.role}`,
+              type: 'success'
+            });
+          } catch (err) {
+            console.error('Failed to add member:', err);
+            setNotification({
+              open: true,
+              message: `Lỗi khi thêm thành viên: ${err.message}`,
+              type: 'error'
+            });
+          }
+        }}
+        onRemoveMember={async (memberId) => {
+          try {
+            if (!contextProject || !contextProject._id) {
+              throw new Error('Không tìm thấy Dữ liệu Dự án');
+            }
+            if (!memberId) {
+              throw new Error('ID thành viên không hợp lệ');
+            }
+            await removeMember(contextProject._id, memberId);
+            loadData();
 
-        {/* MemberDialog is already a component, good. */}
-        <MemberDialog
-          open={memberDialogOpen}
-          onClose={() => setMemberDialogOpen(false)}
-          members={selectedMembers}
-          onMemberChange={handleMemberFieldChange}
-          onRemoveMember={handleRemoveSelectedMember}
-          onSave={handleSaveMembers}
-          selectedMembers={selectedMembers}
-        />
-    {/* Deadline notification pop-up */}
-    <DeadlineSnackbar
-      open={deadlineAlert.open}
-      message={deadlineAlert.message}
-      onClose={() => setDeadlineAlert({ ...deadlineAlert, open: false })}
-    />
-  </Box>
-  ) 
+            setNotification({
+              open: true,
+              message: `Thành viên đã được xóa khỏi dự án`,
+              type: 'success'
+            });
+          } catch (err) {
+            console.error('Failed to remove member:', err);
+            setNotification({
+              open: true,
+              message: `Lỗi khi xóa thành viên: ${err.message}`,
+              type: 'error'
+            });
+          }
+        }}
+        onSearchMembers={handleSearchUsers}
+        searchResults={memberResults}
+        searchLoading={searchLoading}
+        members={contextProject ? getProjectMembers(contextProject._id) : []}
+      />
+
+      {/* ProjectDialog component */}
+      <ProjectDialog
+        open={projectDialogOpen}
+        onClose={handleCloseProjectDialog}
+        onSubmit={handleProjectFormSubmit}
+        project={selectedProject}
+        form={projectForm}
+        onChange={handleProjectFormChange}
+      />
+
+      {/* MemberDialog is already a component, good. */}
+      <MemberDialog
+        open={memberDialogOpen}
+        onClose={() => setMemberDialogOpen(false)}
+        members={selectedMembers}
+        onMemberChange={handleMemberFieldChange}
+        onRemoveMember={handleRemoveSelectedMember}
+        onSave={handleSaveMembers}
+        selectedMembers={selectedMembers}
+      />
+      {/* Deadline notification pop-up */}
+      <DeadlineSnackbar
+        open={deadlineAlert.open}
+        message={deadlineAlert.message}
+        onClose={() => setDeadlineAlert({ ...deadlineAlert, open: false })}
+      />
+    </Box>
+  )
 }
 export default DashboardPage

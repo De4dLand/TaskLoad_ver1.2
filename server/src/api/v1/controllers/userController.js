@@ -78,16 +78,30 @@ export class UserController {
     });
   });
 
-  // Cập nhật avatar
+  // Update user avatar
   updateAvatar = catchAsync(async (req, res) => {
+    if (!req.file) {
+      throw createError(400, 'No file uploaded');
+    }
+
+    // Construct the full URL to the uploaded file
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const avatarUrl = `${baseUrl}/uploads/avatars/${req.file.filename}`;
+
+    // Update the user's profile with the new avatar URL
     const user = await this.userService.updateAvatar(
       req.user._id,
-      req.body.avatarUrl
+      avatarUrl
     );
 
     res.status(200).json({
       status: 'success',
-      data: { user }
+      data: { 
+        user: {
+          ...user.toObject(),
+          profileImage: avatarUrl
+        }
+      }
     });
   });
 

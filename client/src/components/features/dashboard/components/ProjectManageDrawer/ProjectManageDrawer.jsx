@@ -130,10 +130,10 @@ const ProjectManageDrawer = ({
   const [memberDialogOpen, setMemberDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [memberFormError, setMemberFormError] = useState('');
-  
+
   // Attachment state
   const [attachments, setAttachments] = useState([]);
-  
+
   // Custom fields state
   const [customFields, setCustomFields] = useState([]);
   const [newCustomField, setNewCustomField] = useState({ name: '', value: '' });
@@ -164,10 +164,10 @@ const ProjectManageDrawer = ({
           notifications: true
         }
       });
-      
+
       setCustomFields(project.customFields || []);
       setAttachments(project.attachments || []);
-      
+
       // Reset active tab when a new project is loaded
       setActiveTab(0);
     }
@@ -176,7 +176,7 @@ const ProjectManageDrawer = ({
   // Handle project form field changes
   const handleProjectFormChange = (e) => {
     const { name, value } = e.target;
-    
+
     // Handle nested properties
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
@@ -245,17 +245,17 @@ const ProjectManageDrawer = ({
       console.error('Cannot save project: Project data is missing');
       return;
     }
-    
+
     const updatedProject = {
       ...projectForm,
       _id: project._id, // Ensure the project ID is included
       customFields,
       attachments
     };
-    
+
     console.log('Saving project changes:', updatedProject);
     onUpdateProject(updatedProject);
-    
+
     // Close the drawer after saving
     // We don't close it immediately to allow the parent component to handle any errors
     // The parent component should close the drawer if the update is successful
@@ -287,17 +287,17 @@ const ProjectManageDrawer = ({
       setMemberFormError('Vui lòng chọn một người dùng hợp lệ');
       return;
     }
-    
+
     if (!selectedPosition.trim()) {
       setMemberFormError('Vị trí là bắt buộc');
       return;
     }
-    
+
     if (!project || !project._id) {
       setMemberFormError('Thông tin dự án không hợp lệ');
       return;
     }
-    
+
     try {
       onAddMember(selectedUser, {
         role: selectedRole,
@@ -305,7 +305,7 @@ const ProjectManageDrawer = ({
         startDate: memberStartDate.format('YYYY-MM-DD'),
         projectId: project._id // Include the project ID
       });
-      
+
       handleCloseMemberDialog();
     } catch (error) {
       console.error('Error adding member:', error);
@@ -326,10 +326,10 @@ const ProjectManageDrawer = ({
       completed: 'primary',
       cancelled: 'error'
     };
-    
+
     return (
-      <Chip 
-        label={status.replace('_', ' ').toUpperCase()} 
+      <Chip
+        label={status.replace('_', ' ').toUpperCase()}
         color={statusColors[status] || 'default'}
         size="small"
       />
@@ -355,8 +355,6 @@ const ProjectManageDrawer = ({
       }}
     >
       {/* Progress Sidebar */}
-      
-
       {/* Main Content */}
       <Box sx={{
         flexGrow: 1,
@@ -365,11 +363,11 @@ const ProjectManageDrawer = ({
         flexDirection: 'column'
       }}>
         {/* Header */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          p: 2, 
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          p: 2,
           borderBottom: '1px solid #e0e0e0',
           backgroundColor: projectForm.color || '#1976d2',
           color: 'white'
@@ -379,12 +377,12 @@ const ProjectManageDrawer = ({
             <CloseIcon />
           </IconButton>
         </Box>
-        
+
         {/* Tabs */}
-        <Tabs 
-          value={activeTab} 
-          onChange={handleTabChange} 
-          variant="fullWidth" 
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          variant="fullWidth"
           sx={{ borderBottom: '1px solid #e0e0e0' }}
         >
           <Tab icon={<SettingsIcon />} label="Details" />
@@ -399,7 +397,7 @@ const ProjectManageDrawer = ({
           {activeTab === 0 && (
             <Box sx={{ p: 3 }}>
               <Typography variant="h6" sx={{ mb: 3 }}>Thông tin dự án</Typography>
-              
+
               <Grid container spacing={2}>
                 <Grid item xs={12}>
                   <TextField
@@ -410,7 +408,7 @@ const ProjectManageDrawer = ({
                     onChange={handleProjectFormChange}
                   />
                 </Grid>
-                
+
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
@@ -422,7 +420,7 @@ const ProjectManageDrawer = ({
                     onChange={handleProjectFormChange}
                   />
                 </Grid>
-                
+
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth>
                     <InputLabel>Status</InputLabel>
@@ -440,7 +438,7 @@ const ProjectManageDrawer = ({
                     </Select>
                   </FormControl>
                 </Grid>
-                
+
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth>
                     <InputLabel>Template</InputLabel>
@@ -456,7 +454,7 @@ const ProjectManageDrawer = ({
                     </Select>
                   </FormControl>
                 </Grid>
-                
+
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
@@ -468,7 +466,7 @@ const ProjectManageDrawer = ({
                     InputLabelProps={{ shrink: true }}
                   />
                 </Grid>
-                
+
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
@@ -480,7 +478,7 @@ const ProjectManageDrawer = ({
                     InputLabelProps={{ shrink: true }}
                   />
                 </Grid>
-                
+
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
@@ -492,7 +490,7 @@ const ProjectManageDrawer = ({
                     InputLabelProps={{ shrink: true }}
                   />
                 </Grid>
-                
+
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
@@ -505,13 +503,13 @@ const ProjectManageDrawer = ({
                       inputProps: { min: 0, max: 100 }
                     }}
                   />
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={Number(projectForm.progress)} 
+                  <LinearProgress
+                    variant="determinate"
+                    value={Number(projectForm.progress)}
                     sx={{ mt: 1, height: 8, borderRadius: 5 }}
                   />
                 </Grid>
-                
+
                 {/* <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
@@ -539,7 +537,7 @@ const ProjectManageDrawer = ({
                     }}
                   />
                 </Grid> */}
-                
+
                 <Grid item xs={12}>
                   <Typography variant="subtitle1" sx={{ mb: 1, mt: 2 }}>Tags</Typography>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
@@ -570,7 +568,7 @@ const ProjectManageDrawer = ({
                     </Button>
                   </Box>
                 </Grid>
-                
+
                 <Grid item xs={12}>
                   <Typography variant="subtitle1" sx={{ mb: 1, mt: 2 }}>Custom Fields</Typography>
                   <List>
@@ -631,7 +629,7 @@ const ProjectManageDrawer = ({
             <Typography variant="h6" gutterBottom>
               Project Progress
             </Typography>
-            
+
             {/* Overall Progress */}
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Typography variant="subtitle2" gutterBottom>
@@ -746,21 +744,21 @@ const ProjectManageDrawer = ({
             <Box sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography variant="h6">Thành viên dự án</Typography>
-                <Button 
-                  variant="contained" 
+                <Button
+                  variant="contained"
                   startIcon={<PersonAddIcon />}
                   onClick={() => setMemberDialogOpen(true)}
                 >
                   Thêm thành viên
                 </Button>
               </Box>
-              
+
               {/* Current Members List */}
               <Paper variant="outlined" sx={{ mb: 3 }}>
                 <List sx={{ width: '100%' }}>
                   {members && members.length > 0 ? (
                     members.map((member) => (
-                      <ListItem 
+                      <ListItem
                         key={member._id || member.user?._id}
                         divider
                         secondaryAction={
@@ -772,18 +770,18 @@ const ProjectManageDrawer = ({
                           </IconButton>
                         }
                       >
-                        <Avatar 
-                          src={member.profileImage || member.user?.profileImage} 
-                          alt={(member.username || member.user?.username || 'User').charAt(0)} 
-                          sx={{ mr: 2 }} 
+                        <Avatar
+                          src={member.profileImage || member.user?.profileImage}
+                          alt={(member.username || member.user?.username || 'User').charAt(0)}
+                          sx={{ mr: 2 }}
                         />
                         <ListItemText
                           primary={
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <Typography variant="body1">{member.username || member.user?.username}</Typography>
-                              <Chip 
-                                label={member.role || 'Member'} 
-                                size="small" 
+                              <Chip
+                                label={member.role || 'Member'}
+                                size="small"
                                 color={member.role === 'admin' ? 'primary' : 'default'}
                               />
                             </Box>
@@ -810,7 +808,7 @@ const ProjectManageDrawer = ({
                   )}
                 </List>
               </Paper>
-              
+
               {/* Search for Members */}
               <Typography variant="subtitle1" sx={{ mb: 2 }}>Add New Members</Typography>
               <Box sx={{ display: 'flex', mb: 2 }}>
@@ -835,7 +833,7 @@ const ProjectManageDrawer = ({
                   }}
                 />
               </Box>
-              
+
               {/* Search Results */}
               {searchResults.length > 0 && (
                 <Paper variant="outlined" sx={{ mb: 3 }}>
@@ -846,8 +844,8 @@ const ProjectManageDrawer = ({
                         button
                         onClick={() => handleOpenMemberDialog(user)}
                       >
-                        <Avatar 
-                          src={user.profileImage} 
+                        <Avatar
+                          src={user.profileImage}
                           alt={(user.name || 'User').charAt(0)}
                           sx={{ mr: 2 }}
                         />
@@ -867,7 +865,7 @@ const ProjectManageDrawer = ({
           {activeTab === 2 && (
             <Box sx={{ p: 3 }}>
               <Typography variant="h6" sx={{ mb: 3 }}>Tệp đính kèm</Typography>
-              
+
               {/* Attachment list will go here */}
               <Typography variant="body2" color="text.secondary">
                 Tính năng tệp đính kèm sẽ được triển khai trong một lần cập nhật sau.
@@ -879,7 +877,7 @@ const ProjectManageDrawer = ({
           {activeTab === 3 && (
             <Box sx={{ p: 3 }}>
               <Typography variant="h6" sx={{ mb: 3 }}>Cài đặt dự án</Typography>
-              
+
               <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
                 <FormControlLabel
                   control={
@@ -895,7 +893,7 @@ const ProjectManageDrawer = ({
                   Cho phép hoặc không cho phép bình luận trên các nhiệm vụ trong dự án này
                 </Typography>
               </Paper>
-              
+
               <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
                 <FormControlLabel
                   control={
@@ -911,7 +909,7 @@ const ProjectManageDrawer = ({
                   Cho phép hoặc không cho phép tệp đính kèm trên các nhiệm vụ trong dự án này
                 </Typography>
               </Paper>
-              
+
               <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
                 <FormControlLabel
                   control={
@@ -927,7 +925,7 @@ const ProjectManageDrawer = ({
                   Cho phép hoặc không cho phép thông báo cho dự án này
                 </Typography>
               </Paper>
-              
+
               <Button
                 variant="contained"
                 onClick={handleSaveProject}
@@ -940,7 +938,7 @@ const ProjectManageDrawer = ({
           )}
         </Box>
       </Box>
-      
+
       {/* Member Dialog */}
       <Dialog open={memberDialogOpen} onClose={handleCloseMemberDialog} maxWidth="sm" fullWidth>
         <DialogTitle>Thêm thành viên vào dự án</DialogTitle>
@@ -948,21 +946,21 @@ const ProjectManageDrawer = ({
           {selectedUser && (
             <Box sx={{ mb: 3, mt: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Avatar 
-                  src={selectedUser.profileImage} 
-                  alt={selectedUser.name?.charAt(0) || 'U'} 
-                  sx={{ width: 56, height: 56, mr: 2 }} 
+                <Avatar
+                  src={selectedUser.profileImage}
+                  alt={selectedUser.name?.charAt(0) || 'U'}
+                  sx={{ width: 56, height: 56, mr: 2 }}
                 />
                 <Box>
                   <Typography variant="h6">{selectedUser.name}</Typography>
                   <Typography variant="body2" color="text.secondary">{selectedUser.email}</Typography>
                 </Box>
               </Box>
-              
+
               {memberFormError && (
                 <Alert severity="error" sx={{ mb: 2 }}>{memberFormError}</Alert>
               )}
-              
+
               <Grid container spacing={2}>
                 <Grid item xs={12}>
                   <FormControl fullWidth>
@@ -978,7 +976,7 @@ const ProjectManageDrawer = ({
                     </Select>
                   </FormControl>
                 </Grid>
-                
+
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
@@ -990,7 +988,7 @@ const ProjectManageDrawer = ({
                     helperText={memberFormError}
                   />
                 </Grid>
-                
+
                 <Grid item xs={12}>
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker
@@ -1013,9 +1011,9 @@ const ProjectManageDrawer = ({
           <Button onClick={handleCloseMemberDialog} startIcon={<CancelIcon />}>
             Hủy
           </Button>
-          <Button 
-            onClick={handleAddMember} 
-            variant="contained" 
+          <Button
+            onClick={handleAddMember}
+            variant="contained"
             color="primary"
             startIcon={<PersonAddIcon />}
           >

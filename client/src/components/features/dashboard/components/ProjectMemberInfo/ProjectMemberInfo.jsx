@@ -12,7 +12,7 @@ const ProjectMemberInfo = ({ user, projectMembers = [] }) => {
       {/* User Role */}
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
         <PersonIcon sx={{ mr: 1, fontSize: 20 }} />
-        <Typography variant="body2" color="text.secondary">
+        <Typography component="div" variant="body2" color="text.secondary">
           Vai trò: <Chip size="small" label={role} />
         </Typography>
       </Box>

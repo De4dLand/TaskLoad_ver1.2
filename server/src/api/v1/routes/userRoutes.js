@@ -2,6 +2,8 @@ import express from 'express';
 import auth from '../../../middlewares/auth.js';
 import authController from '../../v1/controllers/authController.js';
 import { UserController } from '../../v1/controllers/userController.js';
+import { uploadAvatar, handleUploadError } from '../../../utils/fileUpload.js';
+
 const userController = new UserController();
 
 // Aliases for user-specific operations
@@ -23,9 +25,9 @@ router.use(auth.verifyToken);
 router.post('/logout', authController.logout);
 router.post('/refresh-token', authController.refreshToken);
 router.get('/profile', getProfile);
-router.put('/:id',authController.updateProfile);
+router.put('/:id', authController.updateProfile);
 router.put('/change-password', changePassword);
-router.put('/avatar', updateAvatar);
+router.put('/avatar', uploadAvatar, handleUploadError, updateAvatar);
 router.delete('/account', deleteAccount);
 
 // Search users by username or email

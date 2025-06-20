@@ -3,7 +3,6 @@
   display: flex;
   margin-top: 64px;
   height: calc(100vh - 64px);
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   position: relative;
 }
@@ -15,7 +14,6 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.67);    
   z-index: 0;
 }
 
@@ -215,6 +213,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -230,6 +229,7 @@
     opacity: 0;
     transform: translateX(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -319,7 +319,7 @@
   }
 
   .pageTitle {
-    color: #e0e0e0;
+    color: #000000;
   }
 
   .loadingContainer {

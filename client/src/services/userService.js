@@ -2,6 +2,21 @@ import api from './api';
 import { API_ENDPOINTS } from '../constants/apiEndpoints';
 
 /**
+ * Get user profile data
+ * @param {string} userId - The ID of the user
+ * @returns {Promise<Object>} - User profile data
+ */
+export const getUserProfile = async (userId) => {
+  try {
+    const response = await api.get(API_ENDPOINTS.USERS.getById(userId));
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    throw error;
+  }
+};
+
+/**
  * Update user profile
  * @param {Object} profileData - The profile data to update
  * @param {string} [profileData.firstName] - User's first name
@@ -26,15 +41,13 @@ export const updateUserProfile = async (profileData, id) => {
 
 /**
  * Upload user avatar
- * @param {File} file - The image file to upload
+ * @param {FormData} formData - The form data containing the avatar file
+ * @param {string} userId - The ID of the user
  * @returns {Promise<Object>} - Upload response with file path
  */
-export const uploadAvatar = async (file) => {
+export const uploadAvatar = async (formData, userId) => {
   try {
-    const formData = new FormData();
-    formData.append('avatar', file);
-    
-    const response = await api.post(API_ENDPOINTS.USERS.AVATAR, formData, {
+    const response = await api.put(API_ENDPOINTS.USERS.updateAvatar(userId), formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

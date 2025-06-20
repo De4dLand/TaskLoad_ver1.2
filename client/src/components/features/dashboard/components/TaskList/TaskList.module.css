@@ -5,26 +5,26 @@
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #666 #f1f1f1;
-  
+
   /* WebKit browsers */
   &::-webkit-scrollbar {
     width: 8px;
   }
-  
+
   &::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 4px;
   }
-  
+
   &::-webkit-scrollbar-thumb {
     background: #666;
     border-radius: 4px;
-    
+
     &:hover {
       background: #555;
     }
   }
-  
+
   /* Firefox */
   -ms-overflow-style: none;
 }
@@ -34,12 +34,35 @@
   background-color: #1e1e1e;
   border-left: 4px solid transparent;
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  position: relative;
+  cursor: pointer;
+  z-index: 1;
 }
 
-.taskCard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  cursor: pointer;
+.taskCard * {
+  pointer-events: none;
+}
+
+.taskHeader,
+.taskDescription,
+.taskFooter {
+  position: relative;
+  z-index: 2;
+}
+
+.taskFooter {
+  margin-top: 16px;
+  gap: 12px;
+}
+
+.taskDueDate,
+.taskPriority,
+.taskStatus,
+.taskProject,
+.taskAssignee {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .highPriorityTask {
@@ -71,6 +94,9 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-clamp: 2;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
 }
 
 .taskFooter {

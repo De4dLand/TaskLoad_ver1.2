@@ -1,54 +1,54 @@
 import React, { useState, useEffect } from "react";
-import { 
-  AppBar, 
-  Toolbar, 
-  IconButton, 
-  Typography, 
-  Badge, 
-  Menu, 
-  MenuItem, 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  DialogActions, 
-  TextField, 
-  Button, 
-  Stack, 
-  Divider, 
-  Switch, 
-  FormControlLabel, 
-  Select, 
-  FormControl, 
-  InputLabel, 
-  Box, 
-  Tabs, 
-  Tab, 
-  Avatar, 
-  FormHelperText, 
-  CircularProgress, 
-  useMediaQuery, 
-  List, 
-  ListItem, 
-  ListItemText, 
-  ListItemAvatar, 
-  ListItemSecondaryAction, 
-  IconButton as MuiIconButton, 
-  Tooltip, 
-  ButtonGroup 
+import {
+  AppBar,
+  Toolbar,
+  IconButton,
+  Typography,
+  Badge,
+  Menu,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Button,
+  Stack,
+  Divider,
+  Switch,
+  FormControlLabel,
+  Select,
+  FormControl,
+  InputLabel,
+  Box,
+  Tabs,
+  Tab,
+  Avatar,
+  FormHelperText,
+  CircularProgress,
+  useMediaQuery,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemAvatar,
+  ListItemSecondaryAction,
+  IconButton as MuiIconButton,
+  Tooltip,
+  ButtonGroup
 } from "@mui/material";
-import { 
-  Menu as MenuIcon, 
-  Notifications as NotificationsIcon, 
-  AccountCircle, 
-  Settings, 
-  Brightness4, 
-  Brightness7, 
-  ColorLens, 
-  Person, 
-  CheckCircle, 
-  MoreVert, 
-  MarkEmailRead, 
-  Close 
+import {
+  Menu as MenuIcon,
+  Notifications as NotificationsIcon,
+  AccountCircle,
+  Settings,
+  Brightness4,
+  Brightness7,
+  ColorLens,
+  Person,
+  CheckCircle,
+  MoreVert,
+  MarkEmailRead,
+  Close
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from 'date-fns';
@@ -56,7 +56,7 @@ import useAuth from "../../../hooks/useAuth";
 import useTheme from "../../../hooks/useTheme";
 import { useTheme as useMuiTheme } from "@mui/material/styles";
 import { fetchNotifications, markNotificationAsRead, markAllNotificationsAsRead } from "../../features/dashboard/services/dashboardService";
-import { updateUserProfile } from "../../../services/userService";
+import { updateUserProfile, uploadAvatar, getUserProfile } from "../../../services/userService";
 import { API_ENDPOINTS } from "../../../constants/apiEndpoints";
 
 const AppHeader = () => {
@@ -65,17 +65,17 @@ const AppHeader = () => {
   const navigate = useNavigate();
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
-  
+
   // Menu states
   const [anchorEl, setAnchorEl] = useState(null);
   const [notificationsAnchorEl, setNotificationsAnchorEl] = useState(null);
   const [notificationMenuAnchorEl, setNotificationMenuAnchorEl] = useState(null);
   const [selectedNotification, setSelectedNotification] = useState(null);
-  
+
   // Dialog states
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
-  
+
   // Notifications state
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -83,22 +83,26 @@ const AppHeader = () => {
   const [notificationPage, setNotificationPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isMarkingAll, setIsMarkingAll] = useState(false);
-  
+
   // Tab state for profile dialog
   const [profileTabValue, setProfileTabValue] = useState(0);
-  
+
   // Form states
-  const [profileForm, setProfileForm] = useState({ 
-    username: "", 
-    email: "", 
-    firstName: "", 
-    lastName: "", 
+  const [profileForm, setProfileForm] = useState({
+    username: "",
+    email: "",
+    firstName: "",
+    lastName: "",
     bio: "",
     jobTitle: "",
     department: "",
-    phoneNumber: ""
+    phoneNumber: "",
+    profileImage: ""
   });
-  
+  // Avatar states
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState("");
+
   // Loading and error states
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState({});
@@ -107,41 +111,105 @@ const AppHeader = () => {
   useEffect(() => {
     if (user) {
       fetchUserNotifications();
-      
+
       // Set up polling for new notifications (every 30 seconds)
       const interval = setInterval(fetchUserNotifications, 30000);
       return () => clearInterval(interval);
     }
   }, [user]);
 
+  // Fetch user profile data
+  const fetchUserProfile = async () => {
+    if (!user?._id) return;
+
+    try {
+      setLoading(true);
+      const userData = await getUserProfile(user._id);
+
+      if (userData) {
+        setProfileForm({
+          username: userData.username || "",
+          email: userData.email || "",
+          firstName: userData.firstName || "",
+          lastName: userData.lastName || "",
+          bio: userData.bio || "",
+          jobTitle: userData.jobTitle || "",
+          department: userData.department || "",
+          phoneNumber: userData.phoneNumber || "",
+          profileImage: userData.profileImage || ""
+        });
+
+        if (userData.profileImage) {
+          setAvatarPreview(userData.profileImage);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Initialize form data from user
   useEffect(() => {
-    if (user) {
-      setProfileForm({
-        username: user.username || "",
-        email: user.email || "",
-        firstName: user.firstName || "",
-        lastName: user.lastName || "",
-        bio: user.bio || "",
-        jobTitle: user.jobTitle || "",
-        department: user.department || "",
-        phoneNumber: user.phoneNumber || ""
-      });
+    fetchUserProfile();
+  }, [user?._id]);
+
+  // Handle avatar file selection
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAvatarFile(file);
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
-  }, [user]);
-  
+  };
+
+  // Handle avatar upload
+  const handleAvatarUpload = async () => {
+    if (!avatarFile) return null;
+
+    try {
+      const formData = new FormData();
+      formData.append('avatar', avatarFile);
+
+      // Upload the avatar file
+      const response = await uploadAvatar(formData, user?._id);
+
+      if (response?.avatarUrl) {
+        // Update local state
+        setProfileForm(prev => ({
+          ...prev,
+          profileImage: response.avatarUrl
+        }));
+
+        setAvatarPreview(response.avatarUrl);
+        return response.avatarUrl;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      throw error;
+    }
+  };
+
   // Menu handlers
   const handleProfileMenuOpen = (e) => setAnchorEl(e.currentTarget);
   const handleProfileMenuClose = () => setAnchorEl(null);
-  
+
   const handleNotificationsOpen = (e) => setNotificationsAnchorEl(e.currentTarget);
   const handleNotificationsClose = () => setNotificationsAnchorEl(null);
-  
+
   const handleNotificationMenuOpen = (event, notification) => {
     setSelectedNotification(notification);
     setNotificationMenuAnchorEl(event.currentTarget);
   };
-  
+
   const handleNotificationMenuClose = () => setNotificationMenuAnchorEl(null);
 
   // Fetch user notifications
@@ -149,7 +217,7 @@ const AppHeader = () => {
     try {
       setLoading(true);
       const data = await fetchNotifications(notificationPage);
-      setNotifications(prev => [...prev, ...(data.notifications||[]) ]);
+      setNotifications(prev => [...prev, ...(data.notifications || [])]);
       setUnreadCount(data.unreadCount);
       setHasMore(data.hasMore);
     } catch (error) {
@@ -163,8 +231,8 @@ const AppHeader = () => {
   const handleMarkAsRead = async (notificationId) => {
     try {
       await markNotificationAsRead(notificationId);
-      setNotifications(prev => 
-        prev.map(n => 
+      setNotifications(prev =>
+        prev.map(n =>
           n._id === notificationId ? { ...n, read: true } : n
         )
       );
@@ -179,7 +247,7 @@ const AppHeader = () => {
     try {
       setIsMarkingAll(true);
       await markAllNotificationsAsRead();
-      setNotifications(prev => 
+      setNotifications(prev =>
         prev.map(n => ({ ...n, read: true }))
       );
       setUnreadCount(0);
@@ -212,6 +280,23 @@ const AppHeader = () => {
 
   const handleProfileDialogClose = () => {
     setProfileDialogOpen(false);
+    setFormErrors({});
+    // Reset form to current user data when closing
+    if (user) {
+      setProfileForm({
+        username: user.username || "",
+        email: user.email || "",
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        bio: user.bio || "",
+        jobTitle: user.jobTitle || "",
+        department: user.department || "",
+        phoneNumber: user.phoneNumber || "",
+        profileImage: user.profileImage || ""
+      });
+      setAvatarPreview(user.profileImage || "");
+    }
+    setAvatarFile(null);
   };
 
   const handleSettingsDialogOpen = () => {
@@ -229,58 +314,75 @@ const AppHeader = () => {
   };
 
   // Handle profile form submission
-  const handleProfileSubmit = async () => {
+  const handleProfileSubmit = async (e) => {
+    e.preventDefault();
+
     try {
       setIsSubmitting(true);
-      
-      // Validate required fields
+      setFormErrors({});
+
+      // Basic validation
       const errors = {};
-      if (!profileForm.firstName) errors.firstName = 'Vui lòng nhập tên';
-      if (!profileForm.lastName) errors.lastName = 'Vui lòng nhập họ';
-      if (!profileForm.email) {
-        errors.email = 'Vui lòng nhập email';
+      if (!profileForm.firstName.trim()) errors.firstName = 'Please enter your first name';
+      if (!profileForm.lastName.trim()) errors.lastName = 'Please enter your last name';
+      if (!profileForm.email.trim()) {
+        errors.email = 'Please enter your email';
       } else if (!/^\S+@\S+\.\S+$/.test(profileForm.email)) {
-        errors.email = 'Email không hợp lệ';
+        errors.email = 'Please enter a valid email address';
       }
-      
+
       if (Object.keys(errors).length > 0) {
         setFormErrors(errors);
         return;
       }
-      
-      // Prepare profile data for submission
+
+      // Prepare profile data
       const profileData = {
-        firstName: profileForm.firstName,
-        lastName: profileForm.lastName,
-        email: profileForm.email,
-        phoneNumber: profileForm.phoneNumber || undefined,
-        bio: profileForm.bio || undefined,
-        jobTitle: profileForm.jobTitle || undefined,
-        department: profileForm.department || undefined,
+        firstName: profileForm.firstName.trim(),
+        lastName: profileForm.lastName.trim(),
+        email: profileForm.email.trim(),
+        phoneNumber: profileForm.phoneNumber?.trim() || '',
+        bio: profileForm.bio?.trim() || '',
+        jobTitle: profileForm.jobTitle?.trim() || '',
+        department: profileForm.department?.trim() || ''
       };
-      
-      // Call the update profile service
-      const updatedUser = await updateUserProfile(profileData, user._id);
-      
-      // Update the auth context with the new user data
-      if (updatedUser) {
-        // You might want to update the user context here if you have one
-        // For example: updateUser(updatedUser);
-        
-        // Close the dialog on success
-        handleProfileDialogClose();
+
+      // First upload avatar if a new one was selected
+      if (avatarFile) {
+        try {
+          const avatarUrl = await handleAvatarUpload();
+          if (avatarUrl) {
+            profileData.profileImage = avatarUrl;
+          }
+        } catch (error) {
+          console.error('Error uploading avatar:', error);
+          setFormErrors({
+            submit: 'Failed to upload profile image. Please try again.'
+          });
+          return;
+        }
       }
-      
+
+      // Update the profile
+      await updateUserProfile(profileData, user?._id);
+
+      // Refresh user data
+      await fetchUserProfile();
+
+      // Close the dialog
+      handleProfileDialogClose();
+
+      // Reset avatar file state
+      setAvatarFile(null);
+
+      // Show success message (you can replace this with a toast)
+      alert('Profile updated successfully!');
+
     } catch (error) {
       console.error('Error updating profile:', error);
-      
-      // Handle API validation errors
-      if (error.response?.data?.errors) {
-        setFormErrors(error.response.data.errors);
-      } else {
-        // Show a generic error message
-        setFormErrors({ submit: 'Có lỗi xảy ra khi cập nhật thông tin' });
-      }
+      setFormErrors({
+        submit: error.response?.data?.message || 'An error occurred while updating your profile. Please try again.'
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -312,11 +414,11 @@ const AppHeader = () => {
           >
             <MenuIcon />
           </IconButton>
-          
+
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             TaskLoad
           </Typography>
-          
+
           {/* Notification and User Menu */}
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             {/* Notification Icon */}
@@ -330,7 +432,7 @@ const AppHeader = () => {
                 </Badge>
               </IconButton>
             </Tooltip>
-            
+
             {/* User Menu */}
             <Tooltip title="Tài khoản">
               <IconButton
@@ -341,18 +443,29 @@ const AppHeader = () => {
                 aria-expanded={anchorEl ? 'true' : undefined}
               >
                 {user?.avatar ? (
-                  <Avatar 
-                    src={user.avatar} 
-                    alt={user.username}
-                    sx={{ width: 32, height: 32 }}
-                  />
+                  <Avatar
+                    src={user?.profileImage}
+                    alt={user?.username}
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      bgcolor: 'primary.main',
+                      cursor: 'pointer',
+                      '&:hover': {
+                        opacity: 0.8
+                      }
+                    }}
+                    onClick={() => setProfileDialogOpen(true)}
+                  >
+                    {user?.username?.charAt(0)?.toUpperCase()}
+                  </Avatar>
                 ) : (
                   <AccountCircle />
                 )}
               </IconButton>
             </Tooltip>
           </Box>
-          
+
           {/* Notification Menu */}
           <Menu
             anchorEl={notificationsAnchorEl}
@@ -379,22 +492,22 @@ const AppHeader = () => {
                 Thông báo
               </Typography>
               <ButtonGroup size="small" variant="text">
-                <Button 
-                  onClick={handleMarkAllAsRead} 
+                <Button
+                  onClick={handleMarkAllAsRead}
                   disabled={unreadCount === 0 || isMarkingAll}
                   startIcon={<MarkEmailRead fontSize="small" />}
                 >
                   Đánh dấu đã đọc
                 </Button>
-                <Button 
+                <Button
                   onClick={handleNotificationsClose}
                   startIcon={<Close fontSize="small" />}
                 >
-                  Đóng  
+                  Đóng
                 </Button>
               </ButtonGroup>
             </Box>
-            
+
             {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
                 <CircularProgress size={24} />
@@ -408,13 +521,13 @@ const AppHeader = () => {
             ) : (
               <List dense disablePadding>
                 {notifications.map((notification) => (
-                  <ListItem 
-                    key={notification._id} 
-                    button 
+                  <ListItem
+                    key={notification._id}
+                    button
                     onClick={() => handleNotificationClick(notification)}
                     sx={{
-                      borderLeft: notification.read 
-                        ? '3px solid transparent' 
+                      borderLeft: notification.read
+                        ? '3px solid transparent'
                         : `3px solid ${muiTheme.palette.primary.main}`,
                       bgcolor: notification.read ? 'background.paper' : 'action.hover',
                       '&:hover': {
@@ -423,7 +536,7 @@ const AppHeader = () => {
                     }}
                   >
                     <ListItemAvatar>
-                      <Avatar 
+                      <Avatar
                         src={notification.sender?.avatar ? `${API_ENDPOINTS.AUTH.BASE}${notification.sender.avatar}` : undefined}
                         alt={notification.sender?.name}
                       >
@@ -455,11 +568,11 @@ const AppHeader = () => {
                 ))}
               </List>
             )}
-            
+
             {hasMore && (
               <Box sx={{ p: 1, display: 'flex', justifyContent: 'center' }}>
-                <Button 
-                  size="small" 
+                <Button
+                  size="small"
                   onClick={() => setNotificationPage(p => p + 1)}
                   disabled={loading}
                 >
@@ -468,7 +581,7 @@ const AppHeader = () => {
               </Box>
             )}
           </Menu>
-          
+
           {/* Notification Actions Menu */}
           <Menu
             anchorEl={notificationMenuAnchorEl}
@@ -477,7 +590,7 @@ const AppHeader = () => {
             onClick={handleNotificationMenuClose}
           >
             {selectedNotification && !selectedNotification.read && (
-              <MenuItem 
+              <MenuItem
                 onClick={() => handleMarkAsRead(selectedNotification._id)}
               >
                 <ListItem>
@@ -493,7 +606,7 @@ const AppHeader = () => {
               </ListItem>
             </MenuItem>
           </Menu>
-          
+
           {/* User Menu */}
           <Menu
             id="user-menu"
@@ -533,11 +646,66 @@ const AppHeader = () => {
       <Dialog open={profileDialogOpen} onClose={handleProfileDialogClose} fullWidth maxWidth="md">
         <DialogTitle>Chỉnh sửa thông tin cá nhân</DialogTitle>
         <DialogContent>
+          <Box display="flex" flexDirection="column" alignItems="center" mb={3}>
+            <input
+              accept="image/*"
+              style={{ display: 'none' }}
+              id="profile-avatar-upload"
+              type="file"
+              onChange={handleAvatarChange}
+            />
+            <Box sx={{ position: 'relative', mb: 2 }}>
+              <label htmlFor="profile-avatar-upload">
+                <Avatar
+                  src={avatarPreview || user?.profileImage}
+                  alt={user?.username}
+                  sx={{
+                    width: 120,
+                    height: 120,
+                    cursor: 'pointer',
+                    transition: 'opacity 0.3s',
+                    '&:hover': {
+                      opacity: 0.8,
+                    },
+                  }}
+                >
+                  {user?.username?.charAt(0)?.toUpperCase()}
+                </Avatar>
+              </label>
+              {avatarPreview && (
+                <IconButton
+                  onClick={() => {
+                    setAvatarFile(null);
+                    setAvatarPreview('');
+                  }}
+                  size="small"
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    backgroundColor: 'background.paper',
+                    '&:hover': {
+                      backgroundColor: 'action.hover',
+                    },
+                  }}
+                >
+                  <Close fontSize="small" />
+                </IconButton>
+              )}
+            </Box>
+            <Typography variant="caption" color="textSecondary" sx={{ cursor: 'pointer' }}>
+              Ảnh đại diện
+            </Typography>
+            {loading && (
+              <CircularProgress size={24} sx={{ mt: 1 }} />
+            )}
+          </Box>
+
           <Tabs value={profileTabValue} onChange={handleProfileTabChange} sx={{ mb: 3 }}>
             <Tab label="Thông tin cơ bản" />
             <Tab label="Chi tiết công việc" />
           </Tabs>
-          
+
           {profileTabValue === 0 ? (
             <Stack spacing={2}>
               <Stack direction="row" spacing={2}>
@@ -545,7 +713,7 @@ const AppHeader = () => {
                   fullWidth
                   label="Tên"
                   value={profileForm.firstName}
-                  onChange={(e) => setProfileForm({...profileForm, firstName: e.target.value})}
+                  onChange={(e) => setProfileForm({ ...profileForm, firstName: e.target.value })}
                   error={!!formErrors.firstName}
                   helperText={formErrors.firstName}
                 />
@@ -553,7 +721,7 @@ const AppHeader = () => {
                   fullWidth
                   label="Họ"
                   value={profileForm.lastName}
-                  onChange={(e) => setProfileForm({...profileForm, lastName: e.target.value})}
+                  onChange={(e) => setProfileForm({ ...profileForm, lastName: e.target.value })}
                   error={!!formErrors.lastName}
                   helperText={formErrors.lastName}
                 />
@@ -563,7 +731,7 @@ const AppHeader = () => {
                 label="Email"
                 type="email"
                 value={profileForm.email}
-                onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
+                onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
                 error={!!formErrors.email}
                 helperText={formErrors.email}
               />
@@ -571,7 +739,7 @@ const AppHeader = () => {
                 fullWidth
                 label="Số điện thoại"
                 value={profileForm.phoneNumber}
-                onChange={(e) => setProfileForm({...profileForm, phoneNumber: e.target.value})}
+                onChange={(e) => setProfileForm({ ...profileForm, phoneNumber: e.target.value })}
                 error={!!formErrors.phoneNumber}
                 helperText={formErrors.phoneNumber}
               />
@@ -581,7 +749,7 @@ const AppHeader = () => {
                 rows={3}
                 label="Giới thiệu bản thân"
                 value={profileForm.bio}
-                onChange={(e) => setProfileForm({...profileForm, bio: e.target.value})}
+                onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })}
               />
             </Stack>
           ) : (
@@ -590,21 +758,21 @@ const AppHeader = () => {
                 fullWidth
                 label="Chức vụ"
                 value={profileForm.jobTitle}
-                onChange={(e) => setProfileForm({...profileForm, jobTitle: e.target.value})}
+                onChange={(e) => setProfileForm({ ...profileForm, jobTitle: e.target.value })}
               />
               <TextField
                 fullWidth
                 label="Phòng ban"
                 value={profileForm.department}
-                onChange={(e) => setProfileForm({...profileForm, department: e.target.value})}
+                onChange={(e) => setProfileForm({ ...profileForm, department: e.target.value })}
               />
             </Stack>
           )}
         </DialogContent>
         <DialogActions sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
           <Button onClick={handleProfileDialogClose}>Hủy</Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={handleProfileSubmit}
             disabled={isSubmitting}
           >
@@ -619,7 +787,7 @@ const AppHeader = () => {
         <DialogContent>
           <Stack spacing={3} sx={{ mt: 2 }}>
             <Typography variant="h6" gutterBottom>Cài đặt giao diện</Typography>
-            
+
             <FormControl fullWidth>
               <InputLabel id="theme-mode-label">Chế độ giao diện</InputLabel>
               <Select
@@ -629,9 +797,9 @@ const AppHeader = () => {
                 label="Chế độ giao diện"
                 onChange={handleThemeChange}
                 startAdornment={
-                  themeSettings.mode === 'dark' ? 
-                  <Brightness7 sx={{ color: 'text.primary', mr: 1 }} /> : 
-                  <Brightness4 sx={{ color: 'text.primary', mr: 1 }} />
+                  themeSettings.mode === 'dark' ?
+                    <Brightness7 sx={{ color: 'text.primary', mr: 1 }} /> :
+                    <Brightness4 sx={{ color: 'text.primary', mr: 1 }} />
                 }
               >
                 <MenuItem value="light">Sáng</MenuItem>
@@ -639,7 +807,7 @@ const AppHeader = () => {
                 <MenuItem value="system">Theo hệ thống</MenuItem>
               </Select>
             </FormControl>
-            
+
             <FormControl fullWidth>
               <InputLabel id="primary-color-label">Màu chủ đạo</InputLabel>
               <Select
@@ -657,7 +825,7 @@ const AppHeader = () => {
                 <MenuItem value="#8b5cf6">Tím</MenuItem>
               </Select>
             </FormControl>
-            
+
             <FormControl fullWidth>
               <InputLabel id="font-size-label">Kích thước chữ</InputLabel>
               <Select
@@ -672,49 +840,49 @@ const AppHeader = () => {
                 <MenuItem value="large">Lớn</MenuItem>
               </Select>
             </FormControl>
-            
+
             <Divider />
-            
+
             <Typography variant="h6" gutterBottom>Thiết lập thông báo</Typography>
-            
+
             <FormControlLabel
               control={
-                <Switch 
+                <Switch
                   checked={themeSettings.notifications}
                   onChange={(e) => handleThemeChange({
-                    target: { 
-                      name: 'notifications', 
-                      value: e.target.checked 
+                    target: {
+                      name: 'notifications',
+                      value: e.target.checked
                     }
                   })}
                 />
               }
               label="Bật thông báo"
             />
-            
+
             <FormControlLabel
               control={
-                <Switch 
+                <Switch
                   checked={themeSettings.sound}
                   onChange={(e) => handleThemeChange({
-                    target: { 
-                      name: 'sound', 
-                      value: e.target.checked 
+                    target: {
+                      name: 'sound',
+                      value: e.target.checked
                     }
                   })}
                 />
               }
               label="Âm thanh thông báo"
             />
-            
+
             <FormControlLabel
               control={
-                <Switch 
+                <Switch
                   checked={themeSettings.emailNotifications}
                   onChange={(e) => handleThemeChange({
-                    target: { 
-                      name: 'emailNotifications', 
-                      value: e.target.checked 
+                    target: {
+                      name: 'emailNotifications',
+                      value: e.target.checked
                     }
                   })}
                 />
@@ -725,8 +893,8 @@ const AppHeader = () => {
         </DialogContent>
         <DialogActions sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
           <Button onClick={handleSettingsDialogClose}>Hủy</Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             // onClick={handleSettingsSubmit}
             disabled={isSubmitting}
           >

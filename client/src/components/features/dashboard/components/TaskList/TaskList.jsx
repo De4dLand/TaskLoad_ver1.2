@@ -9,7 +9,7 @@ const calculateDaysRemaining = (dueDate) => {
   const due = new Date(dueDate);
   const diffTime = Math.abs(due - now);
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
+
   if (diffDays === 0) {
     return <span className={styles.daysRemaining}>Due Today</span>;
   }
@@ -47,24 +47,28 @@ const TaskList = ({ tasks, onTaskClick, onTaskContextMenu }) => {
   }
 
   return (
-    <Box 
+    <Box
       className={styles.taskListContainer}
       style={{
         maxHeight: 'calc(100vh - 200px)',
         padding: '16px',
-        bgcolor: 'background.paper'
+        overflowY: 'auto',
       }}
     >
       {tasks.map((task) => (
         <Paper
           key={task._id}
           className={`${styles.taskCard} ${getTaskBorderColor(task)}`}
-          onClick={() => onTaskClick && onTaskClick(task)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onTaskClick && onTaskClick(task);
+          }}
           onContextMenu={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             onTaskContextMenu && onTaskContextMenu(e, task);
           }}
-          style={{ cursor: 'pointer' }}
+          elevation={1}
         >
           <Box className={styles.taskHeader}>
             <Typography variant="h6" className={styles.taskTitle}>
@@ -94,8 +98,8 @@ const TaskList = ({ tasks, onTaskClick, onTaskContextMenu }) => {
             </Box>
 
             <Box className={styles.taskPriority}>
-              <PriorityIcon 
-                fontSize="small" 
+              <PriorityIcon
+                fontSize="small"
                 sx={{ opacity: 0.7 }}
               />
               <Typography variant="caption">
@@ -104,8 +108,8 @@ const TaskList = ({ tasks, onTaskClick, onTaskContextMenu }) => {
             </Box>
 
             <Box className={styles.taskStatus}>
-              <StatusIcon 
-                fontSize="small" 
+              <StatusIcon
+                fontSize="small"
                 sx={{ opacity: 0.7 }}
               />
               <Typography variant="caption">
@@ -114,8 +118,8 @@ const TaskList = ({ tasks, onTaskClick, onTaskContextMenu }) => {
             </Box>
 
             <Box className={styles.taskProject}>
-              <ProjectIcon 
-                fontSize="small" 
+              <ProjectIcon
+                fontSize="small"
                 sx={{ opacity: 0.7 }}
               />
               <Typography variant="caption">
